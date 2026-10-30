@@ -10,7 +10,7 @@ Connect AI tools to your city.
 
 - 面向标准 MCP 客户端，不绑定特定模型供应商。
 - Codex 与 DeepSeek Harness 是重点适配、验收对象。
-- 默认通过模组内置的 Streamable HTTP 服务接入；每种客户端、协议版本和可选能力均需实际验证。
+- MCP 服务提供 stdio 和 Streamable HTTP；通过本机 HTTP 调用 C# 模组，每种客户端、协议版本和可选能力均需实际验证。
 - 玩家订阅并启用模组即可获得完整连接能力，无需另装服务程序、Node.js、Python、.NET 或桥接插件。
 - 首次在 AI 客户端添加 MCP 连接属于接入配置，提供尽可能简短的引导；不要求玩家编译、运行脚本或复制 DLL。
 - 遵循游戏正常资金、解锁、原生校验及操作生命周期。
@@ -20,11 +20,12 @@ Connect AI tools to your city.
 
 - [语言与架构调研](docs/research/2026-10-30-language-selection.md)
 - [模组市场与同步发布调研](docs/research/2026-10-30-distribution.md)
+- [开发工具与版本基线](docs/development/toolchain.md)
 - [许可证、来源与品牌边界](docs/governance/licensing.md)
 - [公开材料与脱敏规则](docs/governance/publication-privacy.md)
 - [OpenSpec 项目基础提案](openspec/changes/establish-project-foundation/proposal.md)
 
-目前推荐以 C# 实现游戏模组及内置 MCP 服务，沿用游戏官方运行时；有自定义界面需求时采用构建后随模组分发的 TypeScript 界面。此为调研建议，SDK 在游戏中的兼容性及无额外安装体验尚未通过原型验收。
+架构已确定为 **C# 游戏模组 + TypeScript/Node.js MCP 服务**。游戏操作与协议服务分进程，Node 运行时和服务随同一个订阅包提供；stdio 模式由 AI 客户端启动，HTTP 模式由模组按需管理。采用官方 TS SDK，所有开发工具优先最新 LTS / 稳定版，并固定可复现版本；包管理以 pnpm 为主、npm 备用。架构决定已完成，随包分发、真实接入和性能仍待实现与验证。
 
 ## 发布与权益
 

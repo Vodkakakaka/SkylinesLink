@@ -1,80 +1,69 @@
-# SkylinesLink 语言与架构调研
+# SkylinesLink 语言与架构决定
 
-调研日期：2026-10-30。状态：建议方案，尚未开始产品实现或游戏内联调。
+核实日期：2026-10-30。架构与语言已确定，产品实现、平台分发和真实客户端验收尚未完成。本记录替代此前游戏进程内置完整 MCP 的建议。
 
-## 推荐结论
+## 已确定的分工
 
-以 **C# 为核心语言，单个模组内置 MCP 服务**：沿用官方工具链当前的 C# 9 / .NET Framework 4.8 目标，在游戏进程内提供本机 Streamable HTTP 连接。需要自定义面板时再采用 TypeScript，构建后的界面资源随模组分发。
+采用 **C# 游戏模组 + TypeScript/Node.js MCP Host**，两部分通过经过认证的本机 HTTP 通信。MCP 使用官方 TypeScript SDK，向客户端同时提供 stdio 和 Streamable HTTP。C# 侧是游戏身份、原生校验、操作事实与写入队列的唯一权威；Host 负责协议、工具输入输出及客户端能力适配。
 
-维护者明确要求订阅安装即可使用，不额外安装组件。因此普通玩家不需要下载独立 Host，也不需要安装 Node.js、Python、.NET、桥接插件或开发工具。首次在已有 AI 客户端添加 MCP 地址及必要的连接授权仍是正常接入步骤，应尽可能简化。当前这一体验是必须实现的要求，尚非实测结果。
-
-语言不能直接保证客户端兼容。兼容性由协议版本、传输、工具 schema、结果表达、操作状态和实测共同决定。先比较和验证这套方案，不因语言选择直接宣称完整兼容。
-
-## 已核实的依据
-
-### 游戏内运行时
-
-- 当前本机游戏随附的 `Content/Game/.ModdingToolchain/Mod.props` 明确设置 `TargetFramework=net48`、`LangVersion=9.0`。
-- 官方模板包 `ColossalOrder.ModTemplate.1.0.0.nupkg` 标明语言 C#，引用游戏、Unity 和 Colossal 程序集，游戏依赖设置为不复制到输出目录。
-- 对当前 `Game.dll` 的 `Game.Modding.IMod` 定向读取确认了模组加载/释放接口；未导出或收录游戏反编译源码。
-- 游戏携带 `@colossalorder/create-csii-ui-mod` 工具，界面层需按其实际模板选择。当前无需为 MCP 接入先建立复杂界面。
-
-这些是安装文件和元数据检查，不是新模组已编译、加载或运行的证明。不能把现代 .NET 服务程序集加载进游戏来替代官方运行时目标。当前游戏包含 Newtonsoft.Json 和 System.Memory 等库，但不能据此认定新的 SDK 依赖可直接并存。
-
-### MCP 与客户端
-
-- [MCP 官方 SDK 列表](https://modelcontextprotocol.io/docs/sdk)当前将 C#、TypeScript、Python、Go、Rust 等列为 Tier 1。不能以“只有 TypeScript 是一等支持”为选型依据。
-- [C# SDK](https://github.com/modelcontextprotocol/csharp-sdk)提供 Core、常规托管和 ASP.NET Core 包。调研时最新稳定发布为 [v2.3.0](https://github.com/modelcontextprotocol/csharp-sdk/releases/tag/v2.3.0)。
-- [C# Core v2.3.0 项目](https://github.com/modelcontextprotocol/csharp-sdk/blob/v2.3.0/src/ModelContextProtocol.Core/ModelContextProtocol.Core.csproj)包含 netstandard2.0 目标，但依赖 JSON、Channels、Pipelines、BCL 兼容包等；[ASP.NET Core 托管包](https://github.com/modelcontextprotocol/csharp-sdk/blob/v2.3.0/src/ModelContextProtocol.AspNetCore/ModelContextProtocol.AspNetCore.csproj)仅目标 net8/9/10，不能直接用于 net48 模组。Core 可编译不等于完整 HTTP 服务已可在游戏中运行。
-- [TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)当前稳定线为 v2，使用拆分的 `@modelcontextprotocol/server` / `client`；不应依据旧 v1 包名直接搭建新项目。
-- 本机 Codex CLI 为 `0.166.0-alpha.5.1`，其 `mcp add --help` 与[官方配置文档](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)均提供 stdio 和 Streamable HTTP 接入。
-- 本机 DeepSeek Harness 桌面版为 `0.2.1-rc.5`；只读检查安装包确认其 MCP client 为同版本，使用 `@modelcontextprotocol/client=2.2.0`。
-- 本机 DSH 的打包代码和[官方包说明](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/mcp/mcp-client/README.md)均表明支持这两种传输，并会拒绝要求 task-based execution 扩展的工具。图片还取决于模型与宿主的图像能力。
-
-因此，长操作不能仅靠声明 MCP Tasks 为必需能力。应提供普通工具可调用的操作查询机制，再按能力协商增加可选协议扩展。普通文本与结构化结果应能表达核心信息，图片是补充能力。
-
-[Streamable HTTP 规范](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http)在 2026-07-28 有协议行为变化；不能把不同版本的初始化、会话、流与取消规则混用。实现必须声明支持范围，并使用实际客户端验证兼容协商。规范要求校验 Origin，并建议本机绑定及认证，这些须进入模组内服务设计。
-
-### 交付环境
-
-本机已有 .NET SDK 10.0.403 和 Node.js 24.21.0；未安装或升级工具链。这些属于开发环境，不能成为玩家安装要求。模组只使用游戏实际支持的运行时和随包分发且许可允许的兼容依赖。发行渠道与上传工具详见[发布调研](2026-10-30-distribution.md)。
-
-## 方案比较
-
-| 方案 | 优点 | 代价与适用判断 |
-|---|---|---|
-| C# 模组内置 MCP | 单订阅包，直接使用游戏运行时；无需额外程序；推荐方向 | 需要验证 SDK 依赖、HTTP 实现、并发及游戏稳定性 |
-| C# 模组 + 独立 C# 服务 | 官方 SDK 与现代 HTTP 托管方便；进程故障隔离 | 要求玩家另下载或安装 Host 不符合需求，不能作为默认交付 |
-| C# 模组 + TypeScript / Python 服务 | SDK 与各自生态成熟 | 额外运行环境与启动链不符合当前安装目标 |
-| 随包附带独立原生或自包含进程 | 理论上可免另装运行时 | 仍有外部进程、平台许可及启动维护问题；尚未证实必要，不作为首选 |
-
-C# 的依据是游戏侧运行时和单订阅交付约束，不是语言天然更兼容 AI。优先验证官方 Core SDK 加兼容的嵌入式 HTTP 适配；如果依赖无法可靠运行，则在相同协议验收下比较更小的原创协议实现。不能以更换实现为由降低标准，也不能默默退回要求玩家安装独立服务的方案。
-
-## 建议的职责边界
+同一个 Paradox Mods 订阅包包含 Mod、构建后的 Host、官方可移植 Node 运行时和必要许可证。玩家不需要额外安装 Node、.NET、Host、桥接工具或包管理器。首次在 AI 客户端添加 MCP 连接仍是必要的接入配置。随包运行时是否获平台接受、真实订阅是否完整交付，必须在首发前验证，不能把架构决定当成已实现的安装体验。
 
 ```mermaid
 flowchart LR
-    A[Codex / DeepSeek Harness / MCP 客户端] -->|本机 Streamable HTTP| B[模组内置 MCP 服务]
-    subgraph G[游戏进程：一个 SkylinesLink 订阅包]
-      B --> C[有界请求调度与游戏操作队列]
-      C --> D[原生工具、校验和模拟系统]
-      E[连接状态与接入引导] --> B
-    end
+    A[Codex / DeepSeek Harness / MCP 客户端] -->|stdio 或 Streamable HTTP| B[TypeScript / Node MCP Host]
+    B -->|认证的本机 HTTP| C[C# Mod]
+    C --> D[游戏线程、原生校验和模拟系统]
 ```
 
-- 模组内分别组织协议、契约、游戏执行和连接界面职责，无需为了职责分离额外启动一个服务程序。
-- 网络工作不直接从任意线程操作 ECS；通过适用游戏线程调度，用普通值快照返回，限制并发、队列和响应大小。
-- 服务随模组加载和释放；端口冲突或网络错误应可见且可恢复，不阻止正常游戏，不要求玩家手工配置系统 URL ACL 或关闭安全软件。
-- 默认本机访问；云端专用或只支持 stdio 的客户端仍须单独解决可达性/接入方式，不能宣称已覆盖。可选兼容方案不得成为 Codex、DSH 或其他 HTTP 客户端的必装组件。
-- 多客户端可以读取，但游戏写操作需要唯一执行队列。取消等待不等于撤销已提交的原生操作。
+语言本身不保证兼容或性能。协议版本、工具契约、长操作状态、错误和实际测试决定兼容性；游戏与所有 Host 的资源总量决定运行成本。
 
-## 进入实现前的具体验证
+## 选择依据
 
-1. 用官方模板构建最小只读模组，确认 net48 / C# 9 与安装版本一致；实际检验 Core SDK 的完整依赖和冲突。
-2. 在游戏运行时验证嵌入式 Streamable HTTP、协议版本、工具发现和结果；以普通用户权限检查监听、认证、Origin 及卸载释放。
-3. 在 Codex 与 DSH 实测结构化结果、错误、图像拒绝与支持、超时、断开和恢复，并提供接入引导。
-4. 核对线程调度、负载上界、帧时间及端口冲突，排除网络请求拖住模拟或留下后台资源。
-5. 用同一操作 ID 验证超时后查询、取消边界以及不会重复施工；先用模拟执行器，实际游戏写入另行授权。
-6. 在只有游戏和 AI 客户端的 Windows 环境通过 Paradox Mods 订阅验证完整流程，禁止借用开发机已安装的额外运行时掩盖依赖。
+### 游戏侧使用 C#，遵守官方运行时
 
-上述均尚未完成，不能把文档或 SDK 级别当成集成验收结果。后续任务以同一 OpenSpec change 为准。
+本机随游戏提供的 `Content/Game/.ModdingToolchain/Mod.props` 明确设置 `TargetFramework=net48`、`LangVersion=9.0`。官方 C# 模板引用游戏、Unity 和 Colossal 程序集，游戏依赖不复制到发行目录。对 `Game.Modding.IMod` 的定向检查确认了加载与释放入口，没有将游戏反编译源码导出到本项目。
+
+开发机使用最新稳定 .NET SDK，但游戏模组保持官方支持的目标和语言级别。新的编译器不代表游戏、Burst 或后处理器支持全部新语法与运行时特性。不能直接将面向现代 .NET 的服务程序集加载进游戏。
+
+游戏随附 UI 模组工具，未来有实际面板需求时再使用其官方模板；首次 MCP 原型无需先建立大型界面。
+
+### MCP 侧使用 TypeScript 和 Node
+
+[MCP 官方 SDK 列表](https://modelcontextprotocol.io/docs/sdk)包含多种一等支持语言，选择 TypeScript 并不是因为其他语言不受官方支持。[官方 TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)当前稳定线为 v2，拆分 server、client 与适配包，支持 stdio 和 Streamable HTTP。独立 Host 允许使用其当前稳定版本，协议测试也可以脱离游戏运行。
+
+曾评估 C# SDK：其 Core 包可包含 netstandard2.0 目标，但完整依赖和 HTTP 托管仍需解决游戏运行时兼容；ASP.NET Core 托管不能直接用于 net48 模组。当前选择不再把完整 MCP SDK 或自行维护的第二套 MCP 实现放进游戏。
+
+Node 选最新 LTS 系列和稳定补丁，TypeScript、pnpm 及依赖采用最新稳定版并固定。精确版本、来源与本机安装状态统一见[开发工具与版本基线](../development/toolchain.md)。pnpm 为主要包管理器，npm 仅备用；TypeScript 是项目开发依赖，无需全局安装。严格类型检查和构建在开发阶段完成，玩家只收到 JS 和随包运行时。
+
+默认打包采用官方可移植 Node + JS bundle。[Node SEA](https://nodejs.org/api/single-executable-applications.html)仍标注 Active development，可另行评估，但不作为首发依赖。单次订阅可以交付多个文件，无需为单一可执行文件增加不必要的构建约束。
+
+### 客户端与协议依据
+
+- 本机 Codex CLI `0.166.0-alpha.5.1` 的命令帮助支持 stdio 与 Streamable HTTP；[官方配置说明](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)提供相应入口。
+- 本机 DeepSeek Harness `0.2.1-rc.5` 的安装代码使用 MCP client `2.2.0`，支持这两种传输，并拒绝要求 task-based execution 扩展的工具；[官方客户端包说明](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/mcp/mcp-client/README.md)提供能力依据。这些是现有验收客户端版本，不是要求项目采用预发布依赖。
+- [stdio 规范](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/stdio)由客户端管理子进程，stdout 仅承载协议，日志写 stderr。
+- [Streamable HTTP 规范](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http)包含版本、来源和连接行为要求；不能混用不同版本的语义，也不能只验证 SDK 示例就宣称所有客户端兼容。
+
+因此，核心长操作以普通工具提交、查询和稳定操作 ID 表达，Tasks 作为可选扩展；核心结果保留文本与结构化数据，图像按宿主和模型能力提供。云端专用客户端访问本机的问题需要单独实现，不能由本地两种传输直接推导出全覆盖。
+
+## 运行和维护边界
+
+- stdio Host 由 AI 客户端启动和释放；多个客户端可以各自持有 Host，但所有游戏写入仍进入 C# 的同一队列。
+- HTTP Host 由模组按需启用并管理。模组释放时只停止自己的 HTTP Host 与内部监听，不误杀客户端持有的 stdio 进程；后者可明确返回游戏不可用，直到客户端关闭它。
+- 模组从已经订阅且核验过的文件自动准备稳定用户数据入口，避免 AI 配置指向随更新变化的市场缓存目录。无额外下载或安装脚本，版本切换处理在用文件和组件匹配。
+- 内部契约以单一版本化 schema 为权威，派生或校验 C# / TS 类型并验证序列化。只交换普通值、快照和稳定引用，不传递游戏原生对象。
+- HTTP 默认仅本机监听，验证 Origin 和授权，凭据不放在命令行或日志。网络线程不直接操作 ECS，所有游戏访问经适用线程、有界调度和身份校验。
+- 游戏侧完成查询范围限制、聚合和分页，不将全城数据搬到 Node 后筛选；没有请求时不持续全城扫描。性能测试涵盖全部进程、多个客户端与过载场景。
+
+模块、生命周期、错误和发布顺序以 [OpenSpec design](../../openspec/changes/establish-project-foundation/design.md) 为权威；后续工作统一维护在 [tasks](../../openspec/changes/establish-project-foundation/tasks.md)。
+
+## 需验证的关键条件
+
+1. 官方模板构建与游戏加载，C# 本机接口在普通用户权限下的监听、线程与释放行为。
+2. 脱离游戏的 TS Host 双传输、协议协商、契约一致性与明确错误。
+3. 多客户端、Host 重启、游戏切换及超时后的操作查询，不盲目重复施工。
+4. Codex 与 DSH 两种传输的真实接入、能力差异及断线恢复。
+5. 全部进程资源、游戏线程耗时和延迟的可复现测量，再据此设置性能预算。
+6. 平台规则、完整订阅包、稳定连接入口、更新与退出，在无开发工具的玩家环境验收。
+
+这些尚未完成。选择两种语言的代价是随包运行时、跨语言契约和进程管理；必须通过上述验证兑现维护性、免安装和低占用要求。发布渠道与同步流程见[发布调研](2026-10-30-distribution.md)。
