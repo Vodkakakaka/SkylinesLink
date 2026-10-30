@@ -1,0 +1,37 @@
+schema: spec-driven
+
+context: |
+  Language: zh-CN
+  All artifacts must be written in zh-CN.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+  Project: SkylinesLink / 天际互联, an independently developed MCP integration for Cities: Skylines II.
+  Public positioning covers MCP-capable AI clients; Codex and DeepSeek Harness are priority validation clients.
+  The project starts from original requirements and implementation, not a fork or port.
+  Current work is research and foundation planning. Stack recommendations are not completed integration tests.
+  Installation requirement: one Paradox Mods subscription delivers the complete mod and embedded MCP service; players must not install a separate host, runtime, bridge or developer tools.
+  Default connection is local Streamable HTTP. GitHub and Paradox Mods releases share version, source commit and changelog through one resumable publishing flow.
+  Architecture must have clear modules and one-way dependencies, bounded work and memory, and measured performance budgets; avoid unnecessary frameworks and idle full-city scans.
+  Use the installed official mod toolchain as the game runtime authority. Keep proprietary binaries, decompiled code, credentials and local paths out of public deliverables.
+  Review every upload for sensitive information, including commit metadata, history, logs, screenshots and release archives. Follow docs/governance/publication-privacy.md.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing

@@ -1,0 +1,24 @@
+# Build outputs and dependencies
+**/bin/
+**/obj/
+node_modules/
+dist/
+artifacts/
+.vs/
+*.user
+*.suo
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.pubxml.user
+**/ParadoxAccount.txt
+**/PDXAccountData*
+
+# Local game installations and research inputs are never source deliverables.
+game-libs/
+decompiled/
+research-inputs/
