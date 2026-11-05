@@ -1,0 +1,62 @@
+[
+  {
+    "name": "日志2true未核目标",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:2",
+    "json": "{\"sequence\":4,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"nativeTerminal\",\"operationId\":\"op-1\",\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"boundTarget\":null}}",
+    "valid": true
+  },
+  {
+    "name": "日志2false未核目标",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:2",
+    "json": "{\"sequence\":4,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"nativeTerminal\",\"operationId\":\"op-1\",\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":false,\"boundTarget\":null}}",
+    "valid": true
+  },
+  {
+    "name": "日志2faulted无返回",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:2",
+    "json": "{\"sequence\":4,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"nativeTerminal\",\"operationId\":\"op-1\",\"physicalTaskState\":\"faulted\",\"loadReturnValue\":null,\"boundTarget\":null}}",
+    "valid": true
+  },
+  {
+    "name": "日志2cancelled无返回",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:2",
+    "json": "{\"sequence\":4,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"nativeTerminal\",\"operationId\":\"op-1\",\"physicalTaskState\":\"cancelled\",\"loadReturnValue\":null,\"boundTarget\":null}}",
+    "valid": true
+  },
+  {
+    "name": "日志2不能遗漏返回值",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:2",
+    "json": "{\"sequence\":4,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"nativeTerminal\",\"operationId\":\"op-1\",\"physicalTaskState\":\"ranToCompletion\",\"boundTarget\":null}}",
+    "valid": false
+  },
+  {
+    "name": "日志2物理终结不可running",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:2",
+    "json": "{\"sequence\":4,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"nativeTerminal\",\"operationId\":\"op-1\",\"physicalTaskState\":\"running\",\"loadReturnValue\":null,\"boundTarget\":null}}",
+    "valid": false
+  },
+  {
+    "name": "日志2拒绝旧终结形状",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:2",
+    "json": "{\"sequence\":4,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"nativeTerminal\",\"operationId\":\"op-1\",\"nativeState\":\"succeeded\",\"boundTarget\":null}}",
+    "valid": false
+  },
+  {
+    "name": "日志2终态显式返回true",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:2",
+    "json": "{\"sequence\":5,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"terminal\",\"operationId\":\"op-1\",\"state\":\"succeeded\",\"mayHaveApplied\":true,\"submissionKnowledge\":\"submitted\",\"reasonCode\":\"OFFLINE_FIXTURE\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"ownerStopped\",\"observationContext\":null}}}",
+    "valid": true
+  },
+  {
+    "name": "日志2终态显式返回false",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:2",
+    "json": "{\"sequence\":5,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"terminal\",\"operationId\":\"op-1\",\"state\":\"failed\",\"mayHaveApplied\":true,\"submissionKnowledge\":\"submitted\",\"reasonCode\":\"OFFLINE_FIXTURE\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":false,\"targetMatch\":\"exact\",\"correlatedTargetReady\":true,\"historicalCompletionProven\":false,\"observationEnd\":\"ownerStopped\",\"observationContext\":null}}}",
+    "valid": true
+  },
+  {
+    "name": "日志2终态显式返回null",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:2",
+    "json": "{\"sequence\":5,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"terminal\",\"operationId\":\"op-1\",\"state\":\"unknown\",\"mayHaveApplied\":true,\"submissionKnowledge\":\"submitted\",\"reasonCode\":\"OFFLINE_FIXTURE\",\"load\":{\"physicalTaskState\":\"unknown\",\"loadReturnValue\":null,\"targetMatch\":\"exact\",\"correlatedTargetReady\":true,\"historicalCompletionProven\":false,\"observationEnd\":\"ownerStopped\",\"observationContext\":null}}}",
+    "valid": true
+  }
+]

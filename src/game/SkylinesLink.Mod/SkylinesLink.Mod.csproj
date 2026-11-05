@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <SkylinesLinkGameToolchain Condition="'$(SkylinesLinkGameToolchain)' == ''">$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))</SkylinesLinkGameToolchain>
+    <!-- 官方后处理器在项目内生成 Library 状态，不能再次作为 SDK 默认源码输入。 -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);Library/**</DefaultItemExcludes>
+    <DefineConstants Condition="'$(SkylinesLinkIntegrationProbe)' == 'true'">$(DefineConstants);SKYLINESLINK_INTEGRATION_PROBE</DefineConstants>
+    <ArtifactsPivots Condition="'$(SkylinesLinkIntegrationProbe)' == 'true'">menu-probe_$(Configuration)</ArtifactsPivots>
+  </PropertyGroup>
+  <Import Project="$(SkylinesLinkGameToolchain)/Mod.props" Condition="Exists('$(SkylinesLinkGameToolchain)/Mod.props')" />
+  <Import Project="$(SkylinesLinkGameToolchain)/Mod.targets" Condition="Exists('$(SkylinesLinkGameToolchain)/Mod.targets')" />
+  <ItemGroup>
+    <Compile Include="../../shared/Processes/WindowsOwnedChild.cs" Link="Shared/Processes/WindowsOwnedChild.cs" />
+    <ProjectReference Include="../SkylinesLink.Application/SkylinesLink.Application.csproj" />
+    <ProjectReference Include="../SkylinesLink.Infrastructure/SkylinesLink.Infrastructure.csproj" />
+    <Reference Include="Game"><Private>false</Private></Reference>
+    <Reference Include="Colossal.Core"><Private>false</Private></Reference>
+    <Reference Include="Colossal.Mathematics"><Private>false</Private></Reference>
+    <Reference Include="Colossal.IO.AssetDatabase"><Private>false</Private></Reference>
+    <Reference Include="Colossal.Logging"><Private>false</Private></Reference>
+    <Reference Include="Colossal.Localization"><Private>false</Private></Reference>
+    <Reference Include="Colossal.PSI.Common"><Private>false</Private></Reference>
+    <Reference Include="Newtonsoft.Json"><Private>false</Private></Reference>
+    <!-- 官方模板的 ECS 编译/源码生成边界；均由游戏提供，不随 Mod 复制。 -->
+    <Reference Include="Unity.Burst"><Private>false</Private></Reference>
+    <Reference Include="Unity.Collections"><Private>false</Private></Reference>
+    <Reference Include="Unity.Entities"><Private>false</Private></Reference>
+    <Reference Include="Unity.Mathematics"><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><Private>false</Private></Reference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(SkylinesLinkIntegrationProbe)' == 'true'">
+    <Reference Include="Colossal.Collections"><Private>false</Private></Reference>
+    <Reference Include="Colossal.AssetPipeline"><Private>false</Private></Reference>
+    <Reference Include="Colossal.UI.Binding"><Private>false</Private></Reference>
+    <AssemblyMetadata Include="SkylinesLink.BuildMode" Value="integration-probe" />
+  </ItemGroup>
+  <Target Name="RequireOfficialToolchain" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(SkylinesLinkGameToolchain)/Mod.props') Or !Exists('$(SkylinesLinkGameToolchain)/Mod.targets')"
+           Text="Official Cities: Skylines II mod toolchain is not configured. Set CSII_TOOLPATH through the official toolchain or supply the verified SkylinesLinkGameToolchain MSBuild property." />
+  </Target>
+  <!-- 官方默认参数始终带 -d，与 C# Configuration 无关。使用正式配置钩子，
+       Release 保持全部官方后处理平台，但关闭 Burst 的 Full 调试路径。 -->
+  <Target Name="ConfigureReleasePostProcessor" AfterTargets="ModPostProcessorConfig" Condition="'$(Configuration)' == 'Release'">
+    <PropertyGroup>
+      <ModPostProcessorArgs>"$(ModPostProcessorFullPath)" PostProcess "$(TargetPath)" -u "$(UnityModProjectFullPath)" @(ReferencePath->'-r "%(Identity)"', ' ') -p Windows -p macOS -p Linux -v</ModPostProcessorArgs>
+    </PropertyGroup>
+  </Target>
+  <!-- 官方 targets 明确允许覆盖 DeployWIP。普通构建不能删除/覆盖玩家模组目录。 -->
+  <Target Name="DeployWIP" AfterTargets="AfterBuild">
+    <Message Text="SkylinesLink build does not deploy to a game profile. Use an explicitly scoped integration procedure." Importance="high" />
+  </Target>
+  <Target Name="RunModPublisher" AfterTargets="Publish">
+    <Error Text="Publishing is not part of the foundation build. Use the reviewed release workflow." />
+  </Target>
+  <Target Name="ExcludeGameJsonCopy" AfterTargets="ResolveReferences">
+    <ItemGroup>
+      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.Filename)' == 'Newtonsoft.Json'" />
+    </ItemGroup>
+  </Target>
+</Project>

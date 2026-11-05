@@ -1,0 +1,34 @@
+{
+  "format": "SLNK/1",
+  "maximumBytes": 65536,
+  "encodeVectors": [
+    { "name": "ascii-object", "json": "{\"text\":\"ASCII\"}", "payloadBytes": 16, "payloadHex": "7b2274657874223a224153434949227d", "frameHex": "534c4e4b01000000100000007b2274657874223a224153434949227d" },
+    { "name": "chinese-and-emoji", "json": "{\"text\":\"中文😀\"}", "payloadBytes": 21, "payloadHex": "7b2274657874223a22e4b8ade69687f09f9880227d", "frameHex": "534c4e4b01000000150000007b2274657874223a22e4b8ade69687f09f9880227d" },
+    { "name": "one-byte-json-not-wire", "json": "0", "payloadBytes": 1, "payloadHex": "30", "frameHex": "534c4e4b010000000100000030" },
+    { "name": "two-byte-json-not-wire", "json": "{}", "payloadBytes": 2, "payloadHex": "7b7d", "frameHex": "534c4e4b01000000020000007b7d" }
+  ],
+  "headers": [
+    { "name": "zero", "hex": "534c4e4b0100000000000000", "length": null, "error": "FRAME_LIMIT" },
+    { "name": "one", "hex": "534c4e4b0100000001000000", "length": 1, "error": null },
+    { "name": "two", "hex": "534c4e4b0100000002000000", "length": 2, "error": null },
+    { "name": "uint32-little-endian-256", "hex": "534c4e4b0100000000010000", "length": 256, "error": null },
+    { "name": "maximum", "hex": "534c4e4b0100000000000100", "length": 65536, "error": null },
+    { "name": "maximum-plus-one", "hex": "534c4e4b0100000001000100", "length": null, "error": "FRAME_LIMIT" },
+    { "name": "uint32-high-bit", "hex": "534c4e4b0100000000000080", "length": null, "error": "FRAME_LIMIT" },
+    { "name": "uint32-maximum", "hex": "534c4e4b01000000ffffffff", "length": null, "error": "FRAME_LIMIT" },
+    { "name": "version-zero", "hex": "534c4e4b0000000001000000", "length": null, "error": "INVALID_FRAME_HEADER" },
+    { "name": "version-two", "hex": "534c4e4b0200000001000000", "length": null, "error": "INVALID_FRAME_HEADER" },
+    { "name": "version-uint16-high-byte", "hex": "534c4e4b0101000001000000", "length": null, "error": "INVALID_FRAME_HEADER" },
+    { "name": "version-big-endian", "hex": "534c4e4b0001000001000000", "length": null, "error": "INVALID_FRAME_HEADER" },
+    { "name": "reserved-low-byte", "hex": "534c4e4b0100010001000000", "length": null, "error": "INVALID_FRAME_HEADER" },
+    { "name": "reserved-high-byte", "hex": "534c4e4b0100000101000000", "length": null, "error": "INVALID_FRAME_HEADER" },
+    { "name": "high-bit-magic", "hex": "d3cccecb0100000001000000", "length": null, "error": "INVALID_FRAME_HEADER" },
+    { "name": "short-header", "hex": "534c4e4b01000000010000", "length": null, "error": "INVALID_FRAME_HEADER" },
+    { "name": "long-header", "hex": "534c4e4b010000000100000000", "length": null, "error": "INVALID_FRAME_HEADER" }
+  ],
+  "invalidUtf8": [
+    { "name": "invalid-continuation", "frameHex": "534c4e4b0100000002000000c328", "error": "INVALID_UTF8" },
+    { "name": "overlong", "frameHex": "534c4e4b0100000002000000c0af", "error": "INVALID_UTF8" },
+    { "name": "truncated-emoji", "frameHex": "534c4e4b0100000003000000f09f98", "error": "INVALID_UTF8" }
+  ]
+}

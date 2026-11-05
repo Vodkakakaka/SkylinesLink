@@ -1,0 +1,91 @@
+{
+  "formatVersion": 1,
+  "schemaMetadata": {
+    "urn:skylineslink:contract:activation-record:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:authorization-snapshot:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:capability-description:1": "2435ccc3f03528e5431613830dee9a622dd60ee547d5220888eebcc5788439b3",
+    "urn:skylineslink:contract:context:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:core-manifest:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:empty:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:environment-discovery:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:operation-journal-record:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:operation-journal-record:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:operation-lookup:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:operation-lookup:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:operation-query:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:operation-query:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:operation-status:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:wire-authenticate:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:wire-authenticate:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:wire-authenticated:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:wire-authenticated:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:wire-challenge:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:wire-error:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:wire-proof:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:wire-request:1": "8d7557b1c27ab0501c4c51ee56355ff6c834a38aa2ce695f5aba3754e4b8eb50",
+    "urn:skylineslink:contract:wire-result:1": "cdbae916bd1e799e9738a185a3558db8f254aef54dcd158c5011938830dac054",
+    "urn:skylineslink:contract:native-history-capture:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:native-history-request:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:operation-history-checkpoint:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:operation-lookup:3": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:operation-query:3": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:operation-lookup:4": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:journal-control:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:capability-query:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:guidance-document:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:guidance-query:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:guidance-search-query:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:guidance-search-result:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:authorization-snapshot:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:operation-journal-record:3": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:journal-control:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:operation-history-checkpoint:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:native-history-capture:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:native-history-request:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:native-history-capture:3": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:native-history-request:3": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:task-stop-decision-lookup:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:task-stop-decision-query:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:task-stop-query:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:task-stop-result:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:module-runtime-page:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:module-runtime-query:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:context:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:managed-components:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:city-overview:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:city-overview:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002"
+  },
+  "capabilityBindings": {
+    "system.context": {
+      "1": "9606a83ea573ce7c008c8040a24a5f8b0a95352430ce59e87e3e77ccbd0b4dde",
+      "2": "6d772b6ef5cb1c861fcf856275eaf3486823275a6d046cc20c01428c17dd8f10"
+    },
+    "operations.get": {
+      "3": "8fed58b129463367841531e329841e45e88fb3ff7045abb44180ad84ebd0101a",
+      "4": "01b22c9a708131974b233e3e5bc7e1e903a3ee66f285d4d69f6e873d4a0f210a",
+      "5": "5b9f17ba85879c87efcbbe46973c246a0d70c01ec7f75c5eb6eb91740652ea92"
+    },
+    "guidance.search": {
+      "1": "c70cdd06326cfcaae68d674e82c28ce2723f0358e3708c74ae30129e0390eaae"
+    },
+    "guidance.get": {
+      "1": "ba4cc63921ef0f2f60b8145135c2ca7ca082b54d04d971906102bc0644d8b87d"
+    },
+    "capabilities.describe": {
+      "1": "b6e87c66cbd708fde0f62b8b157b2bac287aa97811217793fd2935fc1ee90104"
+    },
+    "tasks.stop": {
+      "1": "770d79899c6545661cfae3edd2833817972f77b1e75a429f7c782a7300fc63f3"
+    },
+    "tasks.stop.get": {
+      "1": "53ef0332cbf6c1fde128ffd4fd890b043fb67c9480c9995f2ed94d361254d83d"
+    },
+    "system.modules.get": {
+      "1": "07463de4090f8b27f272575fd9670c2910ea93433304dc865713f5d072084a4e"
+    },
+    "city.overview": {
+      "1": "ba13f252e8cc74d89cc6cbb4092459d23d3d745f19f1756e2b90c1a70f4b978b",
+      "2": "a09a49891c826b2759b5eda767070b69f9bebad46565510447f819bd9e9aec07"
+    }
+  }
+}

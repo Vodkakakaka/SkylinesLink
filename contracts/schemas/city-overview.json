@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:city-overview:1",
+  "description": "One bounded observation of native city population and player money components. Capture frames describe when the stored values were read; source update times remain unknown. This is not a complete city diagnosis or a guarantee of same-frame source updates.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "kind": { "type": "string", "minLength": 11, "maxLength": 11, "const": "unavailable" },
+        "reason": {
+          "type": "string", "minLength": 4, "maxLength": 18,
+          "enum": ["MENU", "LOADING", "SOURCE_UNAVAILABLE", "SCOPE_CHANGED", "BUSY", "CAPTURE_FAILED", "STOPPED"]
+        }
+      },
+      "required": ["kind", "reason"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": { "type": "string", "minLength": 8, "maxLength": 8, "const": "overview" },
+        "scope": { "$ref": "#/$defs/CityScope" },
+        "gameVersion": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "capture": { "$ref": "#/$defs/CaptureInterval" },
+        "coverage": { "type": "string", "minLength": 4, "maxLength": 4, "const": "city" },
+        "population": { "$ref": "#/$defs/PopulationObservation" },
+        "treasury": { "$ref": "#/$defs/TreasuryObservation" }
+      },
+      "required": ["kind", "scope", "gameVersion", "capture", "coverage", "population", "treasury"],
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "CityScope": {
+      "type": "object",
+      "properties": {
+        "instanceId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "generation": { "type": "string", "minLength": 1, "maxLength": 19 },
+        "cityId": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 }
+      },
+      "required": ["instanceId", "generation", "cityId"],
+      "additionalProperties": false
+    },
+    "CaptureInterval": {
+      "type": "object",
+      "properties": {
+        "startedAtUnixMs": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "endedAtUnixMs": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "simulationFrameStart": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+        "simulationFrameEnd": { "type": "integer", "minimum": 0, "maximum": 4294967295 }
+      },
+      "required": ["startedAtUnixMs", "endedAtUnixMs", "simulationFrameStart", "simulationFrameEnd"],
+      "additionalProperties": false
+    },
+    "PopulationObservation": {
+      "type": "object",
+      "properties": {
+        "status": { "type": "string", "minLength": 8, "maxLength": 11, "enum": ["observed", "unavailable"] },
+        "value": { "type": ["integer", "null"], "minimum": 0, "maximum": 2147483647 },
+        "unit": { "type": "string", "minLength": 9, "maxLength": 9, "const": "residents" },
+        "source": { "type": "string", "minLength": 25, "maxLength": 25, "const": "city-population-component" },
+        "sourceUpdatedFrame": { "type": "null" },
+        "reason": { "$ref": "#/$defs/MetricIssue" }
+      },
+      "required": ["status", "value", "unit", "source", "sourceUpdatedFrame", "reason"],
+      "additionalProperties": false
+    },
+    "TreasuryObservation": {
+      "type": "object",
+      "description": "The native public money getter, in game currency. When unlimited is true this value is the game's effective limit, not a finite treasury balance. Negative finite balances are valid.",
+      "properties": {
+        "status": { "type": "string", "minLength": 8, "maxLength": 11, "enum": ["observed", "unavailable"] },
+        "value": { "type": ["integer", "null"], "minimum": -2147483648, "maximum": 2147483647 },
+        "unlimited": { "type": ["boolean", "null"] },
+        "unit": { "type": "string", "minLength": 13, "maxLength": 13, "const": "game-currency" },
+        "source": { "type": "string", "minLength": 22, "maxLength": 22, "const": "player-money-component" },
+        "sourceUpdatedFrame": { "type": "null" },
+        "reason": { "$ref": "#/$defs/MetricIssue" }
+      },
+      "required": ["status", "value", "unlimited", "unit", "source", "sourceUpdatedFrame", "reason"],
+      "additionalProperties": false
+    },
+    "MetricIssue": {
+      "anyOf": [
+        { "type": "string", "minLength": 13, "maxLength": 17, "enum": ["MISSING_COMPONENT", "INVALID_VALUE"] },
+        { "type": "null" }
+      ]
+    }
+  }
+}

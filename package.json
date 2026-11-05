@@ -1,0 +1,37 @@
+{
+  "name": "skylineslink",
+  "version": "0.1.0-dev.0",
+  "private": true,
+  "type": "module",
+  "license": "MPL-2.0",
+  "packageManager": "pnpm@12.16.1",
+  "engines": { "node": "26.13.0", "pnpm": "12.16.1" },
+  "scripts": {
+    "generate": "node tools/contracts/generate.mjs",
+    "check:generated": "node tools/contracts/generate.mjs --check",
+    "check:architecture": "node tools/architecture/check.mjs",
+    "typecheck": "pnpm --filter @skylineslink/host typecheck",
+    "build:host": "pnpm --filter @skylineslink/host build",
+    "build:managed": "dotnet build SkylinesLink.slnx --nologo",
+    "build:aot": "pwsh -NoProfile -File tools/build/publish-desktop.ps1",
+    "build:core": "node tools/release/core.mjs build",
+    "test:core": "node --test tools/release/core.test.mjs",
+    "verify:fresh-source": "pwsh -NoProfile -File tools/verification/fresh-source.ps1",
+    "build:probes": "dotnet build tests/integration/runtime/SkylinesLink.RuntimeProbe.csproj --nologo && dotnet build tests/integration/desktop/SkylinesLink.ProcessProbe.csproj --nologo",
+    "build:mod": "pwsh -NoProfile -File tools/build/build-mod.ps1",
+    "build": "pnpm generate && pnpm typecheck && pnpm build:host && pnpm build:managed",
+    "test:contracts": "node --test tests/contracts/*.test.mjs",
+    "test:contracts:managed": "dotnet run --project tests/contracts/SkylinesLink.Contracts.Probe.csproj --no-launch-profile",
+    "test:host": "pnpm --filter @skylineslink/host test",
+    "test:architecture": "node --test tools/architecture/check.test.mjs",
+    "test:runtime": "dotnet run --project tests/integration/runtime/SkylinesLink.RuntimeProbe.csproj --no-build --no-launch-profile -- --self-test",
+    "test:desktop": "pnpm build:host && node --test tests/integration/desktop/launcher.test.mjs tests/integration/desktop/history.test.mjs tests/integration/desktop/history-runtime.test.mjs tests/integration/desktop/mixed-history.test.mjs",
+    "test:desktop:aot": "pwsh -NoProfile -File tools/verification/nativeaot.ps1",
+    "test": "pnpm check:generated && pnpm check:architecture && pnpm test:architecture && pnpm typecheck && pnpm build:managed && pnpm build:probes && pnpm test:contracts && pnpm test:contracts:managed && pnpm test:runtime && pnpm test:host && pnpm test:desktop"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2"
+  }
+}

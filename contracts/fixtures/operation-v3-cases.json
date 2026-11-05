@@ -1,0 +1,82 @@
+[
+  {
+    "name": "查询3真实true",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:2",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"ownerStopped\"}}}",
+    "valid": true
+  },
+  {
+    "name": "查询3真实false不变异常",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:2",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"failed\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":false,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":false,\"observationEnd\":\"ownerStopped\"}}}",
+    "valid": true
+  },
+  {
+    "name": "查询3未取返回值",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:2",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"unknown\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"unknown\",\"loadReturnValue\":null,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":false,\"observationEnd\":\"ownerStopped\"}}}",
+    "valid": true
+  },
+  {
+    "name": "查询3取消不伪false",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:2",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"unknown\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"cancelled\",\"loadReturnValue\":null,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":false,\"observationEnd\":\"ownerStopped\"}}}",
+    "valid": true
+  },
+  {
+    "name": "查询3原始返回值不可缺省",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:2",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"unknown\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"running\",\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":false,\"observationEnd\":\"ownerStopped\"}}}",
+    "valid": false
+  },
+  {
+    "name": "查询3拒绝旧成功形状",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:2",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"ownerStopped\",\"nativeState\":\"succeeded\"}}}",
+    "valid": false
+  },
+  {
+    "name": "查询3返回值不做字符串转换",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:2",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"unknown\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":\"false\",\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":false,\"observationEnd\":\"ownerStopped\"}}}",
+    "valid": false
+  },
+  {
+    "name": "查询3拒绝旧物理成功枚举",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:2",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"succeeded\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"ownerStopped\"}}}",
+    "valid": false
+  },
+  {
+    "name": "查询3日志不兼容显式领域结果",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:2",
+    "json": "{\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"JOURNAL_INCOMPATIBLE\"}}",
+    "valid": true
+  },
+  {
+    "name": "旧查询3线请求不静默映射到4",
+    "schemaId": "urn:skylineslink:contract:wire-request:1",
+    "json": "{\"kind\":\"request\",\"requestId\":\"wire-1\",\"capabilityId\":\"operations.get\",\"schemaRevision\":\"3\",\"arguments\":{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx\",\"requestId\":\"请求\"}}}}",
+    "valid": false
+  },
+  {
+    "name": "旧查询3结果绑定不静默映射到4",
+    "schemaId": "urn:skylineslink:contract:wire-result:1",
+    "json": "{\"kind\":\"result\",\"requestId\":\"wire-1\",\"result\":{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"failed\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":false,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":false,\"observationEnd\":\"ownerStopped\"}}}}",
+    "binding": {
+      "capabilityId": "operations.get",
+      "schemaRevision": "3"
+    },
+    "valid": false
+  },
+  {
+    "name": "旧查询3绑定及旧形状均不接受",
+    "schemaId": "urn:skylineslink:contract:wire-result:1",
+    "json": "{\"kind\":\"result\",\"requestId\":\"wire-1\",\"result\":{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"ownerStopped\",\"nativeState\":\"succeeded\"}}}}",
+    "binding": {
+      "capabilityId": "operations.get",
+      "schemaRevision": "3"
+    },
+    "valid": false
+  }
+]

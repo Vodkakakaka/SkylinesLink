@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:module-runtime-query:1",
+  "description": "Capture or page a bounded observation of the current module-loader registry; snapshot rows are not stable package identities.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 7,
+          "maxLength": 7,
+          "const": "capture"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 4,
+          "const": "page"
+        },
+        "snapshotId": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 32,
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 128
+        }
+      },
+      "required": [
+        "kind",
+        "snapshotId",
+        "offset"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

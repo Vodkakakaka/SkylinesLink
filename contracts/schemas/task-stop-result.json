@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:task-stop-result:1",
+  "description": "真实停止决定回执；pending或持久不可用不回滚sticky停止请求，不认证关联工作全部结束。",
+  "type": "object",
+  "properties": {
+    "selector": {
+      "$ref": "#/$defs/TaskStopSelector"
+    },
+    "lookup": {
+      "$ref": "#/$defs/StopLookup"
+    }
+  },
+  "required": [
+    "selector",
+    "lookup"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Identity": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "SubmissionKey": {
+      "type": "object",
+      "properties": {
+        "writeContextId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "requestId": {
+          "$ref": "#/$defs/Identity"
+        }
+      },
+      "required": [
+        "writeContextId",
+        "requestId"
+      ],
+      "additionalProperties": false
+    },
+    "TaskStopSelector": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "expectedControlVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740990
+        }
+      },
+      "required": [
+        "taskId",
+        "expectedControlVersion"
+      ],
+      "additionalProperties": false
+    },
+    "JournalReceipt": {
+      "type": "object",
+      "properties": {
+        "storeId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "storeId",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "StopReceipt": {
+      "type": "object",
+      "properties": {
+        "submissionKey": {
+          "$ref": "#/$defs/SubmissionKey"
+        },
+        "controlVersion": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 9007199254740991
+        },
+        "stopRequested": {
+          "type": "boolean"
+        },
+        "persistenceAttempted": {
+          "type": "boolean"
+        },
+        "journal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/JournalReceipt"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "submissionKey",
+        "controlVersion",
+        "stopRequested",
+        "persistenceAttempted",
+        "journal"
+      ],
+      "additionalProperties": false,
+      "description": "原停止决定的有限投影；stopRequested为真实sticky latch，不代表所有原生工作已停止。lookup.kind单独承载持久状态，不重复durability。"
+    },
+    "StopLookup": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 7,
+              "maxLength": 7,
+              "const": "pending"
+            },
+            "receipt": {
+              "$ref": "#/$defs/StopReceipt"
+            }
+          },
+          "required": [
+            "kind",
+            "receipt"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 5,
+              "const": "found"
+            },
+            "receipt": {
+              "$ref": "#/$defs/StopReceipt"
+            }
+          },
+          "required": [
+            "kind",
+            "receipt"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 11,
+              "maxLength": 11,
+              "const": "unavailable"
+            },
+            "receipt": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/StopReceipt"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "enum": [
+                "JOURNAL_UNAVAILABLE",
+                "TASKS_UNAVAILABLE",
+                "RETENTION_NOT_COVERED"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "receipt",
+            "reason"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

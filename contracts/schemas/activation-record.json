@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:activation-record:1",
+  "type": "object",
+  "properties": {
+    "productId": {
+      "type": "string",
+      "const": "skylineslink",
+      "minLength": 12,
+      "maxLength": 12
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "coreManifestSha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64
+    }
+  },
+  "required": [
+    "productId",
+    "version",
+    "coreManifestSha256"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,329 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:native-history-capture:1",
+  "description": "只读租约内核权捕获的有限历史来源与单记录；无记录只表示历史未覆盖。",
+  "type": "object",
+  "properties": {
+    "formatVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1
+    },
+    "environmentId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "profileId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "authorizationRecordRevision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "authorityEpoch": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "grantEpoch": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "source": {
+      "$ref": "#/$defs/HistorySource"
+    },
+    "record": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HistoryRecord"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "formatVersion",
+    "environmentId",
+    "profileId",
+    "authorizationRecordRevision",
+    "authorityEpoch",
+    "grantEpoch",
+    "source",
+    "record"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Identity": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "HistorySource": {
+      "type": "object",
+      "properties": {
+        "formatVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1
+        },
+        "productId": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 12,
+          "const": "skylineslink"
+        },
+        "environmentId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "storeId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "throughSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "producerVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "producerInstanceId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "producerCoreManifestSha256": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "journalSchemaRevision": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 2
+        },
+        "publishedAtUnixMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "selection": {
+          "type": "string",
+          "minLength": 19,
+          "maxLength": 19,
+          "const": "durableTerminalOnly"
+        }
+      },
+      "required": [
+        "formatVersion",
+        "productId",
+        "environmentId",
+        "storeId",
+        "throughSequence",
+        "producerVersion",
+        "producerInstanceId",
+        "producerCoreManifestSha256",
+        "journalSchemaRevision",
+        "publishedAtUnixMs",
+        "selection"
+      ],
+      "additionalProperties": false
+    },
+    "HistoryContext": {
+      "type": "object",
+      "properties": {
+        "instanceId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "generation": {
+          "$ref": "#/$defs/Identity"
+        },
+        "gameState": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 11,
+          "enum": [
+            "menu",
+            "loading",
+            "ready",
+            "unavailable"
+          ]
+        },
+        "cityId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "instanceId",
+        "generation",
+        "gameState",
+        "cityId"
+      ],
+      "additionalProperties": false
+    },
+    "HistoryLoad": {
+      "type": "object",
+      "properties": {
+        "physicalTaskState": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 15,
+          "enum": [
+            "notStarted",
+            "running",
+            "ranToCompletion",
+            "faulted",
+            "cancelled",
+            "unknown"
+          ],
+          "description": "实际原生 Task 的物理状态；正常完成不等于 Load 返回 true 或目标 Ready。"
+        },
+        "loadReturnValue": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "实际 Task<bool> 正常完成时的原始返回值；未取得该值时为 null。"
+        },
+        "targetMatch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12,
+          "enum": [
+            "unknown",
+            "different",
+            "identityOnly",
+            "exact"
+          ]
+        },
+        "isObservationCurrent": {
+          "type": "boolean",
+          "description": "历史语义必须为false；不把已持久观察提升为当前世界事实。"
+        },
+        "correlatedTargetReady": {
+          "type": "boolean"
+        },
+        "historicalCompletionProven": {
+          "type": "boolean"
+        },
+        "observationEnd": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12,
+          "enum": [
+            "open",
+            "expired",
+            "interrupted",
+            "ownerStopped"
+          ]
+        },
+        "observationContext": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HistoryContext"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "physicalTaskState",
+        "loadReturnValue",
+        "targetMatch",
+        "isObservationCurrent",
+        "correlatedTargetReady",
+        "historicalCompletionProven",
+        "observationEnd",
+        "observationContext"
+      ],
+      "additionalProperties": false
+    },
+    "HistoryRecord": {
+      "type": "object",
+      "properties": {
+        "terminalSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "submissionKey": {
+          "type": "object",
+          "properties": {
+            "writeContextId": {
+              "$ref": "#/$defs/Identity"
+            },
+            "requestId": {
+              "$ref": "#/$defs/Identity"
+            }
+          },
+          "required": [
+            "writeContextId",
+            "requestId"
+          ],
+          "additionalProperties": false
+        },
+        "operationId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "originInstanceId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "sourceContext": {
+          "$ref": "#/$defs/HistoryContext"
+        },
+        "state": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 9,
+          "enum": [
+            "succeeded",
+            "failed",
+            "cancelled",
+            "unknown"
+          ]
+        },
+        "mayHaveApplied": {
+          "type": "boolean"
+        },
+        "durability": {
+          "type": "string",
+          "minLength": 7,
+          "maxLength": 7,
+          "const": "durable"
+        },
+        "load": {
+          "$ref": "#/$defs/HistoryLoad"
+        }
+      },
+      "required": [
+        "terminalSequence",
+        "submissionKey",
+        "operationId",
+        "originInstanceId",
+        "sourceContext",
+        "state",
+        "mayHaveApplied",
+        "durability",
+        "load"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

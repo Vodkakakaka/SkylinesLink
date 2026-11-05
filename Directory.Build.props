@@ -1,0 +1,24 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <UseArtifactsOutput>true</UseArtifactsOutput>
+    <ArtifactsPath>$(MSBuildThisFileDirectory)artifacts/dotnet</ArtifactsPath>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- NativeAOT 的编译器/RID 依赖图不同，不能与普通开发构建互相改写锁文件。 -->
+    <NuGetLockFilePath Condition="'$(PublishAot)' == 'true'">$(MSBuildProjectDirectory)/packages.nativeaot.lock.json</NuGetLockFilePath>
+    <PathMap>$(MSBuildThisFileDirectory)=/_/</PathMap>
+    <Authors>Vodka;SkylinesLink contributors</Authors>
+    <Copyright>Copyright © 2026 Vodka and SkylinesLink contributors</Copyright>
+    <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/Vodkakakaka/SkylinesLink</RepositoryUrl>
+  </PropertyGroup>
+  <Import Project="$(MSBuildThisFileDirectory)tools/build/ProductVersion.generated.props" />
+  <ItemGroup Condition="'$(PublishAot)' == 'true' And '$(RuntimeIdentifier)' == 'win-x64'">
+    <!-- 保留本地调试符号，发行 PE 只记 PDB 文件名，不嵌入构建机目录。 -->
+    <LinkerArg Include="/PDBALTPATH:%_PDB%" />
+  </ItemGroup>
+</Project>

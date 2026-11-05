@@ -1,0 +1,414 @@
+[
+  {
+    "name": "stop1/input/minimum",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":1}",
+    "valid": true
+  },
+  {
+    "name": "stop1/input/128-supplementary-scalars-and-last-incrementable-version",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"expectedControlVersion\":9007199254740990}",
+    "valid": true
+  },
+  {
+    "name": "stop1/input/whitespace-and-control-characters-are-identities",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\" \\u0000\\t\\n \",\"expectedControlVersion\":1}",
+    "valid": true
+  },
+  {
+    "name": "stop1/input/reject-empty",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"\",\"expectedControlVersion\":1}",
+    "valid": false
+  },
+  {
+    "name": "stop1/input/reject-129-scalars",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"expectedControlVersion\":1}",
+    "valid": false
+  },
+  {
+    "name": "stop1/input/reject-unpaired-high-surrogate",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"\\ud800\",\"expectedControlVersion\":1}",
+    "valid": false
+  },
+  {
+    "name": "stop1/input/reject-unpaired-low-surrogate",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"\\udc00\",\"expectedControlVersion\":1}",
+    "valid": false
+  },
+  {
+    "name": "stop1/input/reject-version-zero",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":0}",
+    "valid": false
+  },
+  {
+    "name": "stop1/input/reject-version-exhausted",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":9007199254740991}",
+    "valid": false
+  },
+  {
+    "name": "stop1/input/reject-version-fraction",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":1.5}",
+    "valid": false
+  },
+  {
+    "name": "stop1/input/reject-version-string",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":\"1\"}",
+    "valid": false
+  },
+  {
+    "name": "stop1/input/reject-version-null",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":null}",
+    "valid": false
+  },
+  {
+    "name": "stop1/input/reject-version-boolean",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":true}",
+    "valid": false
+  },
+  {
+    "name": "stop1/input/reject-extra-priority",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":1,\"priority\":\"unexpected\"}",
+    "valid": false
+  },
+  {
+    "name": "stop1/input/reject-extra-writeContext",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":1,\"writeContext\":\"unexpected\"}",
+    "valid": false
+  },
+  {
+    "name": "stop1/input/reject-extra-profileId",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":1,\"profileId\":\"unexpected\"}",
+    "valid": false
+  },
+  {
+    "name": "stop1/input/reject-extra-source",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":1,\"source\":\"unexpected\"}",
+    "valid": false
+  },
+  {
+    "name": "stop1/input/reject-missing-version",
+    "schemaId": "urn:skylineslink:contract:task-stop-query:1",
+    "json": "{\"taskId\":\"task-一\"}",
+    "valid": false
+  },
+  {
+    "name": "stop1/ack/pending-version-plus-one",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"pending\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":null}}}",
+    "valid": true
+  },
+  {
+    "name": "stop1/ack/found-with-original-noncanonical-key",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"found\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":{\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sequence\":3}}}}",
+    "valid": true
+  },
+  {
+    "name": "stop1/ack/unavailable-still-has-real-journal",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"unavailable\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":{\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sequence\":3}},\"reason\":\"JOURNAL_UNAVAILABLE\"}}",
+    "valid": true
+  },
+  {
+    "name": "stop1/ack/unavailable-latched-without-persistence-attempt",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"unavailable\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":false,\"journal\":null},\"reason\":\"JOURNAL_UNAVAILABLE\"}}",
+    "valid": true
+  },
+  {
+    "name": "stop1/ack/legacy-unavailable-is-not-absence",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"unavailable\",\"receipt\":null,\"reason\":\"TASKS_UNAVAILABLE\"}}",
+    "valid": true
+  },
+  {
+    "name": "stop1/ack/reject-missing-journal",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"pending\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/ack/reject-invalid-journal",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"pending\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":{}}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/ack/reject-null-pending-receipt",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"pending\",\"receipt\":null}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/ack/reject-missing-latch",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"pending\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"persistenceAttempted\":true,\"journal\":null}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/ack/reject-control-version-one",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"pending\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":1,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":null}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/ack/reject-duplicate-durability",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"pending\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":null,\"durability\":\"pending\"}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/ack/reject-key-extra-actor",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"pending\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\",\"actor\":\"forged\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":null}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/ack/reject-unknown-kind",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"confirmed\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":null}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/ack/reject-missing-unavailable-reason",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"unavailable\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":{\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sequence\":3}}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/ack/reject-null-unavailable-reason",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"unavailable\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":{\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sequence\":3}},\"reason\":null}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/ack/reject-empty-original-key",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"pending\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":null}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/ack/128-scalar-original-key-and-journal",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"found\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"requestId\":\"\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":{\"storeId\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"sequence\":3}}}}",
+    "valid": true
+  },
+  {
+    "name": "stop1/ack/reject-original-key-129-scalars",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"found\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"requestId\":\"\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000x\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":{\"storeId\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"sequence\":3}}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/association/shape-valid-control-version-mismatch",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"found\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":3,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":{\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sequence\":3}}}}",
+    "valid": true,
+    "semanticValid": false,
+    "semanticReason": "CONTROL_VERSION_MISMATCH"
+  },
+  {
+    "name": "stop1/association/shape-valid-false-latch",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"pending\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":false,\"persistenceAttempted\":true,\"journal\":null}}}",
+    "valid": true,
+    "semanticValid": false,
+    "semanticReason": "STOP_LATCH_MISSING"
+  },
+  {
+    "name": "stop1/association/shape-valid-found-without-journal",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"found\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":null}}}",
+    "valid": true,
+    "semanticValid": false,
+    "semanticReason": "DURABLE_RECEIPT_MISSING_JOURNAL"
+  },
+  {
+    "name": "stop1/association/shape-valid-pending-with-journal",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"pending\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":{\"storeId\":\"store\",\"sequence\":3}}}}",
+    "valid": true,
+    "semanticValid": false,
+    "semanticReason": "PENDING_RECEIPT_HAS_JOURNAL"
+  },
+  {
+    "name": "stop1/association/shape-valid-journal-without-attempt",
+    "schemaId": "urn:skylineslink:contract:task-stop-result:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"found\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":false,\"journal\":{\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sequence\":3}}}}",
+    "valid": true,
+    "semanticValid": false,
+    "semanticReason": "JOURNAL_WITHOUT_PERSISTENCE_ATTEMPT"
+  },
+  {
+    "name": "stop1/decision/input-default-live",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":1}",
+    "valid": true
+  },
+  {
+    "name": "stop1/decision/input-live",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":1,\"source\":\"live\"}",
+    "valid": true
+  },
+  {
+    "name": "stop1/decision/input-history",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":1,\"source\":\"history\"}",
+    "valid": true
+  },
+  {
+    "name": "stop1/decision/reject-source-null",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":1,\"source\":null}",
+    "valid": false
+  },
+  {
+    "name": "stop1/decision/reject-source-automatic",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":1,\"source\":\"automatic\"}",
+    "valid": false
+  },
+  {
+    "name": "stop1/decision/reject-source-",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":1,\"source\":\"\"}",
+    "valid": false
+  },
+  {
+    "name": "stop1/decision/reject-current-reader-input",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-query:1",
+    "json": "{\"taskId\":\"task-一\",\"expectedControlVersion\":1,\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+    "valid": false
+  },
+  {
+    "name": "stop1/decision/live-full-original-decision",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-lookup:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"result\":{\"kind\":\"live\",\"instanceId\":\"current-reader-instance\",\"lookup\":{\"kind\":\"found\",\"receipt\":{\"taskId\":\"task-一\",\"decisionKind\":\"stop\",\"goalRevision\":null,\"controlVersion\":2,\"decision\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"},\"journal\":{\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sequence\":3},\"persistenceAttempted\":true}}}}",
+    "valid": true
+  },
+  {
+    "name": "stop1/decision/live-pending",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-lookup:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"result\":{\"kind\":\"live\",\"instanceId\":\"current-reader-instance\",\"lookup\":{\"kind\":\"pending\",\"receipt\":{\"taskId\":\"task-一\",\"decisionKind\":\"stop\",\"goalRevision\":null,\"controlVersion\":2,\"decision\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"},\"journal\":null,\"persistenceAttempted\":true}}}}",
+    "valid": true
+  },
+  {
+    "name": "stop1/decision/live-unavailable-keeps-record",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-lookup:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"result\":{\"kind\":\"live\",\"instanceId\":\"current-reader-instance\",\"lookup\":{\"kind\":\"unavailable\",\"receipt\":{\"taskId\":\"task-一\",\"decisionKind\":\"stop\",\"goalRevision\":null,\"controlVersion\":2,\"decision\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"},\"journal\":{\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sequence\":3},\"persistenceAttempted\":true},\"reason\":\"JOURNAL_UNAVAILABLE\"}}}",
+    "valid": true
+  },
+  {
+    "name": "stop1/decision/live-miss-is-not-absence",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-lookup:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"result\":{\"kind\":\"live\",\"instanceId\":\"current-reader-instance\",\"lookup\":{\"kind\":\"unavailable\",\"receipt\":null,\"reason\":\"STOP_NOT_COVERED\"}}}",
+    "valid": true
+  },
+  {
+    "name": "stop1/decision/history-full-original-decision-and-source2",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-lookup:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"ageMs\":null,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"found\",\"receipt\":{\"taskId\":\"task-一\",\"decisionKind\":\"stop\",\"goalRevision\":null,\"controlVersion\":2,\"sequence\":3,\"decision\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"}}}}}",
+    "valid": true
+  },
+  {
+    "name": "stop1/decision/history-not-covered",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-lookup:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"ageMs\":null,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"HISTORY_NOT_COVERED\"}}}",
+    "valid": true
+  },
+  {
+    "name": "stop1/decision/reject-source1-in-history",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-lookup:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"ageMs\":null,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"found\",\"receipt\":{\"taskId\":\"task-一\",\"decisionKind\":\"stop\",\"goalRevision\":null,\"controlVersion\":2,\"sequence\":3,\"decision\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"}}}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/decision/reject-journal2-in-source2",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-lookup:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"ageMs\":null,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"found\",\"receipt\":{\"taskId\":\"task-一\",\"decisionKind\":\"stop\",\"goalRevision\":null,\"controlVersion\":2,\"sequence\":3,\"decision\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"}}}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/decision/reject-invented-history-without-source",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-lookup:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"ageMs\":null,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"found\",\"receipt\":{\"taskId\":\"task-一\",\"decisionKind\":\"stop\",\"goalRevision\":null,\"controlVersion\":2,\"sequence\":3,\"decision\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"}}}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/decision/reject-duplicate-durability",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-lookup:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"result\":{\"kind\":\"live\",\"instanceId\":\"current-reader-instance\",\"lookup\":{\"kind\":\"found\",\"receipt\":{\"taskId\":\"task-一\",\"decisionKind\":\"stop\",\"goalRevision\":null,\"controlVersion\":2,\"decision\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"},\"journal\":{\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sequence\":3},\"persistenceAttempted\":true,\"durability\":\"durable\"}}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/decision/reject-unproved-absence",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-lookup:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"result\":{\"kind\":\"live\",\"instanceId\":\"current-reader-instance\",\"lookup\":{\"kind\":\"absent\"}}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/association/shape-valid-history-task-mismatch",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-lookup:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"ageMs\":null,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"found\",\"receipt\":{\"taskId\":\"another-task\",\"decisionKind\":\"stop\",\"goalRevision\":null,\"controlVersion\":2,\"sequence\":3,\"decision\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"}}}}}",
+    "valid": true,
+    "semanticValid": false,
+    "semanticReason": "TASK_ID_MISMATCH"
+  },
+  {
+    "name": "stop1/association/shape-valid-history-non-stop-decision",
+    "schemaId": "urn:skylineslink:contract:task-stop-decision-lookup:1",
+    "json": "{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"ageMs\":null,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"found\",\"receipt\":{\"taskId\":\"task-一\",\"decisionKind\":\"create\",\"goalRevision\":1,\"controlVersion\":2,\"sequence\":3,\"decision\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"}}}}}",
+    "valid": true,
+    "semanticValid": false,
+    "semanticReason": "STOP_DECISION_KIND_MISMATCH"
+  },
+  {
+    "name": "stop1/binding/wire-stop",
+    "schemaId": "urn:skylineslink:contract:wire-request:1",
+    "json": "{\"kind\":\"request\",\"requestId\":\"wire-request\",\"capabilityId\":\"tasks.stop\",\"schemaRevision\":\"1\",\"arguments\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1}}",
+    "valid": true
+  },
+  {
+    "name": "stop1/binding/wire-stop-rejects-extra-priority",
+    "schemaId": "urn:skylineslink:contract:wire-request:1",
+    "json": "{\"kind\":\"request\",\"requestId\":\"wire-request\",\"capabilityId\":\"tasks.stop\",\"schemaRevision\":\"1\",\"arguments\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1,\"priority\":\"stop\"}}",
+    "valid": false
+  },
+  {
+    "name": "stop1/binding/wire-result-compact",
+    "schemaId": "urn:skylineslink:contract:wire-result:1",
+    "json": "{\"kind\":\"result\",\"requestId\":\"wire-request\",\"result\":{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"lookup\":{\"kind\":\"found\",\"receipt\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"controlVersion\":2,\"stopRequested\":true,\"persistenceAttempted\":true,\"journal\":{\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sequence\":3}}}}}",
+    "valid": true,
+    "binding": {
+      "capabilityId": "tasks.stop",
+      "schemaRevision": "1"
+    }
+  },
+  {
+    "name": "stop1/binding/wire-result-rejects-full-audit-on-stop-lane",
+    "schemaId": "urn:skylineslink:contract:wire-result:1",
+    "json": "{\"kind\":\"result\",\"requestId\":\"wire-request\",\"result\":{\"selector\":{\"taskId\":\"task-一\",\"expectedControlVersion\":1},\"result\":{\"kind\":\"live\",\"instanceId\":\"current-reader-instance\",\"lookup\":{\"kind\":\"found\",\"receipt\":{\"taskId\":\"task-一\",\"decisionKind\":\"stop\",\"goalRevision\":null,\"controlVersion\":2,\"decision\":{\"submissionKey\":{\"writeContextId\":\"legacy-stop-context\",\"requestId\":\"原停止键 😀\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"},\"journal\":{\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sequence\":3},\"persistenceAttempted\":true}}}}}",
+    "valid": false,
+    "binding": {
+      "capabilityId": "tasks.stop",
+      "schemaRevision": "1"
+    }
+  }
+]

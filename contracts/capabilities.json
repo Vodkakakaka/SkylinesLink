@@ -1,0 +1,108 @@
+{
+  "capabilities": [
+    {
+      "id": "system.context",
+      "toolName": "skylines_context",
+      "schemaRevision": "2",
+      "description": "读取游戏实例、本次加载作用域和可用状态；已验证就绪的世界可没有稳定城市ID。不启动游戏或加载存档。",
+      "effect": "read",
+      "input": "empty",
+      "output": "context-v2"
+    },
+    {
+      "id": "operations.get",
+      "toolName": "skylines_operation_get",
+      "schemaRevision": "5",
+      "description": "按操作 ID 或原提交键查询操作；source缺省live，history读取已发布的持久终态。查询不重放，未覆盖或不可用不表示可以重提。",
+      "effect": "read",
+      "input": "operation-query-v3",
+      "output": "operation-lookup-v4"
+    },
+    {
+      "id": "guidance.search",
+      "toolName": "skylines_guidance_search",
+      "schemaRevision": "1",
+      "description": "Search static, bundled public product guidance. This describes declared capabilities only, without a guarantee of current game availability or qualification. Never starts the game.",
+      "effect": "read",
+      "input": "guidance-search-query",
+      "output": "guidance-search-result"
+    },
+    {
+      "id": "guidance.get",
+      "toolName": "skylines_guidance_get",
+      "schemaRevision": "1",
+      "description": "Read a static, bundled public product guide. Capability references describe declared schemas only, without a guarantee of current game availability or qualification. Never starts the game.",
+      "effect": "read",
+      "input": "guidance-query",
+      "output": "guidance-document"
+    },
+    {
+      "id": "capabilities.describe",
+      "toolName": "skylines_capability_describe",
+      "schemaRevision": "1",
+      "description": "Read exact declared input and output schemas from static, bundled product metadata. This does not guarantee current game availability or qualification. Never starts the game.",
+      "effect": "read",
+      "input": "capability-query",
+      "output": "capability-description"
+    },
+    {
+      "id": "tasks.stop",
+      "toolName": "skylines_task_stop",
+      "schemaRevision": "1",
+      "description": "请求停止指定任务的后续工作并立即返回原停止决定。pending表示持久确认仍在进行，回执不代表所有已提交动作已停止；取消等待不回滚停止请求。环境不支持时明确返回不可用。",
+      "effect": "write",
+      "input": "task-stop-query",
+      "output": "task-stop-result"
+    },
+    {
+      "id": "tasks.stop.get",
+      "toolName": "skylines_task_stop_decision_get",
+      "schemaRevision": "1",
+      "description": "按任务与原预期控制版本读取原停止决定。source缺省live，显式history仅读取已确认出版事实；未覆盖不表示未执行。查询不会发出停止请求，也不自动回退来源。",
+      "effect": "read",
+      "input": "task-stop-decision-query",
+      "output": "task-stop-decision-lookup"
+    },
+    {
+      "id": "system.modules.get",
+      "toolName": "skylines_module_runtime_get",
+      "schemaRevision": "1",
+      "description": "Read a bounded snapshot of the current module-loader registry. Rows describe observed runtime state, not all installed or subscribed packages, enabled modules, or a health verdict.",
+      "effect": "read",
+      "input": "module-runtime-query",
+      "output": "module-runtime-page"
+    },
+    {
+      "id": "city.overview",
+      "toolName": "skylines_city_overview",
+      "schemaRevision": "2",
+      "description": "Read native city population, player money, selected simulation speed and game clock in one bounded observation of the current loaded city. Includes loading scope, capture frames, units and missing reasons. Source update times, pause causes and actual advancement remain unknown; never loads a city or changes simulation.",
+      "effect": "read",
+      "input": "empty",
+      "output": "city-overview-v2"
+    }
+  ],
+  "boundaries": [
+    {
+      "schema": "wire-request",
+      "path": "/properties/arguments",
+      "kind": "registeredInput"
+    },
+    {
+      "schema": "wire-result",
+      "path": "/properties/result",
+      "kind": "registeredOutput"
+    },
+    {
+      "schema": "capability-description",
+      "path": "/properties/inputSchema",
+      "kind": "schemaDocument"
+    },
+    {
+      "schema": "capability-description",
+      "path": "/properties/outputSchema",
+      "kind": "schemaDocument"
+    }
+  ],
+  "decimalFields": []
+}

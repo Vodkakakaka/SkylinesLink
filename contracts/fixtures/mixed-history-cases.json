@@ -1,0 +1,104 @@
+[
+  {
+    "name": "history2/schema/checkpoint-complete-small-task-chain",
+    "schemaId": "urn:skylineslink:contract:operation-history-checkpoint:2",
+    "json": "{\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"records\":[],\"taskRecords\":[{\"sequence\":2,\"environmentId\":\"history2-schema\",\"entry\":{\"kind\":\"taskCreated\",\"taskId\":\"task-一\",\"goalRevision\":1,\"controlVersion\":1,\"decision\":{\"submissionKey\":{\"writeContextId\":\"history2-create-context\",\"requestId\":\"create\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"source-α\",\"generation\":\"7\",\"gameState\":\"ready\",\"cityId\":\"城市-a\"},\"commandHash\":\"4a178315c6ad77a4b7db8273fc4502ea8eb672d0c35d4b229e13f0453b896595\"},\"goal\":{\"kind\":\"statedIntent\",\"title\":\"道路 😀\",\"requestText\":\"用户原话\\n逐步验收\",\"constraintsText\":[\"a\",\"bc\"],\"acceptanceText\":[\"明确结果\"]}}},{\"sequence\":3,\"environmentId\":\"history2-schema\",\"entry\":{\"kind\":\"taskStopped\",\"taskId\":\"task-一\",\"expectedControlVersion\":1,\"controlVersion\":2,\"decision\":{\"submissionKey\":{\"writeContextId\":\"task-control.581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\",\"requestId\":\"stop\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"}}}]}",
+    "valid": true
+  },
+  {
+    "name": "history2/schema/request-operation-unbound-principal",
+    "schemaId": "urn:skylineslink:contract:native-history-request:2",
+    "json": "{\"formatVersion\":2,\"environmentId\":\"history2-schema\",\"profileId\":\"schema-reader\",\"expectedAuthorityEpoch\":null,\"expectedGrantEpoch\":null,\"expectedProfileInstanceId\":null,\"query\":{\"kind\":\"operation\",\"selector\":{\"kind\":\"operationId\",\"operationId\":\"schema-missing-operation\"}}}",
+    "valid": true
+  },
+  {
+    "name": "history2/schema/request-task-bound-principal",
+    "schemaId": "urn:skylineslink:contract:native-history-request:2",
+    "json": "{\"formatVersion\":2,\"environmentId\":\"history2-schema\",\"profileId\":\"schema-reader\",\"expectedAuthorityEpoch\":1,\"expectedGrantEpoch\":1,\"expectedProfileInstanceId\":\"dddddddddddddddddddddddddddddddd\",\"query\":{\"kind\":\"task\",\"taskId\":\"task-一\"}}",
+    "valid": true
+  },
+  {
+    "name": "history2/schema/request-task-decision",
+    "schemaId": "urn:skylineslink:contract:native-history-request:2",
+    "json": "{\"formatVersion\":2,\"environmentId\":\"history2-schema\",\"profileId\":\"schema-reader\",\"expectedAuthorityEpoch\":1,\"expectedGrantEpoch\":1,\"expectedProfileInstanceId\":\"dddddddddddddddddddddddddddddddd\",\"query\":{\"kind\":\"taskDecision\",\"submissionKey\":{\"writeContextId\":\"task-control.581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\",\"requestId\":\"stop\"}}}",
+    "valid": true
+  },
+  {
+    "name": "history2/schema/request-goal-text-page",
+    "schemaId": "urn:skylineslink:contract:native-history-request:2",
+    "json": "{\"formatVersion\":2,\"environmentId\":\"history2-schema\",\"profileId\":\"schema-reader\",\"expectedAuthorityEpoch\":1,\"expectedGrantEpoch\":1,\"expectedProfileInstanceId\":\"dddddddddddddddddddddddddddddddd\",\"query\":{\"kind\":\"taskGoal\",\"taskId\":\"task-一\",\"goalRevision\":1,\"section\":\"requestText\",\"offset\":0,\"limit\":512}}",
+    "valid": true
+  },
+  {
+    "name": "history2/schema/capture-not-covered-is-not-absent",
+    "schemaId": "urn:skylineslink:contract:native-history-capture:2",
+    "json": "{\"formatVersion\":2,\"environmentId\":\"history2-schema\",\"profileId\":\"schema-reader\",\"profileInstanceId\":\"dddddddddddddddddddddddddddddddd\",\"authorizationRecordRevision\":1,\"authorityEpoch\":1,\"grantEpoch\":1,\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"query\":{\"kind\":\"operation\",\"selector\":{\"kind\":\"operationId\",\"operationId\":\"schema-missing-operation\"}},\"result\":{\"kind\":\"notCovered\"}}",
+    "valid": true
+  },
+  {
+    "name": "history2/schema/capture-task-summary-independent-reader",
+    "schemaId": "urn:skylineslink:contract:native-history-capture:2",
+    "json": "{\"formatVersion\":2,\"environmentId\":\"history2-schema\",\"profileId\":\"schema-reader\",\"profileInstanceId\":\"dddddddddddddddddddddddddddddddd\",\"authorizationRecordRevision\":1,\"authorityEpoch\":1,\"grantEpoch\":1,\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"query\":{\"kind\":\"task\",\"taskId\":\"task-一\"},\"result\":{\"kind\":\"task\",\"summary\":{\"taskId\":\"task-一\",\"cityId\":\"城市-a\",\"owner\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"title\":\"道路 😀\",\"goalRevision\":1,\"controlVersion\":2,\"isStopped\":true,\"createdSequence\":2,\"lastDecisionSequence\":3}}}",
+    "valid": true
+  },
+  {
+    "name": "history2/schema/capture-stop-receipt-null-goal-version",
+    "schemaId": "urn:skylineslink:contract:native-history-capture:2",
+    "json": "{\"formatVersion\":2,\"environmentId\":\"history2-schema\",\"profileId\":\"schema-reader\",\"profileInstanceId\":\"dddddddddddddddddddddddddddddddd\",\"authorizationRecordRevision\":1,\"authorityEpoch\":1,\"grantEpoch\":1,\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"query\":{\"kind\":\"taskDecision\",\"submissionKey\":{\"writeContextId\":\"task-control.581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\",\"requestId\":\"stop\"}},\"result\":{\"kind\":\"taskDecision\",\"receipt\":{\"taskId\":\"task-一\",\"decisionKind\":\"stop\",\"goalRevision\":null,\"controlVersion\":2,\"sequence\":3,\"decision\":{\"submissionKey\":{\"writeContextId\":\"task-control.581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\",\"requestId\":\"stop\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"}}}}",
+    "valid": true
+  },
+  {
+    "name": "history2/schema/capture-goal-text-unicode",
+    "schemaId": "urn:skylineslink:contract:native-history-capture:2",
+    "json": "{\"formatVersion\":2,\"environmentId\":\"history2-schema\",\"profileId\":\"schema-reader\",\"profileInstanceId\":\"dddddddddddddddddddddddddddddddd\",\"authorizationRecordRevision\":1,\"authorityEpoch\":1,\"grantEpoch\":1,\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"query\":{\"kind\":\"taskGoal\",\"taskId\":\"task-一\",\"goalRevision\":1,\"section\":\"requestText\",\"offset\":0,\"limit\":512},\"result\":{\"kind\":\"taskGoal\",\"page\":{\"kind\":\"text\",\"taskId\":\"task-一\",\"goalRevision\":1,\"section\":\"requestText\",\"offset\":0,\"nextOffset\":null,\"text\":\"用户原话\\n逐步验收\",\"sequence\":2}}}",
+    "valid": true
+  },
+  {
+    "name": "history2/schema/capture-goal-items-unicode",
+    "schemaId": "urn:skylineslink:contract:native-history-capture:2",
+    "json": "{\"formatVersion\":2,\"environmentId\":\"history2-schema\",\"profileId\":\"schema-reader\",\"profileInstanceId\":\"dddddddddddddddddddddddddddddddd\",\"authorizationRecordRevision\":1,\"authorityEpoch\":1,\"grantEpoch\":1,\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"query\":{\"kind\":\"taskGoal\",\"taskId\":\"task-一\",\"goalRevision\":1,\"section\":\"acceptanceText\",\"offset\":0,\"limit\":4},\"result\":{\"kind\":\"taskGoal\",\"page\":{\"kind\":\"items\",\"taskId\":\"task-一\",\"goalRevision\":1,\"section\":\"acceptanceText\",\"offset\":0,\"nextOffset\":null,\"items\":[\"明确结果\"],\"sequence\":2}}}",
+    "valid": true
+  },
+  {
+    "name": "history2/schema/checkpoint-rejects-legacy-source-family",
+    "schemaId": "urn:skylineslink:contract:operation-history-checkpoint:2",
+    "json": "{\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"records\":[],\"taskRecords\":[{\"sequence\":2,\"environmentId\":\"history2-schema\",\"entry\":{\"kind\":\"taskCreated\",\"taskId\":\"task-一\",\"goalRevision\":1,\"controlVersion\":1,\"decision\":{\"submissionKey\":{\"writeContextId\":\"history2-create-context\",\"requestId\":\"create\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"source-α\",\"generation\":\"7\",\"gameState\":\"ready\",\"cityId\":\"城市-a\"},\"commandHash\":\"4a178315c6ad77a4b7db8273fc4502ea8eb672d0c35d4b229e13f0453b896595\"},\"goal\":{\"kind\":\"statedIntent\",\"title\":\"道路 😀\",\"requestText\":\"用户原话\\n逐步验收\",\"constraintsText\":[\"a\",\"bc\"],\"acceptanceText\":[\"明确结果\"]}}},{\"sequence\":3,\"environmentId\":\"history2-schema\",\"entry\":{\"kind\":\"taskStopped\",\"taskId\":\"task-一\",\"expectedControlVersion\":1,\"controlVersion\":2,\"decision\":{\"submissionKey\":{\"writeContextId\":\"task-control.581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\",\"requestId\":\"stop\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"}}}]}",
+    "valid": false
+  },
+  {
+    "name": "history2/schema/checkpoint-metadata-rejects-load-branch",
+    "schemaId": "urn:skylineslink:contract:operation-history-checkpoint:2",
+    "json": "{\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"records\":[],\"taskRecords\":[{\"sequence\":2,\"environmentId\":\"history2-schema\",\"entry\":{\"kind\":\"nativeTerminal\",\"operationId\":\"schema-operation\",\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":false,\"boundTarget\":null}},{\"sequence\":3,\"environmentId\":\"history2-schema\",\"entry\":{\"kind\":\"taskStopped\",\"taskId\":\"task-一\",\"expectedControlVersion\":1,\"controlVersion\":2,\"decision\":{\"submissionKey\":{\"writeContextId\":\"task-control.581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\",\"requestId\":\"stop\"},\"actor\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"source\":{\"instanceId\":\"history2-schema-menu\",\"generation\":\"8\",\"gameState\":\"menu\",\"cityId\":null},\"commandHash\":\"581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73\"}}}]}",
+    "valid": false
+  },
+  {
+    "name": "history2/schema/request-rejects-unknown-query",
+    "schemaId": "urn:skylineslink:contract:native-history-request:2",
+    "json": "{\"formatVersion\":2,\"environmentId\":\"history2-schema\",\"profileId\":\"schema-reader\",\"expectedAuthorityEpoch\":1,\"expectedGrantEpoch\":1,\"expectedProfileInstanceId\":\"dddddddddddddddddddddddddddddddd\",\"query\":{\"kind\":\"taskEverything\",\"taskId\":\"task-一\"}}",
+    "valid": false
+  },
+  {
+    "name": "history2/schema/capture-rejects-hidden-whole-goal",
+    "schemaId": "urn:skylineslink:contract:native-history-capture:2",
+    "json": "{\"formatVersion\":2,\"environmentId\":\"history2-schema\",\"profileId\":\"schema-reader\",\"profileInstanceId\":\"dddddddddddddddddddddddddddddddd\",\"authorizationRecordRevision\":1,\"authorityEpoch\":1,\"grantEpoch\":1,\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"query\":{\"kind\":\"task\",\"taskId\":\"task-一\"},\"result\":{\"kind\":\"task\",\"summary\":{\"taskId\":\"task-一\",\"cityId\":\"城市-a\",\"owner\":{\"profileId\":\"planner\",\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"authorityEpoch\":1,\"grantEpoch\":1},\"title\":\"道路 😀\",\"goalRevision\":1,\"controlVersion\":2,\"isStopped\":true,\"createdSequence\":2,\"lastDecisionSequence\":3,\"goal\":{\"kind\":\"statedIntent\",\"title\":\"道路 😀\",\"requestText\":\"用户原话\\n逐步验收\",\"constraintsText\":[\"a\",\"bc\"],\"acceptanceText\":[\"明确结果\"]}}}}",
+    "valid": false
+  },
+  {
+    "name": "history2/schema/capture-items-page-max-four",
+    "schemaId": "urn:skylineslink:contract:native-history-capture:2",
+    "json": "{\"formatVersion\":2,\"environmentId\":\"history2-schema\",\"profileId\":\"schema-reader\",\"profileInstanceId\":\"dddddddddddddddddddddddddddddddd\",\"authorizationRecordRevision\":1,\"authorityEpoch\":1,\"grantEpoch\":1,\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"query\":{\"kind\":\"taskGoal\",\"taskId\":\"task-一\",\"goalRevision\":1,\"section\":\"acceptanceText\",\"offset\":0,\"limit\":4},\"result\":{\"kind\":\"taskGoal\",\"page\":{\"kind\":\"items\",\"taskId\":\"task-一\",\"goalRevision\":1,\"section\":\"acceptanceText\",\"offset\":0,\"nextOffset\":null,\"items\":[\"一\",\"二\",\"三\",\"四\",\"五\"],\"sequence\":2}}}",
+    "valid": false
+  },
+  {
+    "name": "history2/schema/capture-text-page-scalar-limit",
+    "schemaId": "urn:skylineslink:contract:native-history-capture:2",
+    "json": "{\"formatVersion\":2,\"environmentId\":\"history2-schema\",\"profileId\":\"schema-reader\",\"profileInstanceId\":\"dddddddddddddddddddddddddddddddd\",\"authorizationRecordRevision\":1,\"authorityEpoch\":1,\"grantEpoch\":1,\"source\":{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"history2-schema\",\"storeId\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":3,\"producerVersion\":\"0.0.0-schema-fixture\",\"producerInstanceId\":\"history2-schema-producer\",\"producerCoreManifestSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"journalSchemaRevision\":3,\"publishedAtUnixMs\":1,\"selection\":\"confirmedTaskMetadataAndOperationTerminals\",\"throughBytes\":1526},\"query\":{\"kind\":\"taskGoal\",\"taskId\":\"task-一\",\"goalRevision\":1,\"section\":\"requestText\",\"offset\":0,\"limit\":512},\"result\":{\"kind\":\"taskGoal\",\"page\":{\"kind\":\"text\",\"taskId\":\"task-一\",\"goalRevision\":1,\"section\":\"requestText\",\"offset\":0,\"nextOffset\":null,\"text\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"sequence\":2}}}",
+    "valid": false
+  },
+  {
+    "name": "history2/schema/request-rejects-old-root-format",
+    "schemaId": "urn:skylineslink:contract:native-history-request:2",
+    "json": "{\"formatVersion\":1,\"environmentId\":\"history2-schema\",\"profileId\":\"schema-reader\",\"expectedAuthorityEpoch\":1,\"expectedGrantEpoch\":1,\"expectedProfileInstanceId\":\"dddddddddddddddddddddddddddddddd\",\"query\":{\"kind\":\"task\",\"taskId\":\"task-一\"}}",
+    "valid": false
+  }
+]

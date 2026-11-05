@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:operation-query:2",
+  "type": "object",
+  "properties": {
+    "selector": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "const": "operationId", "minLength": 11, "maxLength": 11 },
+            "operationId": { "$ref": "#/$defs/Identity" }
+          },
+          "required": ["kind", "operationId"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "const": "submissionKey", "minLength": 13, "maxLength": 13 },
+            "submissionKey": {
+              "type": "object",
+              "properties": {
+                "writeContextId": { "$ref": "#/$defs/Identity" },
+                "requestId": { "$ref": "#/$defs/Identity" }
+              },
+              "required": ["writeContextId", "requestId"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["kind", "submissionKey"],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "required": ["selector"],
+  "additionalProperties": false,
+  "$defs": {
+    "Identity": { "type": "string", "minLength": 1, "maxLength": 128 }
+  }
+}

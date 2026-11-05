@@ -1,0 +1,86 @@
+[
+  {
+    "name": "日志header有限结构",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:1",
+    "json": "{\"sequence\":1,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"header\",\"storeId\":\"store-1\"}}",
+    "valid": true
+  },
+  {
+    "name": "日志accepted源上下文与未绑定版本",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:1",
+    "json": "{\"sequence\":2,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"accepted\",\"operationId\":\"op-1\",\"originInstanceId\":\"old-instance\",\"writeContextId\":\"ctx-1\",\"requestId\":\"request-1\",\"commandHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"profileId\":\"Profile.Exact\",\"authorityEpoch\":1,\"grantEpoch\":1,\"source\":{\"instanceId\":\"old-instance\",\"generation\":\"0\",\"gameState\":\"menu\",\"cityId\":null},\"target\":{\"providerId\":\"offline-provider\",\"assetId\":\"save-1\",\"contentVersion\":null}}}",
+    "valid": true
+  },
+  {
+    "name": "日志commit意图不假称已绑定",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:1",
+    "json": "{\"sequence\":3,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"commitIntent\",\"operationId\":\"op-1\",\"target\":{\"providerId\":\"offline-provider\",\"assetId\":\"save-1\",\"contentVersion\":null},\"nativeHost\":{\"processId\":123,\"creationTime\":\"134000000000000000\"}}}",
+    "valid": true
+  },
+  {
+    "name": "日志native保存实际绑定",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:1",
+    "json": "{\"sequence\":4,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"nativeTerminal\",\"operationId\":\"op-1\",\"nativeState\":\"succeeded\",\"boundTarget\":{\"providerId\":\"offline-provider\",\"assetId\":\"save-1\",\"contentVersion\":\"actual-version\"}}}",
+    "valid": true
+  },
+  {
+    "name": "日志native未核绑定明确null",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:1",
+    "json": "{\"sequence\":4,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"nativeTerminal\",\"operationId\":\"op-1\",\"nativeState\":\"faulted\",\"boundTarget\":null}}",
+    "valid": true
+  },
+  {
+    "name": "日志terminal历史证明不恢复当前性",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:1",
+    "json": "{\"sequence\":5,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"terminal\",\"operationId\":\"op-1\",\"state\":\"succeeded\",\"mayHaveApplied\":true,\"submissionKnowledge\":\"submitted\",\"reasonCode\":\"TARGET_READY\",\"load\":{\"nativeState\":\"succeeded\",\"targetMatch\":\"exact\",\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"ownerStopped\",\"observationContext\":{\"instanceId\":\"old-instance\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-1\"}}}}",
+    "valid": true
+  },
+  {
+    "name": "日志不得零序号",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:1",
+    "json": "{\"sequence\":0,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"header\",\"storeId\":\"store-1\"}}",
+    "valid": false
+  },
+  {
+    "name": "日志不得未知事件",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:1",
+    "json": "{\"sequence\":3,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"replay\",\"operationId\":\"op-1\"}}",
+    "valid": false
+  },
+  {
+    "name": "日志commit拒伪绑定字段",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:1",
+    "json": "{\"sequence\":3,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"commitIntent\",\"operationId\":\"op-1\",\"boundTarget\":{\"providerId\":\"offline-provider\",\"assetId\":\"save-1\",\"contentVersion\":null},\"nativeHost\":{\"processId\":123,\"creationTime\":\"134000000000000000\"}}}",
+    "valid": false
+  },
+  {
+    "name": "日志native绑定字段不可缺",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:1",
+    "json": "{\"sequence\":4,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"nativeTerminal\",\"operationId\":\"op-1\",\"nativeState\":\"faulted\"}}",
+    "valid": false
+  },
+  {
+    "name": "日志terminal拒持久当前性布尔",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:1",
+    "json": "{\"sequence\":5,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"terminal\",\"operationId\":\"op-1\",\"state\":\"succeeded\",\"mayHaveApplied\":true,\"submissionKnowledge\":\"submitted\",\"reasonCode\":\"TARGET_READY\",\"load\":{\"nativeState\":\"succeeded\",\"targetMatch\":\"exact\",\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"ownerStopped\",\"observationContext\":{\"instanceId\":\"old-instance\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-1\"},\"isObservationCurrent\":true}}}",
+    "valid": false
+  },
+  {
+    "name": "日志accepted无秘密字段",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:1",
+    "json": "{\"sequence\":2,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"accepted\",\"operationId\":\"op-1\",\"originInstanceId\":\"old-instance\",\"writeContextId\":\"ctx-1\",\"requestId\":\"request-1\",\"commandHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"profileId\":\"Profile.Exact\",\"authorityEpoch\":1,\"grantEpoch\":1,\"source\":{\"instanceId\":\"old-instance\",\"generation\":\"0\",\"gameState\":\"menu\",\"cityId\":null},\"target\":{\"providerId\":\"offline-provider\",\"assetId\":\"save-1\",\"contentVersion\":null},\"token\":\"forbidden\"}}",
+    "valid": false
+  },
+  {
+    "name": "日志source明确null不等于缺失",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:1",
+    "json": "{\"sequence\":2,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"accepted\",\"operationId\":\"op-1\",\"originInstanceId\":\"old-instance\",\"writeContextId\":\"ctx-1\",\"requestId\":\"request-1\",\"commandHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"profileId\":\"Profile.Exact\",\"authorityEpoch\":1,\"grantEpoch\":1,\"source\":{\"instanceId\":\"old-instance\",\"generation\":\"0\",\"gameState\":\"menu\"},\"target\":{\"providerId\":\"offline-provider\",\"assetId\":\"save-1\",\"contentVersion\":null}}}",
+    "valid": false
+  },
+  {
+    "name": "日志拒unsafe序号",
+    "schemaId": "urn:skylineslink:contract:operation-journal-record:1",
+    "json": "{\"sequence\":9007199254740992,\"environmentId\":\"offline\",\"entry\":{\"kind\":\"header\",\"storeId\":\"store-1\"}}",
+    "valid": false
+  }
+]

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../SkylinesLink.Application/SkylinesLink.Application.csproj" />
+    <Compile Include="../../shared/Installation/CoreInstallationPaths.cs" Link="Shared/Installation/CoreInstallationPaths.cs" />
+    <Compile Include="../../shared/Installation/CorePayloadFiles.cs" Link="Shared/Installation/CorePayloadFiles.cs" />
+  </ItemGroup>
+</Project>

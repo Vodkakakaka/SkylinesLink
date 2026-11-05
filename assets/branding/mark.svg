@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">SkylinesLink · 天际互联</title>
+  <desc id="desc">A stepped city outline joined by one continuous connection bar. Transparent background, for dark surfaces.</desc>
+  <!-- Original SkylinesLink geometry. Copyright 2026 Vodka and SkylinesLink contributors. MPL-2.0. -->
+  <!-- Geometry authority for the app icon and wordmarks: two paths, stroke width 8, round caps and joins. -->
+  <g stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path data-part="city" d="M12 48V28H24V16H40V28H52V48" stroke="#4DE1B4"/>
+    <path data-part="link" d="M12 48H52" stroke="#60C8E8"/>
+  </g>
+</svg>

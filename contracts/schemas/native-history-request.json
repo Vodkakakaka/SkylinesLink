@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:native-history-request:1",
+  "description": "短命只读历史命令输入；期望代次同时为空或同时给出，文件位置由受控边界确定。",
+  "type": "object",
+  "properties": {
+    "formatVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1
+    },
+    "environmentId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "profileId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "expectedAuthorityEpoch": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "expectedGrantEpoch": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "selector": {
+      "$ref": "#/$defs/OperationSelector"
+    }
+  },
+  "required": [
+    "formatVersion",
+    "environmentId",
+    "profileId",
+    "expectedAuthorityEpoch",
+    "expectedGrantEpoch",
+    "selector"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Identity": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "OperationSelector": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "operationId",
+              "minLength": 11,
+              "maxLength": 11
+            },
+            "operationId": {
+              "$ref": "#/$defs/Identity"
+            }
+          },
+          "required": [
+            "kind",
+            "operationId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "submissionKey",
+              "minLength": 13,
+              "maxLength": 13
+            },
+            "submissionKey": {
+              "type": "object",
+              "properties": {
+                "writeContextId": {
+                  "$ref": "#/$defs/Identity"
+                },
+                "requestId": {
+                  "$ref": "#/$defs/Identity"
+                }
+              },
+              "required": [
+                "writeContextId",
+                "requestId"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "kind",
+            "submissionKey"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

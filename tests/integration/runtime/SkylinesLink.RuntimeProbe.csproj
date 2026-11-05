@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <DefineConstants>$(DefineConstants);SKYLINESLINK_INTEGRATION_PROBE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../src/shared/Processes/WindowsOwnedChild.cs" Link="Shared/Processes/WindowsOwnedChild.cs" />
+    <ProjectReference Include="../../../src/game/SkylinesLink.Application/SkylinesLink.Application.csproj" />
+    <ProjectReference Include="../../../src/game/SkylinesLink.Infrastructure/SkylinesLink.Infrastructure.csproj" />
+    <Compile Include="../../../src/game/SkylinesLink.Mod/Connection/*.cs" Link="Connection/%(Filename)%(Extension)" />
+    <Compile Include="../../../src/game/SkylinesLink.Mod/Runtime/*.cs" Link="Runtime/%(Filename)%(Extension)" />
+    <Compile Include="../../../src/game/SkylinesLink.Mod/Native/ProbeTaskObservation.cs" Link="Native/ProbeTaskObservation.cs" />
+  </ItemGroup>
+</Project>

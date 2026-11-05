@@ -1,0 +1,166 @@
+[
+  {
+    "name": "查询2按操作身份",
+    "schemaId": "urn:skylineslink:contract:operation-query:2",
+    "json": "{\"selector\":{\"kind\":\"operationId\",\"operationId\":\"op-1\"}}",
+    "valid": true
+  },
+  {
+    "name": "查询2复合键保留独立字段",
+    "schemaId": "urn:skylineslink:contract:operation-query:2",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"a|b\",\"requestId\":\"请求|c\"}}}",
+    "valid": true
+  },
+  {
+    "name": "查询2拒混合选择器",
+    "schemaId": "urn:skylineslink:contract:operation-query:2",
+    "json": "{\"selector\":{\"kind\":\"operationId\",\"operationId\":\"op-1\",\"submissionKey\":{\"writeContextId\":\"ctx\",\"requestId\":\"req\"}}}",
+    "valid": false
+  },
+  {
+    "name": "查询2复合键不得缺请求身份",
+    "schemaId": "urn:skylineslink:contract:operation-query:2",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx\"}}}",
+    "valid": false
+  },
+  {
+    "name": "查询2不接受调用方授权范围",
+    "schemaId": "urn:skylineslink:contract:operation-query:2",
+    "json": "{\"selector\":{\"kind\":\"operationId\",\"operationId\":\"op-1\"},\"profileId\":\"another\"}",
+    "valid": false
+  },
+  {
+    "name": "查询2不静默回退旧平面输入",
+    "schemaId": "urn:skylineslink:contract:operation-query:2",
+    "json": "{\"operationId\":\"op-1\"}",
+    "valid": false
+  },
+  {
+    "name": "查询2身份非空非null",
+    "schemaId": "urn:skylineslink:contract:operation-query:2",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"\",\"requestId\":null}}}",
+    "valid": false
+  },
+  {
+    "name": "查询结果持久历史与当前性分列",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"nativeState\":\"succeeded\",\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"ownerStopped\"}}}",
+    "valid": true
+  },
+  {
+    "name": "查询结果可无加载证据且未持久",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-1\",\"state\":\"running\",\"mayHaveApplied\":true,\"durability\":\"volatile\"}}",
+    "valid": true
+  },
+  {
+    "name": "落盘失败不抹已证完成",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-1\",\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"unavailable\"}}",
+    "valid": true
+  },
+  {
+    "name": "落盘失败可保已证未执行",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-1\",\"state\":\"cancelled\",\"mayHaveApplied\":false,\"durability\":\"unavailable\"}}",
+    "valid": true
+  },
+  {
+    "name": "首次落盘未确认保身份",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"pending\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-1\",\"durability\":\"pending\"}}",
+    "valid": true
+  },
+  {
+    "name": "首次落盘失败不伪受理",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"pending\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-1\",\"durability\":\"unavailable\"}}",
+    "valid": true
+  },
+  {
+    "name": "未确认分支不含原操作副作用断言",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"pending\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-1\",\"durability\":\"pending\",\"mayHaveApplied\":false}}",
+    "valid": false
+  },
+  {
+    "name": "完整索引缺失是领域结果",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"absent\"}}",
+    "valid": true
+  },
+  {
+    "name": "已知受理上下文失效",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"expired\"}}",
+    "valid": true
+  },
+  {
+    "name": "未知上下文不伪称过期",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"CONTEXT_UNKNOWN\"}}",
+    "valid": true
+  },
+  {
+    "name": "未恢复完整不伪称缺失",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"RECOVERY_INCOMPLETE\"}}",
+    "valid": true
+  },
+  {
+    "name": "不可用分支不补副作用false",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"JOURNAL_UNAVAILABLE\",\"mayHaveApplied\":false}}",
+    "valid": false
+  },
+  {
+    "name": "已受理与首次pending持久枚举区分",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-1\",\"state\":\"queued\",\"mayHaveApplied\":false,\"durability\":\"pending\"}}",
+    "valid": false
+  },
+  {
+    "name": "加载证据缺失不等于null",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-1\",\"state\":\"unknown\",\"mayHaveApplied\":true,\"durability\":\"unavailable\",\"load\":null}}",
+    "valid": false
+  },
+  {
+    "name": "结果不回显授权profile",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:1",
+    "json": "{\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-1\",\"state\":\"queued\",\"mayHaveApplied\":false,\"durability\":\"durable\",\"profileId\":\"private\"}}",
+    "valid": false
+  },
+  {
+    "name": "内部调用旧修订2不静默映射",
+    "schemaId": "urn:skylineslink:contract:wire-request:1",
+    "json": "{\"kind\":\"request\",\"requestId\":\"wire-request\",\"capabilityId\":\"operations.get\",\"schemaRevision\":\"2\",\"arguments\":{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx\",\"requestId\":\"submission-request\"}}}}",
+    "valid": false
+  },
+  {
+    "name": "内部调用旧修订不静默映射",
+    "schemaId": "urn:skylineslink:contract:wire-request:1",
+    "json": "{\"kind\":\"request\",\"requestId\":\"wire-request\",\"capabilityId\":\"operations.get\",\"schemaRevision\":\"1\",\"arguments\":{\"operationId\":\"op-1\"}}",
+    "valid": false
+  },
+  {
+    "name": "内部结果旧修订2绑定显式拒绝",
+    "schemaId": "urn:skylineslink:contract:wire-result:1",
+    "json": "{\"kind\":\"result\",\"requestId\":\"wire-request\",\"result\":{\"lookup\":{\"kind\":\"absent\"}}}",
+    "binding": {
+      "capabilityId": "operations.get",
+      "schemaRevision": "2"
+    },
+    "valid": false
+  },
+  {
+    "name": "旧状态不得冒充新查询结果",
+    "schemaId": "urn:skylineslink:contract:wire-result:1",
+    "json": "{\"kind\":\"result\",\"requestId\":\"wire-request\",\"result\":{\"operationId\":\"op-1\",\"state\":\"succeeded\",\"mayHaveApplied\":true}}",
+    "binding": {
+      "capabilityId": "operations.get",
+      "schemaRevision": "2"
+    },
+    "valid": false
+  }
+]

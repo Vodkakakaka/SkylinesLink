@@ -1,0 +1,146 @@
+[
+  {
+    "name": "物理控制1：固定布局根",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"root\",\"layoutVersion\":1,\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": true
+  },
+  {
+    "name": "物理控制1：准备销毁旧区",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"preparing\",\"targetBank\":1,\"targetGeneration\":1,\"targetStoreId\":\"33333333333333333333333333333333\",\"source\":{\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"activationDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":5,\"throughBytes\":1050,\"prefixDigest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"},\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": true
+  },
+  {
+    "name": "物理控制1：初代完整seed",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"generation\",\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"source\":null,\"seedFrameCount\":1,\"seedBytes\":200,\"seedDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"retentionApplied\":false,\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": true
+  },
+  {
+    "name": "物理控制1：后继完整seed",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"generation\",\"bank\":1,\"generation\":1,\"storeId\":\"33333333333333333333333333333333\",\"source\":{\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"activationDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":5,\"throughBytes\":1050,\"prefixDigest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"},\"seedFrameCount\":3,\"seedBytes\":600,\"seedDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"retentionApplied\":true,\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": true
+  },
+  {
+    "name": "物理控制1：源封存",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"seal\",\"source\":{\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"activationDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":5,\"throughBytes\":1050,\"prefixDigest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"},\"successorBank\":1,\"successorGeneration\":1,\"successorStoreId\":\"33333333333333333333333333333333\",\"successorDescriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": true
+  },
+  {
+    "name": "物理控制1：后继激活",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"activation\",\"bank\":1,\"generation\":1,\"storeId\":\"33333333333333333333333333333333\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"predecessorSealDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": true
+  },
+  {
+    "name": "物理控制1：初代激活",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"activation\",\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"predecessorSealDigest\":null,\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": true
+  },
+  {
+    "name": "物理控制1：未知格式",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":2,\"entry\":{\"kind\":\"root\",\"layoutVersion\":1,\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：未知布局",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"root\",\"layoutVersion\":2,\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：根不含可变active指针",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"root\",\"layoutVersion\":1,\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\",\"activeBank\":0}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：槽索引越界",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"preparing\",\"targetBank\":2,\"targetGeneration\":1,\"targetStoreId\":\"33333333333333333333333333333333\",\"source\":{\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"activationDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":5,\"throughBytes\":1050,\"prefixDigest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"},\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：代数有界",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"generation\",\"bank\":1,\"generation\":2147483648,\"storeId\":\"33333333333333333333333333333333\",\"source\":{\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"activationDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":5,\"throughBytes\":1050,\"prefixDigest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"},\"seedFrameCount\":3,\"seedBytes\":600,\"seedDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"retentionApplied\":true,\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：准备代数不能为零",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"preparing\",\"targetBank\":1,\"targetGeneration\":0,\"targetStoreId\":\"33333333333333333333333333333333\",\"source\":{\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"activationDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":5,\"throughBytes\":1050,\"prefixDigest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"},\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：业务帧数有界",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"generation\",\"bank\":1,\"generation\":1,\"storeId\":\"33333333333333333333333333333333\",\"source\":{\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"activationDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":5,\"throughBytes\":1050,\"prefixDigest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"},\"seedFrameCount\":130,\"seedBytes\":600,\"seedDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"retentionApplied\":true,\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：业务字节有界",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"generation\",\"bank\":1,\"generation\":1,\"storeId\":\"33333333333333333333333333333333\",\"source\":{\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"activationDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":5,\"throughBytes\":1050,\"prefixDigest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"},\"seedFrameCount\":3,\"seedBytes\":534061,\"seedDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"retentionApplied\":true,\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：源前缀必须至少一帧",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"preparing\",\"targetBank\":1,\"targetGeneration\":1,\"targetStoreId\":\"33333333333333333333333333333333\",\"source\":{\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"activationDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":0,\"throughBytes\":1050,\"prefixDigest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"},\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：源字节有界",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"seal\",\"source\":{\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"activationDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":5,\"throughBytes\":534061,\"prefixDigest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"},\"successorBank\":1,\"successorGeneration\":1,\"successorStoreId\":\"33333333333333333333333333333333\",\"successorDescriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：摘要长度固定",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"activation\",\"bank\":1,\"generation\":1,\"storeId\":\"33333333333333333333333333333333\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"predecessorSealDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：store身份长度固定",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"generation\",\"bank\":1,\"generation\":1,\"storeId\":\"2222222222222222222222222222222\",\"source\":{\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"activationDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":5,\"throughBytes\":1050,\"prefixDigest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"},\"seedFrameCount\":3,\"seedBytes\":600,\"seedDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"retentionApplied\":true,\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：Preparing不可省source",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"preparing\",\"targetBank\":1,\"targetGeneration\":1,\"targetStoreId\":\"33333333333333333333333333333333\",\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：来源不接受字符串",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"preparing\",\"targetBank\":1,\"targetGeneration\":1,\"targetStoreId\":\"33333333333333333333333333333333\",\"source\":\"source\",\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：初代前驱显式null不可省",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"activation\",\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：拒绝任意控制kind",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"control\",\"layoutVersion\":1,\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  },
+  {
+    "name": "物理控制1：source闭对象",
+    "schemaId": "urn:skylineslink:contract:journal-control:1",
+    "json": "{\"formatVersion\":1,\"entry\":{\"kind\":\"preparing\",\"targetBank\":1,\"targetGeneration\":1,\"targetStoreId\":\"33333333333333333333333333333333\",\"source\":{\"bank\":0,\"generation\":0,\"storeId\":\"22222222222222222222222222222222\",\"descriptorDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"activationDigest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"throughSequence\":5,\"throughBytes\":1050,\"prefixDigest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"retainedIds\":[]},\"containerId\":\"11111111111111111111111111111111\",\"environmentId\":\"default\"}}",
+    "valid": false
+  }
+]

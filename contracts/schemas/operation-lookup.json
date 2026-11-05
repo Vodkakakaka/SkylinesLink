@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:operation-lookup:1",
+  "description": "原操作查询事实。缺失或不可用不表示可以重新提交；环境及读取授权由连接权威决定。",
+  "type": "object",
+  "properties": {
+    "lookup": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "const": "found", "minLength": 5, "maxLength": 5 },
+            "operationId": { "$ref": "#/$defs/Identity" },
+            "originInstanceId": { "$ref": "#/$defs/Identity" },
+            "state": {
+              "type": "string", "minLength": 1, "maxLength": 9,
+              "enum": ["queued", "running", "waiting", "succeeded", "failed", "cancelled", "partial", "unknown"]
+            },
+            "mayHaveApplied": { "type": "boolean" },
+            "durability": {
+              "type": "string", "minLength": 7, "maxLength": 11,
+              "enum": ["durable", "volatile", "unavailable"],
+              "description": "已知执行及历史事实的可恢复性；不覆盖本次查询重算的当前世界匹配。"
+            },
+            "load": { "$ref": "#/$defs/LoadObservation" }
+          },
+          "required": ["kind", "operationId", "originInstanceId", "state", "mayHaveApplied", "durability"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "const": "pending", "minLength": 7, "maxLength": 7 },
+            "operationId": { "$ref": "#/$defs/Identity" },
+            "originInstanceId": { "$ref": "#/$defs/Identity" },
+            "durability": { "type": "string", "minLength": 7, "maxLength": 11, "enum": ["pending", "unavailable"] }
+          },
+          "required": ["kind", "operationId", "originInstanceId", "durability"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": { "kind": { "type": "string", "const": "absent", "minLength": 6, "maxLength": 6 } },
+          "required": ["kind"], "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": { "kind": { "type": "string", "const": "expired", "minLength": 7, "maxLength": 7 } },
+          "required": ["kind"], "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "const": "unavailable", "minLength": 11, "maxLength": 11 },
+            "reason": {
+              "type": "string", "minLength": 1, "maxLength": 32,
+              "enum": ["CONTEXT_UNKNOWN", "RECOVERY_INCOMPLETE", "JOURNAL_UNAVAILABLE"]
+            }
+          },
+          "required": ["kind", "reason"], "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "required": ["lookup"],
+  "additionalProperties": false,
+  "$defs": {
+    "Identity": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "LoadObservation": {
+      "type": "object",
+      "properties": {
+        "nativeState": {
+          "type": "string", "minLength": 1, "maxLength": 10,
+          "enum": ["notStarted", "running", "succeeded", "faulted", "cancelled", "unknown"]
+        },
+        "targetMatch": {
+          "type": "string", "minLength": 1, "maxLength": 12,
+          "enum": ["unknown", "different", "identityOnly", "exact"]
+        },
+        "isObservationCurrent": {
+          "type": "boolean",
+          "description": "由本次查询的实际实例和加载代次重算；历史记录不能恢复为当前匹配。"
+        },
+        "correlatedTargetReady": { "type": "boolean" },
+        "historicalCompletionProven": { "type": "boolean" },
+        "observationEnd": {
+          "type": "string", "minLength": 1, "maxLength": 12,
+          "enum": ["open", "expired", "interrupted", "ownerStopped"]
+        }
+      },
+      "required": ["nativeState", "targetMatch", "isObservationCurrent", "correlatedTargetReady", "historicalCompletionProven", "observationEnd"],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:wire-challenge:2",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "type": "string",
+      "minLength": 9,
+      "maxLength": 9,
+      "const": "challenge"
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "environmentId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "profileId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "instanceId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "productVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "contractVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1,
+      "const": "2"
+    },
+    "coreManifestSha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64
+    },
+    "authorityEpoch": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "grantEpoch": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "clientNonce": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64
+    },
+    "serverNonce": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64
+    },
+    "serverProof": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64
+    }
+  },
+  "required": [
+    "kind",
+    "requestId",
+    "environmentId",
+    "profileId",
+    "instanceId",
+    "productVersion",
+    "contractVersion",
+    "coreManifestSha256",
+    "authorityEpoch",
+    "grantEpoch",
+    "clientNonce",
+    "serverNonce",
+    "serverProof"
+  ],
+  "additionalProperties": false
+}

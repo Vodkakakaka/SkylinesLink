@@ -1,0 +1,11 @@
+{
+  "decimalFields": [
+    {
+      "path": "/properties/amount",
+      "signed": true,
+      "scale": 2,
+      "maxDigits": 8
+    }
+  ],
+  "boundaries": []
+}

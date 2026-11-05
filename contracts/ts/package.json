@@ -1,0 +1,9 @@
+{
+  "name": "@skylineslink/contracts",
+  "version": "0.1.0-dev.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  }
+}

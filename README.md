@@ -1,36 +1,76 @@
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 # SkylinesLink · 天际互联
 
 Connect AI tools to your city.
 
-面向《城市：天际线 II》的独立 MCP 项目，目标是让支持 Model Context Protocol 的 AI 助手和智能体读取、理解并操作城市。
+SkylinesLink is an independent Model Context Protocol (MCP) project for **Cities: Skylines II**, designed to let AI assistants and agents read, understand, and operate a city. It is being designed and developed from scratch.
 
-项目从头设计和开发。当前处于技术调研与规格设计阶段，尚未提供可用模组或 MCP 服务。
+The goal is a framework linking useful game information, normal gameplay actions, planning, and verifiable results. Public, task-specific AI guidance will ship with the product; player preferences belong to the current task rather than its default rules. These are product commitments, not implemented-capability claims.
 
-## 兼容目标
+**Downloads: [GitHub Releases](https://github.com/Vodkakakaka/SkylinesLink/releases). There is no game-validated player release yet.** Future player releases will provide complete installation assets, a version, English and Simplified Chinese release notes, and checksums. GitHub's automatically generated **Source code** archives are source snapshots, not player installation packages.
 
-- 面向标准 MCP 客户端，不绑定特定模型供应商。
-- Codex 与 DeepSeek Harness 是重点适配、验收对象。
-- MCP 服务提供 stdio 和 Streamable HTTP；通过本机 HTTP 调用 C# 模组，每种客户端、协议版本和可选能力均需实际验证。
-- 玩家订阅并启用模组即可获得完整连接能力，无需另装服务程序、Node.js、Python、.NET 或桥接插件。
-- 首次在 AI 客户端添加 MCP 连接属于接入配置，提供尽可能简短的引导；不要求玩家编译、运行脚本或复制 DLL。
-- 遵循游戏正常资金、解锁、原生校验及操作生命周期。
-- 模块职责清楚、依赖单向，按可复现的空闲和负载测量验证低占用与性能。
+![SkylinesLink original city-connection concept illustration; not a game screenshot](assets/branding/city-link-concept.png)
 
-## 当前资料
+*Original concept illustration. [Identity assets and provenance](assets/branding/README.md); this image does not depict game runtime or implemented UI.*
 
-- [语言与架构调研](docs/research/2026-10-30-language-selection.md)
-- [模组市场与同步发布调研](docs/research/2026-10-30-distribution.md)
-- [开发工具与版本基线](docs/development/toolchain.md)
-- [许可证、来源与品牌边界](docs/governance/licensing.md)
-- [公开材料与脱敏规则](docs/governance/publication-privacy.md)
-- [OpenSpec 项目基础提案](openspec/changes/establish-project-foundation/proposal.md)
+## Current status
 
-架构已确定为 **C# 游戏模组 + TypeScript/Node.js MCP 服务**。游戏操作与协议服务分进程，Node 运行时和服务随同一个订阅包提供；stdio 模式由 AI 客户端启动，HTTP 模式由模组按需管理。采用官方 TS SDK，所有开发工具优先最新 LTS / 稳定版，并固定可复现版本；包管理以 pnpm 为主、npm 备用。架构决定已完成，随包分发、真实接入和性能仍待实现与验证。
+The project is in foundation development and feasibility validation. It has a modular codebase, bounded connections, durable-operation and history experiments, and desktop entry points. The current source declares nine tools: `skylines_context`, `skylines_operation_get`, `skylines_guidance_search`, `skylines_guidance_get`, `skylines_capability_describe`, `skylines_task_stop`, `skylines_task_stop_decision_get`, `skylines_module_runtime_get`, and `skylines_city_overview`.
 
-## 发布与权益
+The module observation API captures loader facts and pages the same immutable observation. Its native adapter uses the configured normal mod connection; an unconfigured source reports unavailable. It does not enumerate every installed or subscribed mod, establish enabled state, or certify health and integration support. Complete coverage and frame-cost acceptance are still pending.
 
-计划通过 GitHub 发布源码及相同模组包，通过 Paradox Mods 提供订阅安装；两处共用版本号、源码提交和更新日志，并由一条可恢复的发布流程协调。普通玩家无需再去 GitHub 下载运行组件。项目自身内容采用 [Mozilla Public License 2.0](LICENSE)，第三方材料依各自许可。当前仅有项目资料与设计，尚无可用软件版本或自动发布流程。
+The city overview reads native population and player money components in the currently loaded city, with loading scope, capture frames, units, missing reasons and the unlimited-money flag. Source update times remain unknown; this is not a full city diagnosis. A bounded new-city load/read/return cycle has passed through the normal mod connection and two MCP protocol versions. Full city coverage, player/AI coexistence and performance acceptance remain open.
 
-Copyright © 2026 Vodkakakaka and SkylinesLink contributors. 品牌使用见[品牌说明](BRANDING.md)。
+Task Stop requests use Control permission; full decision reads use Read permission and explicitly select live or history. Production task creation and execution are not enabled, and runtimes without Task support report unavailable. An accepted Stop is a request to stop subsequent work, not proof that all native work has ended; it does not stop the AI client or undo committed game actions.
 
-SkylinesLink 是独立社区项目，与 Paradox Interactive、Colossal Order、OpenAI 或 DeepSeek 没有官方隶属或背书关系。相关产品名称和商标属于其各自权利人。
+The three public-data tools provide bundled English/Simplified Chinese guidance and the exact declared input/output schemas without contacting the game. Start with `skylines_guidance_search` using `{}`, then read a returned guide ID with `skylines_guidance_get`. They describe this build, not current city facts or permission to execute an action. Construction tools and player-ready installation are still being developed; these additions do not upgrade an older Core candidate.
+
+Offline checks cover the Launcher, bundled Node.js/Host, and an independent C# runtime probe. Isolated Codex and DeepSeek Harness checks provide evidence for the specific tested client and artifact combinations; they do not establish compatibility with every client, the current source revision, real model decisions, or the running game. See the [architecture and current implementation](docs/architecture.md).
+
+Full game runtime coverage, player/AI coexistence, distribution channels, and complete performance acceptance remain unverified. A development build or local Core candidate is not a player-ready release.
+
+The product aims to provide useful game information and reliable normal-play actions, including complex tasks. Progress is judged by complete city tasks, rework, call cost, and measured resource use. Planned capabilities and mod integrations are coverage commitments, not claims of completed support.
+
+## Architecture and product goals
+
+The architecture is **a C# game mod + a TypeScript/Node.js MCP Host**, in separate processes. The Host uses the official TypeScript MCP SDK and communicates with the C# runtime over authenticated Windows named pipes. The stable Launcher is the external stdio entry point. Streamable HTTP has an implementation and offline checks; its complete player-facing startup and lifecycle integration remains work in progress.
+
+The intended player experience is:
+
+- Standard MCP support without dependence on one model provider, with Codex and DeepSeek Harness as priority compatibility and acceptance targets. Each supported client, protocol version, and optional capability needs its own evidence.
+- A complete package containing the required runtime and Host. Subscribing and enabling the mod should not require a separate Node.js, Python, .NET, service, or bridge installation. Initial MCP registration in an AI client will still need a short setup flow.
+- The same Core, configuration/data, and stable connection entry point whether installed from GitHub or Paradox Mods, with coordinated updates and channel switching that avoids duplicate loading. These distribution and installation flows are not yet player-validated.
+- Normal game funds, unlocks, native validation, and operation lifecycles.
+- Players and AI working concurrently without the AI taking over the player's mouse, keyboard, window focus, active tool, or selection. Conflicting world changes must be detected and revalidated. This is a design requirement; actual in-game isolation has not been demonstrated.
+- Clear module responsibilities, one-way dependencies, and reproducible idle/load measurements for performance and memory use.
+
+## Development
+
+Use Windows and the pinned Node.js, pnpm, and .NET SDK versions in the [toolchain guide](docs/development/toolchain.md). TypeScript is a project dependency and does not need a global installation. pnpm is the primary package manager; npm is a fallback. Tool versions favor current LTS/stable releases and are pinned for reproducibility.
+
+```powershell
+pnpm install --frozen-lockfile
+pnpm build
+pnpm test
+```
+
+These commands build and check the game-independent foundation. `pnpm build:mod` additionally requires the official game toolchain. NativeAOT desktop publishing has separate native build prerequisites. Ordinary builds do not deploy a mod or publish a release. These are contributor commands, not player installation instructions.
+
+## Documentation
+
+- [Architecture and component responsibilities](docs/architecture.md)
+- [Development toolchain and pinned versions](docs/development/toolchain.md)
+- [Licensing and brand boundaries](docs/governance/licensing.md)
+- [Publication privacy](docs/governance/publication-privacy.md)
+- [Original identity assets and concept artwork](assets/branding/README.md)
+
+## Releases and licensing
+
+Player downloads will be published through this repository's [GitHub Releases](https://github.com/Vodkakakaka/SkylinesLink/releases) after the initial functionality and acceptance work is complete. Paradox Mods subscription delivery is also planned. Both channels are intended to share the same Core, version, source commit, and release notes, coordinated through a recoverable release process. Complete packaged delivery is the baseline; see the [architecture](docs/architecture.md).
+
+The project's own content is licensed under the [Mozilla Public License 2.0](LICENSE). Third-party materials retain their respective licenses.
+
+Copyright © 2026 Vodka and SkylinesLink contributors. See the [brand guidelines](BRANDING.md).
+
+SkylinesLink is an independent community project and is not affiliated with or endorsed by Paradox Interactive, Colossal Order, OpenAI, or DeepSeek. Product names and trademarks belong to their respective owners.

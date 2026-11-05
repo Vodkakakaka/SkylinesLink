@@ -1,0 +1,566 @@
+[
+  {
+    "name": "modules1/query/capture",
+    "schemaId": "urn:skylineslink:contract:module-runtime-query:1",
+    "json": "{\"kind\":\"capture\"}",
+    "valid": true
+  },
+  {
+    "name": "modules1/query/page-first",
+    "schemaId": "urn:skylineslink:contract:module-runtime-query:1",
+    "json": "{\"kind\":\"page\",\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"offset\":0}",
+    "valid": true
+  },
+  {
+    "name": "modules1/query/page-last-offset",
+    "schemaId": "urn:skylineslink:contract:module-runtime-query:1",
+    "json": "{\"kind\":\"page\",\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"offset\":128}",
+    "valid": true
+  },
+  {
+    "name": "modules1/query/mode-is-not-kind",
+    "schemaId": "urn:skylineslink:contract:module-runtime-query:1",
+    "json": "{\"mode\":\"capture\"}",
+    "valid": false
+  },
+  {
+    "name": "modules1/query/unknown-kind",
+    "schemaId": "urn:skylineslink:contract:module-runtime-query:1",
+    "json": "{\"kind\":\"other\"}",
+    "valid": false
+  },
+  {
+    "name": "modules1/query/extra-capture",
+    "schemaId": "urn:skylineslink:contract:module-runtime-query:1",
+    "json": "{\"kind\":\"capture\",\"offset\":0}",
+    "valid": false
+  },
+  {
+    "name": "modules1/query/missing-snapshot",
+    "schemaId": "urn:skylineslink:contract:module-runtime-query:1",
+    "json": "{\"kind\":\"page\",\"offset\":0}",
+    "valid": false
+  },
+  {
+    "name": "modules1/query/negative-offset",
+    "schemaId": "urn:skylineslink:contract:module-runtime-query:1",
+    "json": "{\"kind\":\"page\",\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"offset\":-1}",
+    "valid": false
+  },
+  {
+    "name": "modules1/query/large-offset",
+    "schemaId": "urn:skylineslink:contract:module-runtime-query:1",
+    "json": "{\"kind\":\"page\",\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"offset\":129}",
+    "valid": false
+  },
+  {
+    "name": "modules1/query/fractional-offset",
+    "schemaId": "urn:skylineslink:contract:module-runtime-query:1",
+    "json": "{\"kind\":\"page\",\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"offset\":0.5}",
+    "valid": false
+  },
+  {
+    "name": "modules1/query/uppercase-snapshot",
+    "schemaId": "urn:skylineslink:contract:module-runtime-query:1",
+    "json": "{\"kind\":\"page\",\"snapshotId\":\"ABCDEF0123456789ABCDEF0123456789\",\"offset\":0}",
+    "valid": false
+  },
+  {
+    "name": "modules1/query/nonhex-snapshot",
+    "schemaId": "urn:skylineslink:contract:module-runtime-query:1",
+    "json": "{\"kind\":\"page\",\"snapshotId\":\"gggggggggggggggggggggggggggggggg\",\"offset\":0}",
+    "valid": false
+  },
+  {
+    "name": "modules1/query/short-snapshot",
+    "schemaId": "urn:skylineslink:contract:module-runtime-query:1",
+    "json": "{\"kind\":\"page\",\"snapshotId\":\"0000000000000000000000000000000\",\"offset\":0}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/unavailable-SOURCE_UNAVAILABLE",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"unavailable\",\"reason\":\"SOURCE_UNAVAILABLE\"}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/unavailable-BUSY",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"unavailable\",\"reason\":\"BUSY\"}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/unavailable-REGISTRY_CHANGED",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"unavailable\",\"reason\":\"REGISTRY_CHANGED\"}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/unavailable-CAPTURE_FAILED",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"unavailable\",\"reason\":\"CAPTURE_FAILED\"}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/unavailable-STOPPED",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"unavailable\",\"reason\":\"STOPPED\"}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/unavailable-SNAPSHOT_UNAVAILABLE",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"unavailable\",\"reason\":\"SNAPSHOT_UNAVAILABLE\"}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/unavailable-PAGE_OUT_OF_RANGE",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"unavailable\",\"reason\":\"PAGE_OUT_OF_RANGE\"}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/unavailable-unknown-reason",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"unavailable\",\"reason\":\"FAILED\"}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/unavailable-extra",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"unavailable\",\"reason\":\"BUSY\",\"retryAfter\":1}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/normal-row",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/empty-complete",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":0,\"observedCount\":0,\"totalCount\":0}},\"offset\":0,\"entries\":[],\"returnedCount\":0,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/sixteen-rows-more-pages",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":128,\"observedCount\":128,\"totalCount\":128}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":1,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":2,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":3,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":4,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":5,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":6,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":7,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":8,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":9,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":10,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":11,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":12,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":13,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":14,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":15,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":16,\"nextOffset\":16}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/entry-limit",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":false,\"reason\":\"ENTRY_LIMIT\",\"visited\":129,\"observedCount\":128,\"totalCount\":null}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":1}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/time-limit-discarded-half-row",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":false,\"reason\":\"TIME_LIMIT\",\"visited\":2,\"observedCount\":1,\"totalCount\":null}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/null-entry-retained",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":null,\"gameVersionIssue\":\"unavailable\",\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":null,\"isMod\":null,\"loaderStateCode\":null,\"loaderState\":\"unavailable\",\"assemblyPresent\":null,\"assemblyName\":null,\"assemblyVersion\":null,\"instanceCount\":null,\"hasLoadError\":null,\"databaseKind\":\"unknown\",\"fieldIssues\":[{\"field\":\"entry\",\"reason\":\"unavailable\"}]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/unrecognized-state-keeps-code",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"unrecognized\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/maximum-int32-and-scalar-name",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版版\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":2147483647,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/game-version-missing",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":null,\"gameVersionIssue\":\"missing\",\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/game-version-invalid",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":null,\"gameVersionIssue\":\"invalid\",\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/game-version-tooLong",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":null,\"gameVersionIssue\":\"tooLong\",\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/game-version-unavailable",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":null,\"gameVersionIssue\":\"unavailable\",\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/issue-entry",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":null,\"isMod\":null,\"loaderStateCode\":null,\"loaderState\":\"unavailable\",\"assemblyPresent\":null,\"assemblyName\":null,\"assemblyVersion\":null,\"instanceCount\":null,\"hasLoadError\":null,\"databaseKind\":\"unknown\",\"fieldIssues\":[{\"field\":\"entry\",\"reason\":\"missing\"}]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/issue-asset",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":null,\"isMod\":null,\"loaderStateCode\":null,\"loaderState\":\"unavailable\",\"assemblyPresent\":null,\"assemblyName\":null,\"assemblyVersion\":null,\"instanceCount\":null,\"hasLoadError\":null,\"databaseKind\":\"unknown\",\"fieldIssues\":[{\"field\":\"asset\",\"reason\":\"missing\"}]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/issue-assetGuid",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":null,\"isMod\":null,\"loaderStateCode\":null,\"loaderState\":\"unavailable\",\"assemblyPresent\":null,\"assemblyName\":null,\"assemblyVersion\":null,\"instanceCount\":null,\"hasLoadError\":null,\"databaseKind\":\"unknown\",\"fieldIssues\":[{\"field\":\"assetGuid\",\"reason\":\"missing\"}]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/issue-assemblyName",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":null,\"isMod\":null,\"loaderStateCode\":null,\"loaderState\":\"unavailable\",\"assemblyPresent\":null,\"assemblyName\":null,\"assemblyVersion\":null,\"instanceCount\":null,\"hasLoadError\":null,\"databaseKind\":\"unknown\",\"fieldIssues\":[{\"field\":\"assemblyName\",\"reason\":\"missing\"}]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/issue-assemblyVersion",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":null,\"isMod\":null,\"loaderStateCode\":null,\"loaderState\":\"unavailable\",\"assemblyPresent\":null,\"assemblyName\":null,\"assemblyVersion\":null,\"instanceCount\":null,\"hasLoadError\":null,\"databaseKind\":\"unknown\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"missing\"}]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/issue-instanceCount",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":null,\"isMod\":null,\"loaderStateCode\":null,\"loaderState\":\"unavailable\",\"assemblyPresent\":null,\"assemblyName\":null,\"assemblyVersion\":null,\"instanceCount\":null,\"hasLoadError\":null,\"databaseKind\":\"unknown\",\"fieldIssues\":[{\"field\":\"instanceCount\",\"reason\":\"missing\"}]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/issue-databaseKind",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":null,\"isMod\":null,\"loaderStateCode\":null,\"loaderState\":\"unavailable\",\"assemblyPresent\":null,\"assemblyName\":null,\"assemblyVersion\":null,\"instanceCount\":null,\"hasLoadError\":null,\"databaseKind\":\"unknown\",\"fieldIssues\":[{\"field\":\"databaseKind\",\"reason\":\"missing\"}]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/valid-version-0",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"0\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/valid-version-00.01",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"00.01\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/valid-version-1.2",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/valid-version-1.2.3",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/valid-version-999999999999",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": true
+  },
+  {
+    "name": "modules1/output/invalid-extra-page",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null,\"extra\":true}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-extra-snapshot",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1},\"path\":\"private\"},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-extra-row",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[],\"path\":\"private\"}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-extra-issue",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"asset\",\"reason\":\"missing\",\"message\":\"private\"}]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-missing-row-field",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-missing-snapshot-field",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-null-required-snapshot",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":null,\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-null-entries",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":null,\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-seventeen-rows",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":1,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":2,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":3,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":4,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":5,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":6,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":7,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":8,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":9,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":10,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":11,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":12,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":13,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":14,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":15,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]},{\"ordinal\":16,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-nine-field-issues",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"asset\",\"reason\":\"missing\"},{\"field\":\"asset\",\"reason\":\"missing\"},{\"field\":\"asset\",\"reason\":\"missing\"},{\"field\":\"asset\",\"reason\":\"missing\"},{\"field\":\"asset\",\"reason\":\"missing\"},{\"field\":\"asset\",\"reason\":\"missing\"},{\"field\":\"asset\",\"reason\":\"missing\"},{\"field\":\"asset\",\"reason\":\"missing\"},{\"field\":\"asset\",\"reason\":\"missing\"}]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-unknown-issue-field",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"path\",\"reason\":\"missing\"}]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-unknown-issue-reason",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"entry\",\"reason\":\"failed\"}]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-uppercase-asset-guid",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"ABCDEF0123456789ABCDEF0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-nonhex-asset-guid",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-null-snapshot-id",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":null,\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-empty-assembly-name",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-129-scalar-name",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-negative-instance-count",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":-1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-large-instance-count",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":2147483648,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-large-state-code",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":2147483648,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-negative-state-code-overflow",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483649,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-unknown-loader-state",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"enabled\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-unknown-database-kind",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"steam\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-ordinal-overflow",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":128,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-large-return-count",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":17,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-next-offset-overflow",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":129}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-coverage-extra",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1,\"pending\":0}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-coverage-visited-overflow",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":130,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-coverage-count-overflow",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":129,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-coverage-total-overflow",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":129}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-coverage-reason-unknown",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":\"UNKNOWN\",\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-time-unsafe",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":9007199254740992,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-negative-expiry",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":-1,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-empty-game-version",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/invalid-long-game-version",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/bad-version-newline",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1\\n\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/bad-version-carriage-return",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1\\r\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/bad-version-trailing-dot",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/bad-version-leading-dot",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\".1\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/bad-version-empty-part",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1..2\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/bad-version-five-parts",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.2.3.4.5\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/bad-version-empty",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/bad-version-unicode-digit",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"１\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/bad-version-version-letter",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"1.a\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/bad-version-long",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"Example.Module\",\"assemblyVersion\":\"111111111111111111111111111111111\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  },
+  {
+    "name": "modules1/output/maximum-escaped-page-shape",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"captureStartedAtUnixMs\":9007199254740991,\"captureEndedAtUnixMs\":9007199254740991,\"expiresAtUnixMs\":9007199254740991,\"gameVersion\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":1,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":2,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":3,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":4,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":5,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":6,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":7,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":8,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":9,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":10,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":11,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":12,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":13,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":14,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]},{\"ordinal\":15,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":-2147483648,\"loaderState\":\"loadAssemblyReferenceError\",\"assemblyPresent\":true,\"assemblyName\":\"\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\\u0001\",\"assemblyVersion\":\"99999999999999999999999999999999\",\"instanceCount\":2147483647,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"},{\"field\":\"assemblyVersion\",\"reason\":\"unavailable\"}]}],\"returnedCount\":16,\"nextOffset\":16}",
+    "valid": true
+  },
+  {
+    "name": "modules1/syntax/duplicate-kind-existing-last-value",
+    "schemaId": "urn:skylineslink:contract:module-runtime-query:1",
+    "json": "{\"kind\":\"page\",\"kind\":\"capture\"}",
+    "valid": true
+  },
+  {
+    "name": "modules1/syntax/unpaired-name-surrogate",
+    "schemaId": "urn:skylineslink:contract:module-runtime-page:1",
+    "json": "{\"kind\":\"page\",\"snapshot\":{\"snapshotId\":\"0123456789abcdef0123456789abcdef\",\"instanceId\":\"instance\",\"captureStartedAtUnixMs\":1000,\"captureEndedAtUnixMs\":1001,\"expiresAtUnixMs\":301001,\"gameVersion\":\"1.6.2f1\",\"gameVersionIssue\":null,\"firstInitializationComplete\":true,\"restartRequired\":false,\"coverage\":{\"complete\":true,\"reason\":null,\"visited\":1,\"observedCount\":1,\"totalCount\":1}},\"offset\":0,\"entries\":[{\"ordinal\":0,\"assetGuid\":\"abcdef0123456789abcdef0123456789\",\"isMod\":true,\"loaderStateCode\":1,\"loaderState\":\"loaded\",\"assemblyPresent\":true,\"assemblyName\":\"\\ud800\",\"assemblyVersion\":\"1.2.3.4\",\"instanceCount\":1,\"hasLoadError\":false,\"databaseKind\":\"user\",\"fieldIssues\":[]}],\"returnedCount\":1,\"nextOffset\":null}",
+    "valid": false
+  }
+]

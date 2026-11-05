@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../contracts/cs/SkylinesLink.Contracts/SkylinesLink.Contracts.csproj" />
+    <Compile Include="../../shared/Tasks/*.cs" Link="Shared/Tasks/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

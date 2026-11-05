@@ -1,0 +1,296 @@
+[
+  {
+    "name": "历史新query缺省source保持缺失",
+    "schemaId": "urn:skylineslink:contract:operation-query:3",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}}}",
+    "valid": true
+  },
+  {
+    "name": "历史新query显式history",
+    "schemaId": "urn:skylineslink:contract:operation-query:3",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}},\"source\":\"history\"}",
+    "valid": true
+  },
+  {
+    "name": "历史新query不接受source null",
+    "schemaId": "urn:skylineslink:contract:operation-query:3",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}},\"source\":null}",
+    "valid": false
+  },
+  {
+    "name": "历史selector不接受混填分支",
+    "schemaId": "urn:skylineslink:contract:operation-query:3",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\"}}",
+    "valid": false
+  },
+  {
+    "name": "历史源记录上下文完整",
+    "schemaId": "urn:skylineslink:contract:operation-history-checkpoint:1",
+    "json": "{\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"records\":[{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}}]}",
+    "valid": true
+  },
+  {
+    "name": "历史源允许空终态投影",
+    "schemaId": "urn:skylineslink:contract:operation-history-checkpoint:1",
+    "json": "{\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"records\":[]}",
+    "valid": true
+  },
+  {
+    "name": "历史源拒绝第33条",
+    "schemaId": "urn:skylineslink:contract:operation-history-checkpoint:1",
+    "json": "{\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"records\":[{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}},{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}}]}",
+    "valid": false
+  },
+  {
+    "name": "历史源拒绝running终态",
+    "schemaId": "urn:skylineslink:contract:operation-history-checkpoint:1",
+    "json": "{\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"records\":[{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"running\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}}]}",
+    "valid": false
+  },
+  {
+    "name": "历史源必有Load",
+    "schemaId": "urn:skylineslink:contract:operation-history-checkpoint:1",
+    "json": "{\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"records\":[{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\"}]}",
+    "valid": false
+  },
+  {
+    "name": "历史源必有sourceContext",
+    "schemaId": "urn:skylineslink:contract:operation-history-checkpoint:1",
+    "json": "{\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"records\":[{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}}]}",
+    "valid": false
+  },
+  {
+    "name": "历史源nullable observationContext",
+    "schemaId": "urn:skylineslink:contract:operation-history-checkpoint:1",
+    "json": "{\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"records\":[{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":null,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":null}}]}",
+    "valid": true
+  },
+  {
+    "name": "历史源observationContext不能缺失",
+    "schemaId": "urn:skylineslink:contract:operation-history-checkpoint:1",
+    "json": "{\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"records\":[{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\"}}]}",
+    "valid": false
+  },
+  {
+    "name": "历史源journalRevision必须整数2",
+    "schemaId": "urn:skylineslink:contract:operation-history-checkpoint:1",
+    "json": "{\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":\"2\",\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"records\":[]}",
+    "valid": false
+  },
+  {
+    "name": "历史源不接受旧操作原始构建猜测",
+    "schemaId": "urn:skylineslink:contract:operation-history-checkpoint:1",
+    "json": "{\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"records\":[{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}},\"originCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"}]}",
+    "valid": false
+  },
+  {
+    "name": "历史Native request未绑定主体",
+    "schemaId": "urn:skylineslink:contract:native-history-request:1",
+    "json": "{\"formatVersion\":1,\"environmentId\":\"fixture\",\"profileId\":\"reader\",\"expectedAuthorityEpoch\":null,\"expectedGrantEpoch\":null,\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}}}",
+    "valid": true
+  },
+  {
+    "name": "历史Native request已绑定主体",
+    "schemaId": "urn:skylineslink:contract:native-history-request:1",
+    "json": "{\"formatVersion\":1,\"environmentId\":\"fixture\",\"profileId\":\"reader\",\"expectedAuthorityEpoch\":2,\"expectedGrantEpoch\":1,\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}}}",
+    "valid": true
+  },
+  {
+    "name": "历史Native request拒绝token",
+    "schemaId": "urn:skylineslink:contract:native-history-request:1",
+    "json": "{\"formatVersion\":1,\"environmentId\":\"fixture\",\"profileId\":\"reader\",\"expectedAuthorityEpoch\":null,\"expectedGrantEpoch\":null,\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}},\"token\":\"fixture-not-a-token\"}",
+    "valid": false
+  },
+  {
+    "name": "历史Native capture单条结果",
+    "schemaId": "urn:skylineslink:contract:native-history-capture:1",
+    "json": "{\"formatVersion\":1,\"environmentId\":\"fixture\",\"profileId\":\"reader\",\"authorizationRecordRevision\":2,\"authorityEpoch\":2,\"grantEpoch\":1,\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"record\":{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}}}",
+    "valid": true
+  },
+  {
+    "name": "历史Native capture无覆盖",
+    "schemaId": "urn:skylineslink:contract:native-history-capture:1",
+    "json": "{\"formatVersion\":1,\"environmentId\":\"fixture\",\"profileId\":\"reader\",\"authorizationRecordRevision\":2,\"authorityEpoch\":2,\"grantEpoch\":1,\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"record\":null}",
+    "valid": true
+  },
+  {
+    "name": "历史Native capture不接受遗漏record",
+    "schemaId": "urn:skylineslink:contract:native-history-capture:1",
+    "json": "{\"formatVersion\":1,\"environmentId\":\"fixture\",\"profileId\":\"reader\",\"authorizationRecordRevision\":2,\"authorityEpoch\":2,\"grantEpoch\":1,\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"}}",
+    "valid": false
+  },
+  {
+    "name": "历史lookup复用完整记录",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:3",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"ageMs\":null,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"found\",\"record\":{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}}}}}",
+    "valid": true
+  },
+  {
+    "name": "历史lookup无覆盖",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:3",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"ageMs\":null,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"HISTORY_NOT_COVERED\"}}}",
+    "valid": true
+  },
+  {
+    "name": "历史lookup不接受absent",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:3",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"ageMs\":null,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"absent\"}}}",
+    "valid": false
+  },
+  {
+    "name": "历史lookup不接受负age",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:3",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"ageMs\":-1,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"found\",\"record\":{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}}}}}",
+    "valid": false
+  },
+  {
+    "name": "历史lookup显式live保旧lookup语义",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:3",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}},\"result\":{\"kind\":\"live\",\"instanceId\":\"current\",\"lookup\":{\"kind\":\"absent\"}}}",
+    "valid": true
+  },
+  {
+    "name": "历史lookup原根lookup不能冒新版本",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:3",
+    "json": "{\"lookup\":{\"kind\":\"absent\"}}",
+    "valid": false
+  },
+  {
+    "name": "查询5线请求缺省live",
+    "schemaId": "urn:skylineslink:contract:wire-request:1",
+    "json": "{\"kind\":\"request\",\"requestId\":\"wire-current\",\"capabilityId\":\"operations.get\",\"schemaRevision\":\"5\",\"arguments\":{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx\",\"requestId\":\"请求\"}}}}",
+    "valid": true
+  },
+  {
+    "name": "查询5线请求明确history",
+    "schemaId": "urn:skylineslink:contract:wire-request:1",
+    "json": "{\"kind\":\"request\",\"requestId\":\"wire-current\",\"capabilityId\":\"operations.get\",\"schemaRevision\":\"5\",\"arguments\":{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx\",\"requestId\":\"请求\"}},\"source\":\"history\"}}",
+    "valid": true
+  },
+  {
+    "name": "查询5线结果保留原生false",
+    "schemaId": "urn:skylineslink:contract:wire-result:1",
+    "json": "{\"kind\":\"result\",\"requestId\":\"wire-current\",\"result\":{\"selector\":{\"kind\":\"operationId\",\"operationId\":\"op-1\"},\"result\":{\"kind\":\"live\",\"instanceId\":\"instance-now\",\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"failed\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":false,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":false,\"observationEnd\":\"ownerStopped\"}}}}}",
+    "binding": {
+      "capabilityId": "operations.get",
+      "schemaRevision": "5"
+    },
+    "valid": true
+  },
+  {
+    "name": "查询5线结果保留完整历史来源",
+    "schemaId": "urn:skylineslink:contract:wire-result:1",
+    "json": "{\"kind\":\"result\",\"requestId\":\"wire-current\",\"result\":{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"ageMs\":null,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"found\",\"record\":{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}}}}}}",
+    "binding": {
+      "capabilityId": "operations.get",
+      "schemaRevision": "5"
+    },
+    "valid": true
+  },
+  {
+    "name": "查询5线结果不能借新外壳接受旧load",
+    "schemaId": "urn:skylineslink:contract:wire-result:1",
+    "json": "{\"kind\":\"result\",\"requestId\":\"wire-current\",\"result\":{\"selector\":{\"kind\":\"operationId\",\"operationId\":\"op-1\"},\"result\":{\"kind\":\"live\",\"instanceId\":\"instance-now\",\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"ownerStopped\",\"nativeState\":\"succeeded\"}}}}}",
+    "binding": {
+      "capabilityId": "operations.get",
+      "schemaRevision": "5"
+    },
+    "valid": false
+  },
+  {
+    "name": "保留lookup4按ID未覆盖",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:4",
+    "json": "{\"selector\":{\"kind\":\"operationId\",\"operationId\":\"op-retired\"},\"result\":{\"kind\":\"live\",\"instanceId\":\"instance-now\",\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"RETENTION_NOT_COVERED\"}}}",
+    "valid": true
+  },
+  {
+    "name": "保留lookup4按原提交键未覆盖",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:4",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-retired\",\"requestId\":\"req-retired\"}},\"result\":{\"kind\":\"live\",\"instanceId\":\"instance-now\",\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"RETENTION_NOT_COVERED\"}}}",
+    "valid": true
+  },
+  {
+    "name": "旧lookup3拒绝保留未覆盖原因",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:3",
+    "json": "{\"selector\":{\"kind\":\"operationId\",\"operationId\":\"op-retired\"},\"result\":{\"kind\":\"live\",\"instanceId\":\"instance-now\",\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"RETENTION_NOT_COVERED\"}}}",
+    "valid": false
+  },
+  {
+    "name": "旧lookup2拒绝保留未覆盖原因",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:2",
+    "json": "{\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"RETENTION_NOT_COVERED\"}}",
+    "valid": false
+  },
+  {
+    "name": "保留lookup4兼容历史lookup复用完整记录",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:4",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"ageMs\":null,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"found\",\"record\":{\"terminalSequence\":5,\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"},\"operationId\":\"op-1\",\"originInstanceId\":\"origin-1\",\"sourceContext\":{\"instanceId\":\"origin-1\",\"generation\":\"1\",\"gameState\":\"ready\",\"cityId\":\"city-a\"},\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"expired\",\"observationContext\":{\"instanceId\":\"origin-1\",\"generation\":\"2\",\"gameState\":\"ready\",\"cityId\":\"city-b\"}}}}}}",
+    "valid": true
+  },
+  {
+    "name": "保留lookup4兼容历史lookup无覆盖",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:4",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"ageMs\":null,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"HISTORY_NOT_COVERED\"}}}",
+    "valid": true
+  },
+  {
+    "name": "保留lookup4兼容历史lookup显式live保旧lookup语义",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:4",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}},\"result\":{\"kind\":\"live\",\"instanceId\":\"current\",\"lookup\":{\"kind\":\"absent\"}}}",
+    "valid": true
+  },
+  {
+    "name": "保留lookup4不把live未覆盖原因写入history",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:4",
+    "json": "{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx-1\",\"requestId\":\"req-1\"}},\"result\":{\"kind\":\"history\",\"access\":\"offlineLease\",\"source\":{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"storeId\":\"store-1\",\"throughSequence\":5,\"producerVersion\":\"0.1.0-dev.0\",\"producerInstanceId\":\"producer-2\",\"producerCoreManifestSha256\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"journalSchemaRevision\":2,\"publishedAtUnixMs\":1,\"selection\":\"durableTerminalOnly\"},\"ageMs\":null,\"integrity\":\"sha256Verified\",\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"RETENTION_NOT_COVERED\"}}}",
+    "valid": false
+  },
+  {
+    "name": "保留lookup4读取风险窗口保原事实",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:4",
+    "json": "{\"selector\":{\"kind\":\"operationId\",\"operationId\":\"op-1\"},\"result\":{\"kind\":\"live\",\"instanceId\":\"instance-now\",\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"succeeded\",\"mayHaveApplied\":true,\"durability\":\"unavailable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":true,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":true,\"observationEnd\":\"ownerStopped\"}}}}",
+    "valid": true
+  },
+  {
+    "name": "保留lookup4拒绝额外退休账字段",
+    "schemaId": "urn:skylineslink:contract:operation-lookup:4",
+    "json": "{\"selector\":{\"kind\":\"operationId\",\"operationId\":\"op-retired\"},\"result\":{\"kind\":\"live\",\"instanceId\":\"instance-now\",\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"RETENTION_NOT_COVERED\",\"retiredIds\":[\"op-retired\"]}}}",
+    "valid": false
+  },
+  {
+    "name": "停用查询4线结果拒绝新保留原因",
+    "schemaId": "urn:skylineslink:contract:wire-result:1",
+    "json": "{\"kind\":\"result\",\"requestId\":\"wire-retention\",\"result\":{\"selector\":{\"kind\":\"operationId\",\"operationId\":\"op-retired\"},\"result\":{\"kind\":\"live\",\"instanceId\":\"instance-now\",\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"RETENTION_NOT_COVERED\"}}}}",
+    "binding": {
+      "capabilityId": "operations.get",
+      "schemaRevision": "4"
+    },
+    "valid": false
+  },
+  {
+    "name": "活动查询5线结果接受保留未覆盖原因",
+    "schemaId": "urn:skylineslink:contract:wire-result:1",
+    "json": "{\"kind\":\"result\",\"requestId\":\"wire-retention\",\"result\":{\"selector\":{\"kind\":\"operationId\",\"operationId\":\"op-retired\"},\"result\":{\"kind\":\"live\",\"instanceId\":\"instance-now\",\"lookup\":{\"kind\":\"unavailable\",\"reason\":\"RETENTION_NOT_COVERED\"}}}}",
+    "binding": {
+      "capabilityId": "operations.get",
+      "schemaRevision": "5"
+    },
+    "valid": true
+  },
+  {
+    "name": "停用查询4线请求不静默映射到5",
+    "schemaId": "urn:skylineslink:contract:wire-request:1",
+    "json": "{\"kind\":\"request\",\"requestId\":\"wire-current\",\"capabilityId\":\"operations.get\",\"schemaRevision\":\"4\",\"arguments\":{\"selector\":{\"kind\":\"submissionKey\",\"submissionKey\":{\"writeContextId\":\"ctx\",\"requestId\":\"请求\"}}}}",
+    "valid": false
+  },
+  {
+    "name": "停用查询4线结果绑定不静默映射到5",
+    "schemaId": "urn:skylineslink:contract:wire-result:1",
+    "json": "{\"kind\":\"result\",\"requestId\":\"wire-current\",\"result\":{\"selector\":{\"kind\":\"operationId\",\"operationId\":\"op-1\"},\"result\":{\"kind\":\"live\",\"instanceId\":\"instance-now\",\"lookup\":{\"kind\":\"found\",\"operationId\":\"op-1\",\"originInstanceId\":\"instance-old\",\"state\":\"failed\",\"mayHaveApplied\":true,\"durability\":\"durable\",\"load\":{\"physicalTaskState\":\"ranToCompletion\",\"loadReturnValue\":false,\"targetMatch\":\"exact\",\"isObservationCurrent\":false,\"correlatedTargetReady\":true,\"historicalCompletionProven\":false,\"observationEnd\":\"ownerStopped\"}}}}}",
+    "binding": {
+      "capabilityId": "operations.get",
+      "schemaRevision": "4"
+    },
+    "valid": false
+  }
+]

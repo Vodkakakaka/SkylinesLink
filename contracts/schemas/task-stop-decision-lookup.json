@@ -1,0 +1,552 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:task-stop-decision-lookup:1",
+  "description": "活动停止决定与已确认历史投影明确分开；历史无匹配仅未覆盖，不证明未停止或许可重发。",
+  "type": "object",
+  "properties": {
+    "selector": {
+      "$ref": "#/$defs/TaskStopSelector"
+    },
+    "result": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 4,
+              "const": "live"
+            },
+            "instanceId": {
+              "$ref": "#/$defs/Identity"
+            },
+            "lookup": {
+              "$ref": "#/$defs/LiveStopLookup"
+            }
+          },
+          "required": [
+            "kind",
+            "instanceId",
+            "lookup"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 7,
+              "maxLength": 7,
+              "const": "history"
+            },
+            "access": {
+              "type": "string",
+              "minLength": 12,
+              "maxLength": 15,
+              "enum": [
+                "activeAuthority",
+                "offlineLease"
+              ]
+            },
+            "source": {
+              "$ref": "#/$defs/HistorySource"
+            },
+            "ageMs": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "integrity": {
+              "type": "string",
+              "minLength": 14,
+              "maxLength": 14,
+              "const": "sha256Verified"
+            },
+            "lookup": {
+              "$ref": "#/$defs/HistoryStopLookup"
+            }
+          },
+          "required": [
+            "kind",
+            "access",
+            "source",
+            "ageMs",
+            "integrity",
+            "lookup"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "required": [
+    "selector",
+    "result"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Identity": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "PositiveSafeInteger": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "SubmissionKey": {
+      "type": "object",
+      "properties": {
+        "writeContextId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "requestId": {
+          "$ref": "#/$defs/Identity"
+        }
+      },
+      "required": [
+        "writeContextId",
+        "requestId"
+      ],
+      "additionalProperties": false
+    },
+    "ContextSource": {
+      "type": "object",
+      "properties": {
+        "instanceId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "generation": {
+          "$ref": "#/$defs/Identity"
+        },
+        "gameState": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 11,
+          "enum": [
+            "menu",
+            "loading",
+            "ready",
+            "unavailable"
+          ]
+        },
+        "cityId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "instanceId",
+        "generation",
+        "gameState",
+        "cityId"
+      ],
+      "additionalProperties": false
+    },
+    "TaskDecisionActor": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "profileInstanceId": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 32
+        },
+        "authorityEpoch": {
+          "$ref": "#/$defs/PositiveSafeInteger"
+        },
+        "grantEpoch": {
+          "$ref": "#/$defs/PositiveSafeInteger"
+        }
+      },
+      "required": [
+        "profileId",
+        "profileInstanceId",
+        "authorityEpoch",
+        "grantEpoch"
+      ],
+      "additionalProperties": false
+    },
+    "TaskDecision": {
+      "type": "object",
+      "properties": {
+        "submissionKey": {
+          "$ref": "#/$defs/SubmissionKey"
+        },
+        "actor": {
+          "$ref": "#/$defs/TaskDecisionActor"
+        },
+        "source": {
+          "$ref": "#/$defs/ContextSource"
+        },
+        "commandHash": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "submissionKey",
+        "actor",
+        "source",
+        "commandHash"
+      ],
+      "additionalProperties": false
+    },
+    "TaskHistoryDecisionReceipt": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "decisionKind": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 10,
+          "enum": [
+            "create",
+            "reviseGoal",
+            "stop"
+          ]
+        },
+        "goalRevision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PositiveSafeInteger"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "controlVersion": {
+          "$ref": "#/$defs/PositiveSafeInteger"
+        },
+        "sequence": {
+          "$ref": "#/$defs/PositiveSafeInteger"
+        },
+        "decision": {
+          "$ref": "#/$defs/TaskDecision"
+        }
+      },
+      "required": [
+        "taskId",
+        "decisionKind",
+        "goalRevision",
+        "controlVersion",
+        "sequence",
+        "decision"
+      ],
+      "additionalProperties": false,
+      "description": "原Task决定的历史回执；Stop的goalRevision必须为null，create/reviseGoal必须为原决定版本，由读取边界核对。"
+    },
+    "HistorySource": {
+      "type": "object",
+      "properties": {
+        "formatVersion": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 2
+        },
+        "productId": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 12,
+          "const": "skylineslink"
+        },
+        "environmentId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "storeId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "throughSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "producerVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "producerInstanceId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "producerCoreManifestSha256": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "journalSchemaRevision": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 3
+        },
+        "publishedAtUnixMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "selection": {
+          "type": "string",
+          "minLength": 42,
+          "maxLength": 42,
+          "const": "confirmedTaskMetadataAndOperationTerminals"
+        },
+        "throughBytes": {
+          "type": "integer",
+          "minimum": 45,
+          "maximum": 2097152
+        }
+      },
+      "required": [
+        "formatVersion",
+        "productId",
+        "environmentId",
+        "storeId",
+        "throughSequence",
+        "producerVersion",
+        "producerInstanceId",
+        "producerCoreManifestSha256",
+        "journalSchemaRevision",
+        "publishedAtUnixMs",
+        "selection",
+        "throughBytes"
+      ],
+      "additionalProperties": false
+    },
+    "TaskStopSelector": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "expectedControlVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740990
+        }
+      },
+      "required": [
+        "taskId",
+        "expectedControlVersion"
+      ],
+      "additionalProperties": false
+    },
+    "JournalReceipt": {
+      "type": "object",
+      "properties": {
+        "storeId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "storeId",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "LiveStopReceipt": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "decisionKind": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 4,
+          "const": "stop"
+        },
+        "goalRevision": {
+          "type": "null"
+        },
+        "controlVersion": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 9007199254740991
+        },
+        "decision": {
+          "$ref": "#/$defs/TaskDecision"
+        },
+        "journal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/JournalReceipt"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "persistenceAttempted": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "taskId",
+        "decisionKind",
+        "goalRevision",
+        "controlVersion",
+        "decision",
+        "journal",
+        "persistenceAttempted"
+      ],
+      "additionalProperties": false,
+      "description": "完整原停止决定的活动投影；actor/source/key/hash保持原事实，持久状态仅由外层lookup.kind表达。"
+    },
+    "LiveStopLookup": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 7,
+              "maxLength": 7,
+              "const": "pending"
+            },
+            "receipt": {
+              "$ref": "#/$defs/LiveStopReceipt"
+            }
+          },
+          "required": [
+            "kind",
+            "receipt"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 5,
+              "const": "found"
+            },
+            "receipt": {
+              "$ref": "#/$defs/LiveStopReceipt"
+            }
+          },
+          "required": [
+            "kind",
+            "receipt"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 11,
+              "maxLength": 11,
+              "const": "unavailable"
+            },
+            "receipt": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/LiveStopReceipt"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "enum": [
+                "JOURNAL_UNAVAILABLE",
+                "TASKS_UNAVAILABLE",
+                "RETENTION_NOT_COVERED",
+                "STOP_NOT_COVERED"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "receipt",
+            "reason"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "HistoryStopLookup": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 5,
+              "const": "found"
+            },
+            "receipt": {
+              "$ref": "#/$defs/TaskHistoryDecisionReceipt"
+            }
+          },
+          "required": [
+            "kind",
+            "receipt"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 11,
+              "maxLength": 11,
+              "const": "unavailable"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 19,
+              "maxLength": 19,
+              "const": "HISTORY_NOT_COVERED"
+            }
+          },
+          "required": [
+            "kind",
+            "reason"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

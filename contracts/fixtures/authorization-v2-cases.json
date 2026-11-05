@@ -1,0 +1,102 @@
+[
+  {
+    "name": "authorization2/empty-profiles",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":0,\"profiles\":[]}",
+    "valid": true
+  },
+  {
+    "name": "authorization2/null-http-credential",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":1,\"profiles\":[{\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"profileId\":\"reader\",\"grantEpoch\":2,\"scopeMask\":1,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":null}]}",
+    "valid": true
+  },
+  {
+    "name": "authorization2/explicit-http-credential",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":1,\"profiles\":[{\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"profileId\":\"reader\",\"grantEpoch\":2,\"scopeMask\":1,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"}]}",
+    "valid": true
+  },
+  {
+    "name": "authorization2/distinct-profile-incarnations",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":1,\"profiles\":[{\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"profileId\":\"reader\",\"grantEpoch\":2,\"scopeMask\":1,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":null},{\"profileInstanceId\":\"dddddddddddddddddddddddddddddddd\",\"profileId\":\"writer\",\"grantEpoch\":2,\"scopeMask\":7,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":null}]}",
+    "valid": true
+  },
+  {
+    "name": "authorization2/nonhex-is-a-consumer-semantic-check",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":1,\"profiles\":[{\"profileInstanceId\":\"gggggggggggggggggggggggggggggggg\",\"profileId\":\"reader\",\"grantEpoch\":2,\"scopeMask\":1,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":null}]}",
+    "valid": true
+  },
+  {
+    "name": "authorization2/missing-format-version",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":1,\"profiles\":[{\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"profileId\":\"reader\",\"grantEpoch\":2,\"scopeMask\":1,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":null}]}",
+    "valid": false,
+    "code": "REQUIRED"
+  },
+  {
+    "name": "authorization2/old-format-version",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"formatVersion\":1,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":1,\"profiles\":[{\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"profileId\":\"reader\",\"grantEpoch\":2,\"scopeMask\":1,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":null}]}",
+    "valid": false,
+    "code": "RANGE"
+  },
+  {
+    "name": "authorization2/string-format-version",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"formatVersion\":\"2\",\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":1,\"profiles\":[{\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"profileId\":\"reader\",\"grantEpoch\":2,\"scopeMask\":1,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":null}]}",
+    "valid": false,
+    "code": "TYPE"
+  },
+  {
+    "name": "authorization2/missing-profile-instance",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":1,\"profiles\":[{\"profileId\":\"reader\",\"grantEpoch\":2,\"scopeMask\":1,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":null}]}",
+    "valid": false,
+    "code": "REQUIRED"
+  },
+  {
+    "name": "authorization2/short-profile-instance",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":1,\"profiles\":[{\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"profileId\":\"reader\",\"grantEpoch\":2,\"scopeMask\":1,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":null}]}",
+    "valid": false,
+    "code": "LENGTH"
+  },
+  {
+    "name": "authorization2/long-profile-instance",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":1,\"profiles\":[{\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"profileId\":\"reader\",\"grantEpoch\":2,\"scopeMask\":1,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":null}]}",
+    "valid": false,
+    "code": "LENGTH"
+  },
+  {
+    "name": "authorization2/numeric-profile-instance",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":1,\"profiles\":[{\"profileInstanceId\":32,\"profileId\":\"reader\",\"grantEpoch\":2,\"scopeMask\":1,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":null}]}",
+    "valid": false,
+    "code": "TYPE"
+  },
+  {
+    "name": "authorization2/null-profile-instance",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":1,\"profiles\":[{\"profileInstanceId\":null,\"profileId\":\"reader\",\"grantEpoch\":2,\"scopeMask\":1,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":null}]}",
+    "valid": false,
+    "code": "TYPE"
+  },
+  {
+    "name": "authorization2/extra-root-field",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":1,\"profiles\":[{\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"profileId\":\"reader\",\"grantEpoch\":2,\"scopeMask\":1,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":null}],\"owner\":\"invented\"}",
+    "valid": false,
+    "code": "PROPERTIES"
+  },
+  {
+    "name": "authorization2/extra-profile-field",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:2",
+    "json": "{\"formatVersion\":2,\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":2,\"authorityEpoch\":1,\"profiles\":[{\"profileInstanceId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"profileId\":\"reader\",\"grantEpoch\":2,\"scopeMask\":1,\"internalToken\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"externalHttpToken\":null,\"owner\":true}]}",
+    "valid": false,
+    "code": "PROPERTIES"
+  }
+]

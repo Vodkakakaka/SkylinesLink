@@ -1,0 +1,407 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:operation-journal-record:2",
+  "description": "内部单一 Load 日志结构。顺序、关联、权限和真实持久确认仍由 Journal/Operations 检查；不进入 MCP 能力目录。",
+  "type": "object",
+  "properties": {
+    "sequence": {
+      "$ref": "#/$defs/PositiveSafeInteger"
+    },
+    "environmentId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "entry": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 6,
+              "maxLength": 6,
+              "const": "header"
+            },
+            "storeId": {
+              "$ref": "#/$defs/Identity"
+            }
+          },
+          "required": [
+            "kind",
+            "storeId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 8,
+              "const": "accepted"
+            },
+            "operationId": {
+              "$ref": "#/$defs/Identity"
+            },
+            "originInstanceId": {
+              "$ref": "#/$defs/Identity"
+            },
+            "writeContextId": {
+              "$ref": "#/$defs/Identity"
+            },
+            "requestId": {
+              "$ref": "#/$defs/Identity"
+            },
+            "commandHash": {
+              "type": "string",
+              "minLength": 64,
+              "maxLength": 64
+            },
+            "profileId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "authorityEpoch": {
+              "$ref": "#/$defs/PositiveSafeInteger"
+            },
+            "grantEpoch": {
+              "$ref": "#/$defs/PositiveSafeInteger"
+            },
+            "source": {
+              "$ref": "#/$defs/ContextSource"
+            },
+            "target": {
+              "$ref": "#/$defs/LoadTarget"
+            }
+          },
+          "required": [
+            "kind",
+            "operationId",
+            "originInstanceId",
+            "writeContextId",
+            "requestId",
+            "commandHash",
+            "profileId",
+            "authorityEpoch",
+            "grantEpoch",
+            "source",
+            "target"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 12,
+              "maxLength": 12,
+              "const": "commitIntent"
+            },
+            "operationId": {
+              "$ref": "#/$defs/Identity"
+            },
+            "target": {
+              "$ref": "#/$defs/LoadTarget"
+            },
+            "nativeHost": {
+              "type": "object",
+              "properties": {
+                "processId": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 2147483647
+                },
+                "creationTime": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 32
+                }
+              },
+              "required": [
+                "processId",
+                "creationTime"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "kind",
+            "operationId",
+            "target",
+            "nativeHost"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 14,
+              "maxLength": 14,
+              "const": "nativeTerminal"
+            },
+            "operationId": {
+              "$ref": "#/$defs/Identity"
+            },
+            "physicalTaskState": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 15,
+              "enum": [
+                "ranToCompletion",
+                "faulted",
+                "cancelled"
+              ],
+              "description": "实际原生 Task 的物理状态；正常完成不等于 Load 返回 true 或目标 Ready。"
+            },
+            "loadReturnValue": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "实际 Task<bool> 正常完成时的原始返回值；未取得该值时为 null。"
+            },
+            "boundTarget": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/LoadTarget"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "operationId",
+            "physicalTaskState",
+            "loadReturnValue",
+            "boundTarget"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 8,
+              "const": "terminal"
+            },
+            "operationId": {
+              "$ref": "#/$defs/Identity"
+            },
+            "state": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 9,
+              "enum": [
+                "succeeded",
+                "failed",
+                "cancelled",
+                "unknown"
+              ]
+            },
+            "mayHaveApplied": {
+              "type": "boolean"
+            },
+            "submissionKnowledge": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 12,
+              "enum": [
+                "notSubmitted",
+                "submitted",
+                "unknown"
+              ]
+            },
+            "reasonCode": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "load": {
+              "$ref": "#/$defs/PersistedLoadFacts"
+            }
+          },
+          "required": [
+            "kind",
+            "operationId",
+            "state",
+            "mayHaveApplied",
+            "submissionKnowledge",
+            "reasonCode",
+            "load"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "required": [
+    "sequence",
+    "environmentId",
+    "entry"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Identity": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "PositiveSafeInteger": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "ContextSource": {
+      "type": "object",
+      "properties": {
+        "instanceId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "generation": {
+          "$ref": "#/$defs/Identity"
+        },
+        "gameState": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 11,
+          "enum": [
+            "menu",
+            "loading",
+            "ready",
+            "unavailable"
+          ]
+        },
+        "cityId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "instanceId",
+        "generation",
+        "gameState",
+        "cityId"
+      ],
+      "additionalProperties": false
+    },
+    "LoadTarget": {
+      "type": "object",
+      "properties": {
+        "providerId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "assetId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "contentVersion": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "providerId",
+        "assetId",
+        "contentVersion"
+      ],
+      "additionalProperties": false
+    },
+    "PersistedLoadFacts": {
+      "description": "存储已知普通事实与实际观察上下文；不存储跨重启的 isObservationCurrent 承诺。",
+      "type": "object",
+      "properties": {
+        "physicalTaskState": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 15,
+          "enum": [
+            "notStarted",
+            "running",
+            "ranToCompletion",
+            "faulted",
+            "cancelled",
+            "unknown"
+          ],
+          "description": "实际原生 Task 的物理状态；正常完成不等于 Load 返回 true 或目标 Ready。"
+        },
+        "loadReturnValue": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "实际 Task<bool> 正常完成时的原始返回值；未取得该值时为 null。"
+        },
+        "targetMatch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12,
+          "enum": [
+            "unknown",
+            "different",
+            "identityOnly",
+            "exact"
+          ]
+        },
+        "correlatedTargetReady": {
+          "type": "boolean"
+        },
+        "historicalCompletionProven": {
+          "type": "boolean"
+        },
+        "observationEnd": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12,
+          "enum": [
+            "open",
+            "expired",
+            "interrupted",
+            "ownerStopped"
+          ]
+        },
+        "observationContext": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ContextSource"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "physicalTaskState",
+        "loadReturnValue",
+        "targetMatch",
+        "correlatedTargetReady",
+        "historicalCompletionProven",
+        "observationEnd",
+        "observationContext"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

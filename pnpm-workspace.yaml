@@ -1,0 +1,9 @@
+packages:
+  - contracts/ts
+  - src/host
+
+strictDepBuilds: true
+allowBuilds:
+  esbuild: true
+saveExact: true
+engineStrict: true

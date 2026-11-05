@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:authorization-snapshot:1",
+  "type": "object",
+  "properties": {
+    "productId": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 12,
+      "const": "skylineslink"
+    },
+    "environmentId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "recordRevision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "authorityEpoch": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "profiles": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "properties": {
+          "profileId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "grantEpoch": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "scopeMask": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 7
+          },
+          "internalToken": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64
+          },
+          "externalHttpToken": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 64,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "profileId",
+          "grantEpoch",
+          "scopeMask",
+          "internalToken",
+          "externalHttpToken"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "productId",
+    "environmentId",
+    "recordRevision",
+    "authorityEpoch",
+    "profiles"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:context:2",
+  "type": "object",
+  "properties": {
+    "productVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "contractVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "instanceId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "world": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/World"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "gameState": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 11,
+      "enum": [
+        "menu",
+        "loading",
+        "ready",
+        "unavailable"
+      ]
+    },
+    "catalogRevision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  },
+  "required": [
+    "productVersion",
+    "contractVersion",
+    "instanceId",
+    "world",
+    "gameState",
+    "catalogRevision"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "World": {
+      "type": "object",
+      "properties": {
+        "cityId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Verified persistent city identity when available; null does not make a verified loaded world unavailable. Never substitute a display name, map or session ID."
+        },
+        "generation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Logical loading generation within instanceId. Reloading invalidates previous object references even when the Unity World is reused."
+        }
+      },
+      "required": [
+        "cityId",
+        "generation"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

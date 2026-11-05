@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:guidance-search-query:1",
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Omit to browse bundled public guidance."
+    },
+    "language": {
+      "$ref": "#/$defs/Language",
+      "description": "Language of bundled guidance; defaults to en when omitted."
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8,
+      "description": "Maximum number of summaries; defaults to 5 when omitted."
+    }
+  },
+  "required": [],
+  "additionalProperties": false,
+  "$defs": {
+    "Language": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 5,
+      "enum": [
+        "en",
+        "zh-CN"
+      ]
+    }
+  }
+}

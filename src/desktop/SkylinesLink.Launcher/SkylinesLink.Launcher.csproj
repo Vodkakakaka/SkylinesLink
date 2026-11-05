@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <OutputType>Exe</OutputType>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../SkylinesLink.Deployment/SkylinesLink.Deployment.csproj" /></ItemGroup>
+  <ItemGroup><Compile Include="../../shared/Processes/WindowsOwnedChild.cs" Link="Shared/Processes/WindowsOwnedChild.cs" /></ItemGroup>
+</Project>

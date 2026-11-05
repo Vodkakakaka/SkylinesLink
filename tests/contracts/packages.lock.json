@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "Newtonsoft.Json": {
+        "type": "Transitive",
+        "resolved": "13.0.2",
+        "contentHash": "R2pZ3B0UjeyHShm9vG+Tu0EBb2lC8b0dFzV9gVn50ofHXh9Smjk6kTn7A/FdAsC8B5cKib1OnGYOXxRBz5XQDg=="
+      },
+      "skylineslink.contracts": {
+        "type": "Project",
+        "dependencies": {
+          "Newtonsoft.Json": "[13.0.2, )"
+        }
+      },
+      "skylineslink.deployment": {
+        "type": "Project"
+      }
+    }
+  }
+}

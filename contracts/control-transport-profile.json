@@ -1,0 +1,15 @@
+{
+  "capabilityId": "tasks.stop",
+  "schemaRevision": "1",
+  "ordinaryActiveRequests": 8,
+  "maximumControlRequests": 8,
+  "maximumSetupRequests": 1,
+  "maximumSetupRequestBytes": 4096,
+  "maximumSetupResponseBytes": 16384,
+  "ordinaryMessagesPerWindow": 64,
+  "maximumControlMessagesPerWindow": 8,
+  "windowMilliseconds": 1000,
+  "maximumRequestBytes": 4096,
+  "maximumResponseBytes": 16384,
+  "maximumOutputMetadataBytes": 1024
+}

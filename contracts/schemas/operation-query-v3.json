@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:operation-query:3",
+  "description": "显式选择活动或历史查询；保持原选择键语义。",
+  "type": "object",
+  "properties": {
+    "selector": {
+      "$ref": "#/$defs/OperationSelector"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 7,
+      "enum": [
+        "live",
+        "history"
+      ],
+      "description": "省略时消费边界使用live；只有显式history读取历史，live失败不回退。"
+    }
+  },
+  "required": [
+    "selector"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Identity": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "OperationSelector": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "operationId",
+              "minLength": 11,
+              "maxLength": 11
+            },
+            "operationId": {
+              "$ref": "#/$defs/Identity"
+            }
+          },
+          "required": [
+            "kind",
+            "operationId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "submissionKey",
+              "minLength": 13,
+              "maxLength": 13
+            },
+            "submissionKey": {
+              "type": "object",
+              "properties": {
+                "writeContextId": {
+                  "$ref": "#/$defs/Identity"
+                },
+                "requestId": {
+                  "$ref": "#/$defs/Identity"
+                }
+              },
+              "required": [
+                "writeContextId",
+                "requestId"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "kind",
+            "submissionKey"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

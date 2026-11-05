@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:wire-proof:2",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 5,
+      "const": "proof"
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "clientProof": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64
+    }
+  },
+  "required": [
+    "kind",
+    "requestId",
+    "clientProof"
+  ],
+  "additionalProperties": false
+}

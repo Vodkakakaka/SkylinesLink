@@ -1,0 +1,46 @@
+{
+  "formatVersion": 1,
+  "defaults": {
+    "taskId": "task-一",
+    "actor": { "profileId": "planner", "profileInstanceId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "authorityEpoch": 1, "grantEpoch": 1 },
+    "source": { "instanceId": "source-α", "generation": 7, "state": "ready", "cityId": "城市-a" },
+    "goal": { "title": "道路 😀", "requestText": "用户原话\n逐步验收", "constraintsText": ["a", "bc"], "acceptanceText": ["明确结果"] }
+  },
+  "hashes": [
+    { "name": "create-unicode", "kind": "create", "expected": "4a178315c6ad77a4b7db8273fc4502ea8eb672d0c35d4b229e13f0453b896595" },
+    { "name": "create-distinct-partition", "kind": "create", "goal": { "title": "道路 😀", "requestText": "用户原话\n逐步验收", "constraintsText": ["ab", "c"], "acceptanceText": ["明确结果"] }, "expected": "b357c8fb88424ae52c39be0db9b35aa9c776b1e950255e214d0b8efb590c33a8" },
+    { "name": "revise-new-generation", "kind": "reviseGoal", "expectedGoalRevision": 1, "expectedControlVersion": 1, "source": { "instanceId": "source-β", "generation": 9, "state": "ready", "cityId": "城市-a" }, "goal": { "title": "第二版", "requestText": "保持正常规则", "constraintsText": ["正常"], "acceptanceText": [] }, "expected": "3eafa06aaedc56c96c424be2bb053ab123316b173fcbde764eafe2c9ac38aaf1" },
+    { "name": "revise-other-city", "kind": "reviseGoal", "expectedGoalRevision": 1, "expectedControlVersion": 1, "source": { "instanceId": "source-β", "generation": 9, "state": "ready", "cityId": "城市-b" }, "goal": { "title": "第二版", "requestText": "保持正常规则", "constraintsText": ["正常"], "acceptanceText": [] }, "expected": "4d5bbc51875178192726363d84059fd889414adcc52525d4ec2a24128d31242d" },
+    { "name": "revise-goal-2", "kind": "reviseGoal", "expectedGoalRevision": 2, "expectedControlVersion": 1, "source": { "instanceId": "source-β", "generation": 9, "state": "ready", "cityId": "城市-a" }, "goal": { "title": "第二版", "requestText": "保持正常规则", "constraintsText": ["正常"], "acceptanceText": [] }, "expected": "2fa823c78cbd4f47fa1ab1bb9dbd12e4103d8e990cb6ddb2986b4426e554a6c4" },
+    { "name": "revise-control-2", "kind": "reviseGoal", "expectedGoalRevision": 1, "expectedControlVersion": 2, "source": { "instanceId": "source-β", "generation": 9, "state": "ready", "cityId": "城市-a" }, "goal": { "title": "第二版", "requestText": "保持正常规则", "constraintsText": ["正常"], "acceptanceText": [] }, "expected": "fbd2ce16943fbd5248d748ebd9f882449acc707cc54730380d8178a68be38e79" },
+    { "name": "create-menu", "kind": "create", "source": { "instanceId": "menu", "generation": 8, "state": "menu", "cityId": null }, "expected": "c174158f3d5e8a7705a11d615640971ca90ac412f52cb5234dd8488160d0bbca" },
+    { "name": "stop-control-1", "kind": "stop", "expectedControlVersion": 1, "expected": "581b64b6022d08afe98e9de0dbd03a358d57a5c53af5fe9359ee1cb6124cda73" },
+    { "name": "stop-control-2", "kind": "stop", "expectedControlVersion": 2, "expected": "6fb5c5934751c7f44038efc4a73bc8ce3f0d5479bc1bbe51389157576ecc033a" }
+  ],
+  "transitions": [
+    { "name": "create-ready", "current": "none", "kind": "create", "hash": "create-unicode", "valid": true, "goalRevision": 1, "controlVersion": 1, "isStopped": false },
+    { "name": "create-duplicate", "current": "active", "kind": "create", "hash": "create-unicode", "valid": false },
+    { "name": "create-menu", "current": "none", "kind": "create", "hash": "create-menu", "valid": false },
+    { "name": "create-bad-hash", "current": "none", "kind": "create", "hash": "create-unicode", "badHash": true, "valid": false },
+    { "name": "revise-new-audit-epoch", "current": "active", "kind": "reviseGoal", "hash": "revise-new-generation", "actor": { "profileId": "planner", "profileInstanceId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "authorityEpoch": 9, "grantEpoch": 10 }, "valid": true, "goalRevision": 2, "controlVersion": 1, "isStopped": false },
+    { "name": "revise-other-owner", "current": "active", "kind": "reviseGoal", "hash": "revise-new-generation", "actor": { "profileId": "other", "profileInstanceId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "authorityEpoch": 1, "grantEpoch": 1 }, "valid": false },
+    { "name": "revise-recreated-profile", "current": "active", "kind": "reviseGoal", "hash": "revise-new-generation", "actor": { "profileId": "planner", "profileInstanceId": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "authorityEpoch": 1, "grantEpoch": 1 }, "valid": false },
+    { "name": "revise-other-city", "current": "active", "kind": "reviseGoal", "hash": "revise-other-city", "valid": false },
+    { "name": "revise-goal-cas", "current": "active", "kind": "reviseGoal", "hash": "revise-goal-2", "valid": false },
+    { "name": "revise-control-cas", "current": "active", "kind": "reviseGoal", "hash": "revise-control-2", "valid": false },
+    { "name": "revise-bad-hash", "current": "active", "kind": "reviseGoal", "hash": "revise-new-generation", "badHash": true, "valid": false },
+    { "name": "revise-stopped", "current": "stopped", "kind": "reviseGoal", "hash": "revise-new-generation", "valid": false },
+    { "name": "stop-menu", "current": "active", "kind": "stop", "hash": "stop-control-1", "source": { "instanceId": "later", "generation": 20, "state": "menu", "cityId": null }, "valid": true, "goalRevision": 1, "controlVersion": 2, "isStopped": true },
+    { "name": "stop-loading", "current": "active", "kind": "stop", "hash": "stop-control-1", "source": { "instanceId": "later", "generation": 21, "state": "loading", "cityId": null }, "valid": true, "goalRevision": 1, "controlVersion": 2, "isStopped": true },
+    { "name": "stop-unavailable", "current": "active", "kind": "stop", "hash": "stop-control-1", "source": { "instanceId": "later", "generation": 22, "state": "unavailable", "cityId": null }, "valid": true, "goalRevision": 1, "controlVersion": 2, "isStopped": true },
+    { "name": "stop-other-ready-city", "current": "active", "kind": "stop", "hash": "stop-control-1", "source": { "instanceId": "later", "generation": 23, "state": "ready", "cityId": "城市-b" }, "valid": true, "goalRevision": 1, "controlVersion": 2, "isStopped": true },
+    { "name": "stop-control-cas", "current": "active", "kind": "stop", "hash": "stop-control-2", "valid": false },
+    { "name": "stop-stopped", "current": "stopped", "kind": "stop", "hash": "stop-control-2", "valid": false },
+    { "name": "stop-recreated-profile", "current": "active", "kind": "stop", "hash": "stop-control-1", "actor": { "profileId": "planner", "profileInstanceId": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "authorityEpoch": 1, "grantEpoch": 1 }, "valid": false },
+    { "name": "create-zero-epoch", "current": "none", "kind": "create", "hash": "create-unicode", "actor": { "profileId": "planner", "profileInstanceId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "authorityEpoch": 0, "grantEpoch": 1 }, "valid": false },
+    { "name": "create-default-actor", "current": "none", "kind": "create", "hash": "create-unicode", "actor": null, "valid": false },
+    { "name": "create-default-source", "current": "none", "kind": "create", "hash": "create-unicode", "source": null, "valid": false },
+    { "name": "create-default-goal", "current": "none", "kind": "create", "hash": "create-unicode", "goal": null, "valid": false },
+    { "name": "create-unpaired-scalar", "current": "none", "kind": "create", "hash": "create-unicode", "invalidScalar": true, "valid": false }
+  ]
+}

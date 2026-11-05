@@ -1,38 +1,27 @@
-# 许可证、来源与品牌边界
+# Licensing / 许可说明
 
-更新时间：2026-10-30。维护者已选择 MPL-2.0；本文件是项目治理说明，不替代法律意见。
+[English](#english) | [简体中文](#简体中文)
 
-## 项目自身的内容
+## English
 
-SkylinesLink 从头设计和开发，使用独立仓库和提交历史。开发者仅提交原创内容或有权使用并已核对许可的材料。功能目标相近不自动决定许可证；实际引入的依赖或材料分别核对来源、版本、许可证和发布条件。
+SkylinesLink's own source and project-authored materials are provided under the [Mozilla Public License 2.0](../../LICENSE). Copyright © 2026 Vodka and SkylinesLink contributors. Contributors retain their respective authorship and rights.
 
-已确定使用 [MPL-2.0](../../LICENSE)。以下保留选型时与宽松许可证的取舍：
+Third-party dependencies and materials retain their own licenses and copyright notices. Distributions must include the licenses and notices required for the materials they actually contain. The [MPL text](https://www.mozilla.org/en-US/MPL/2.0/) and [Mozilla FAQ](https://www.mozilla.org/en-US/MPL/2.0/FAQ/) are the authoritative references for that license.
 
-| 选项 | 主要取舍 |
-|---|---|
-| MPL-2.0（已选） | 分发修改后的受许可文件或其可执行形式时须履行相应源码开放义务；可与其他许可的独立文件组合；保留通知和版权，适合鼓励修改共享 |
-| Apache-2.0 | 宽松使用和再分发，包括闭源衍生；要求保留许可、适用通知及修改说明，包含明示的专利许可条款 |
+Project identity is governed separately by the [brand guidelines](../../BRANDING.md). Do not imply that a modified distribution is maintained or endorsed by SkylinesLink, or that the project is an official product of Paradox Interactive, Colossal Order, OpenAI or DeepSeek. No registered trademark status is claimed.
 
-两者均允许商业用途，且不因代码授权而授予贡献者的商标权。不能在标准开源许可证后附加“禁止商用/禁止 fork”又将其宣传为同一标准许可证。MPL 不要求修改者把代码提交给本仓库，也不保证外围独立模块全部开源。
+Proprietary game, Unity and Colossal assemblies are referenced from a developer's legitimate installation and are not redistributed. Game decompilations, original game assets, private saves, credentials and local configuration do not belong in this repository or its releases.
 
-来源：[MPL 正文](https://www.mozilla.org/en-US/MPL/2.0/)、[Mozilla FAQ](https://www.mozilla.org/en-US/MPL/2.0/FAQ/)、[Apache-2.0 正文](https://www.apache.org/licenses/LICENSE-2.0)、[GitHub 许可说明](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository)。
+Publishing through a platform must independently satisfy its applicable terms; a source license is not platform approval. Review the current [Paradox terms](https://legal.paradoxplaza.com/eula) and [GitHub terms](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) when preparing the relevant release. This page does not replace those terms or provide legal advice.
 
-## 品牌与贡献
+## 简体中文
 
-- SkylinesLink / 天际互联用于识别本项目；不声明已经注册商标。GitHub 仓库创建只是建立本账号下的项目地址，并非全球名称排他权。
-- 品牌使用说明与代码许可证分开，禁止误导性官方背书或冒充本项目发布者；不妨碍合理注明来源。
-- 后续贡献者应保留各自权利并确认有权按项目许可证贡献，不把所有贡献自动归为单一维护者所有。
-- 维护者审核来源和具体贡献，记录实际设计、修改和验证，保留适用的署名与许可信息。
+SkylinesLink 自身源码及项目创作材料采用 [Mozilla Public License 2.0](../../LICENSE)。Copyright © 2026 Vodka and SkylinesLink contributors。贡献者保留各自署名与权利。
 
-## 游戏与第三方边界
+第三方依赖及材料保留各自许可和版权声明，分发时须提供实际包含材料所要求的许可证与 notices。许可解释以 [MPL 正文](https://www.mozilla.org/en-US/MPL/2.0/)及 [Mozilla FAQ](https://www.mozilla.org/en-US/MPL/2.0/FAQ/)为权威参考。
 
-- 游戏、Unity、Colossal 等程序集只从使用者合法安装的环境引用；不进入本项目 Git 或发布包。
-- 不提交游戏反编译源码、原始游戏资产、私人存档、凭据或本机配置。
-- 使用第三方 SDK 时核对所选版本及传递依赖，随发行包提供实际需要的许可/通知，不预先宣称尚未采用的库是项目依赖。
-- 发布页面说明是社区项目，不暗示 Paradox、Colossal Order、OpenAI 或 DeepSeek 官方出品或背书。
+项目名称与标志的使用另见[品牌说明](../../BRANDING.md)。修改版不得暗示由 SkylinesLink 维护或背书，项目也不代表 Paradox Interactive、Colossal Order、OpenAI 或 DeepSeek 官方出品。不声明名称已注册商标。
 
-## Paradox 平台条款须独立考虑
+专有游戏、Unity、Colossal 程序集从开发者合法安装的环境引用，不随本项目分发。游戏反编译源码、原始游戏资产、私人存档、凭据及本机配置不进入仓库或发行包。
 
-当前 [Paradox User Agreement](https://legal.paradoxplaza.com/eula)（页面标明 2026-01-21 更新）第 5 节区分作者新增原创内容与游戏/第三方内容，同时对 UGC 施加免费提供、非商业发布等条件，允许符合条件的捐助；并包含向 Paradox 及关联方授予广泛、长期使用权的条款。
-
-这与本项目对原创源码选择的开源许可证是两层问题。开源许可中的商业使用授权不等于授予游戏资产权利或允许对游戏模组收费；也不能用本项目品牌条款撤回平台已要求的权利。正式发布前需要按具体源码、制品及当时适用的游戏/平台条款核对。当前尚未向 Paradox Mods 提交或发布。
+平台发布须独立符合适用条款，源码许可证不等于平台批准。准备相应发行时，应重新核对当时适用的 [Paradox 条款](https://legal.paradoxplaza.com/eula)与 [GitHub 条款](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service)。本文不代替相关条款，也不构成法律意见。

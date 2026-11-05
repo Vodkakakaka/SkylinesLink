@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../shared/Tasks/*.cs" Link="Shared/Tasks/%(Filename)%(Extension)" />
+    <Compile Include="../../shared/Installation/CoreInstallationPaths.cs" Link="Shared/Installation/CoreInstallationPaths.cs" />
+    <Compile Include="../../shared/Installation/CorePayloadFiles.cs" Link="Shared/Installation/CorePayloadFiles.cs" />
+  </ItemGroup>
+</Project>

@@ -4,6 +4,8 @@
 node_modules/
 dist/
 artifacts/
+# Official Mod postprocessor temporary state
+/src/game/SkylinesLink.Mod/Library/
 .vs/
 *.user
 *.suo

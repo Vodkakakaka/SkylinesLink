@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:wire-error:1",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "error",
+      "minLength": 5,
+      "maxLength": 5
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "message": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 512
+    }
+  },
+  "required": [
+    "kind",
+    "requestId",
+    "code",
+    "message"
+  ],
+  "additionalProperties": false
+}

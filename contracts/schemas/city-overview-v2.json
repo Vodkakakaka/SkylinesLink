@@ -1,0 +1,505 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:city-overview:2",
+  "description": "One bounded city observation with native population, player money, selected simulation speed and a helper-derived game clock. Source update times, pause causes and actual advancement remain unknown. Game time has no real-world timezone or Gregorian-date guarantee.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 11,
+          "maxLength": 11,
+          "const": "unavailable"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 18,
+          "enum": [
+            "MENU",
+            "LOADING",
+            "SOURCE_UNAVAILABLE",
+            "SCOPE_CHANGED",
+            "BUSY",
+            "CAPTURE_FAILED",
+            "STOPPED"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 8,
+          "const": "overview"
+        },
+        "scope": {
+          "$ref": "#/$defs/CityScope"
+        },
+        "gameVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "capture": {
+          "$ref": "#/$defs/CaptureInterval"
+        },
+        "coverage": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 4,
+          "const": "city"
+        },
+        "population": {
+          "$ref": "#/$defs/PopulationObservation"
+        },
+        "treasury": {
+          "$ref": "#/$defs/TreasuryObservation"
+        },
+        "simulation": {
+          "$ref": "#/$defs/SimulationObservation"
+        },
+        "clock": {
+          "$ref": "#/$defs/ClockObservation"
+        }
+      },
+      "required": [
+        "kind",
+        "scope",
+        "gameVersion",
+        "capture",
+        "coverage",
+        "population",
+        "treasury",
+        "simulation",
+        "clock"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "CityScope": {
+      "type": "object",
+      "properties": {
+        "instanceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "generation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 19
+        },
+        "cityId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "instanceId",
+        "generation",
+        "cityId"
+      ],
+      "additionalProperties": false
+    },
+    "CaptureInterval": {
+      "type": "object",
+      "properties": {
+        "startedAtUnixMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "endedAtUnixMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "simulationFrameStart": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "simulationFrameEnd": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        }
+      },
+      "required": [
+        "startedAtUnixMs",
+        "endedAtUnixMs",
+        "simulationFrameStart",
+        "simulationFrameEnd"
+      ],
+      "additionalProperties": false
+    },
+    "PopulationObservation": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 11,
+          "enum": [
+            "observed",
+            "unavailable"
+          ]
+        },
+        "value": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 9,
+          "maxLength": 9,
+          "const": "residents"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 25,
+          "maxLength": 25,
+          "const": "city-population-component"
+        },
+        "sourceUpdatedFrame": {
+          "type": "null"
+        },
+        "reason": {
+          "$ref": "#/$defs/MetricIssue"
+        }
+      },
+      "required": [
+        "status",
+        "value",
+        "unit",
+        "source",
+        "sourceUpdatedFrame",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "TreasuryObservation": {
+      "type": "object",
+      "description": "The native public money getter, in game currency. When unlimited is true this value is the game's effective limit, not a finite treasury balance. Negative finite balances are valid.",
+      "properties": {
+        "status": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 11,
+          "enum": [
+            "observed",
+            "unavailable"
+          ]
+        },
+        "value": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        },
+        "unlimited": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 13,
+          "maxLength": 13,
+          "const": "game-currency"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 22,
+          "maxLength": 22,
+          "const": "player-money-component"
+        },
+        "sourceUpdatedFrame": {
+          "type": "null"
+        },
+        "reason": {
+          "$ref": "#/$defs/MetricIssue"
+        }
+      },
+      "required": [
+        "status",
+        "value",
+        "unlimited",
+        "unit",
+        "source",
+        "sourceUpdatedFrame",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "MetricIssue": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 13,
+          "maxLength": 17,
+          "enum": [
+            "MISSING_COMPONENT",
+            "INVALID_VALUE"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "SimulationObservation": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 11,
+          "enum": [
+            "observed",
+            "unavailable"
+          ]
+        },
+        "selectedSpeed": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 3.4028234663852886e+38
+        },
+        "selectedPaused": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "smoothSpeed": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 3.4028234663852886e+38
+        },
+        "pauseReason": {
+          "type": "null"
+        },
+        "advancingNow": {
+          "type": "null"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 17,
+          "maxLength": 17,
+          "const": "simulation-system"
+        },
+        "sourceUpdatedFrame": {
+          "type": "null"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 13,
+              "maxLength": 18,
+              "enum": [
+                "SOURCE_UNAVAILABLE",
+                "INVALID_VALUE"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "selectedSpeed",
+        "selectedPaused",
+        "smoothSpeed",
+        "pauseReason",
+        "advancingNow",
+        "source",
+        "sourceUpdatedFrame",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "description": "selectedPaused follows the native UI definition selectedSpeed == 0. selectedSpeed may already have been set to zero by a UI barrier; it is not the retained player choice. smoothSpeed is the native smoothed estimate, not measured throughput. A positive target or repeated frame does not prove advancement or its absence."
+    },
+    "ClockEpoch": {
+      "type": "object",
+      "properties": {
+        "startingYear": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        },
+        "startingMonth": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "startingHour": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "startingMinute": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        }
+      },
+      "required": [
+        "startingYear",
+        "startingMonth",
+        "startingHour",
+        "startingMinute"
+      ],
+      "additionalProperties": false
+    },
+    "ClockObservation": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 11,
+          "enum": [
+            "observed",
+            "unavailable"
+          ]
+        },
+        "year": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        },
+        "dayFraction": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "yearFraction": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "daysPerYear": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 8191
+        },
+        "ticksPerDay": {
+          "type": "integer",
+          "minimum": 262144,
+          "maximum": 262144
+        },
+        "firstFrame": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "epoch": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClockEpoch"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "atSimulationFrame": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "source": {
+          "type": "string",
+          "minLength": 21,
+          "maxLength": 21,
+          "const": "native-time-functions"
+        },
+        "sourceUpdatedFrame": {
+          "type": "null"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 13,
+              "maxLength": 21,
+              "enum": [
+                "SOURCE_UNAVAILABLE",
+                "COMPONENT_UNAVAILABLE",
+                "INVALID_VALUE"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "year",
+        "dayFraction",
+        "yearFraction",
+        "daysPerYear",
+        "ticksPerDay",
+        "firstFrame",
+        "epoch",
+        "atSimulationFrame",
+        "source",
+        "sourceUpdatedFrame",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "description": "Derived from the current unique ECS time components and public native rendering-time functions at one integer simulation frame, without render interpolation or TimeSystem caches. Fractions are normalized to [0,1) after native float rounding. Year and epoch are native game values; do not treat them as a real UTC instant or assert Gregorian month/day accuracy."
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:wire-authenticate:1",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "authenticate",
+      "minLength": 12,
+      "maxLength": 12
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "profileId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "token": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "contractVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "productVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    }
+  },
+  "required": [
+    "kind",
+    "requestId",
+    "profileId",
+    "token",
+    "contractVersion",
+    "productVersion"
+  ],
+  "additionalProperties": false
+}

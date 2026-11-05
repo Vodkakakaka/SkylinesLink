@@ -1,0 +1,2 @@
+# Preserve original upstream LICENSE bytes, including their whitespace.
+*.txt -text whitespace=-trailing-space,-space-before-tab,cr-at-eol

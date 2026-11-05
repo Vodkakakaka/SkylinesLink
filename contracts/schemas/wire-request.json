@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:wire-request:1",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "request",
+      "minLength": 7,
+      "maxLength": 7
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "capabilityId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "schemaRevision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "arguments": {
+      "type": "object",
+      "maxProperties": 64,
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "kind",
+    "requestId",
+    "capabilityId",
+    "schemaRevision",
+    "arguments"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <AssemblyName>ExitLifecycleControl</AssemblyName>
+    <RootNamespace>ExitLifecycleControl</RootNamespace>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Library/**</DefaultItemExcludes>
+    <SkylinesLinkGameToolchain>$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))</SkylinesLinkGameToolchain>
+  </PropertyGroup>
+  <Import Project="$(SkylinesLinkGameToolchain)/Mod.props" />
+  <Import Project="$(SkylinesLinkGameToolchain)/Mod.targets" />
+  <ItemGroup>
+    <Reference Include="Game"><Private>false</Private></Reference>
+    <Reference Include="Colossal.Core"><Private>false</Private></Reference>
+    <Reference Include="Colossal.PSI.Common"><Private>false</Private></Reference>
+    <Reference Include="Newtonsoft.Json"><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><Private>false</Private></Reference>
+    <Reference Include="Unity.Entities"><Private>false</Private></Reference>
+    <Reference Include="Unity.Collections"><Private>false</Private></Reference>
+  </ItemGroup>
+  <Target Name="ConfigureReleasePostProcessor" AfterTargets="ModPostProcessorConfig" Condition="'$(Configuration)' == 'Release'">
+    <PropertyGroup>
+      <ModPostProcessorArgs>"$(ModPostProcessorFullPath)" PostProcess "$(TargetPath)" -u "$(UnityModProjectFullPath)" @(ReferencePath->'-r "%(Identity)"', ' ') -p Windows -p macOS -p Linux -v</ModPostProcessorArgs>
+    </PropertyGroup>
+  </Target>
+  <Target Name="DeployWIP" AfterTargets="AfterBuild">
+    <Message Text="Private exit control build does not deploy." Importance="high" />
+  </Target>
+  <Target Name="RejectControlPublish" BeforeTargets="Publish">
+    <Error Text="Only Build is supported for the private exit control." />
+  </Target>
+  <Target Name="RunModPublisher" AfterTargets="Publish">
+    <Error Text="The private control is not a product release." />
+  </Target>
+</Project>

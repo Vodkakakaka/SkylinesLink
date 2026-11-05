@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/Contracts/">
+    <Project Path="contracts/cs/SkylinesLink.Contracts/SkylinesLink.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/Game-independent/">
+    <Project Path="src/game/SkylinesLink.Application/SkylinesLink.Application.csproj" />
+    <Project Path="src/game/SkylinesLink.Infrastructure/SkylinesLink.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Desktop/">
+    <Project Path="src/desktop/SkylinesLink.Deployment/SkylinesLink.Deployment.csproj" />
+    <Project Path="src/desktop/SkylinesLink.Launcher/SkylinesLink.Launcher.csproj" />
+    <Project Path="src/desktop/SkylinesLink.Setup/SkylinesLink.Setup.csproj" />
+  </Folder>
+</Solution>

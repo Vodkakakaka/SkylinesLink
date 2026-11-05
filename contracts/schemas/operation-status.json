@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:operation-status:1",
+  "type": "object",
+  "properties": {
+    "operationId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "state": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 9,
+      "enum": [
+        "queued",
+        "running",
+        "waiting",
+        "succeeded",
+        "failed",
+        "cancelled",
+        "partial",
+        "unknown"
+      ]
+    },
+    "mayHaveApplied": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "operationId",
+    "state",
+    "mayHaveApplied"
+  ],
+  "additionalProperties": false
+}

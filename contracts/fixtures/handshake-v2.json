@@ -1,0 +1,86 @@
+{
+  "description": "Public synthetic keys only. Independently computed with Python hmac/hashlib and struct uint32 little-endian lengths; never use these credentials outside fixtures.",
+  "domain": "SkylinesLink/pipe-auth/v2",
+  "algorithm": "HMAC-SHA256",
+  "encoding": "uint32le-length-prefixed-utf8",
+  "fieldOrder": [
+    "domain",
+    "role",
+    "requestId",
+    "environmentId",
+    "instanceId",
+    "productVersion",
+    "contractVersion",
+    "coreManifestSha256",
+    "authorityEpoch",
+    "profileId",
+    "grantEpoch",
+    "clientNonce",
+    "serverNonce"
+  ],
+  "vectors": [
+    {
+      "name": "ascii",
+      "internalToken": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "fields": {
+        "requestId": "fixture-request-1",
+        "environmentId": "fixture",
+        "instanceId": "fixture-instance-1",
+        "productVersion": "0.1.0-dev.0",
+        "contractVersion": "2",
+        "coreManifestSha256": "abababababababababababababababababababababababababababababababab",
+        "authorityEpoch": 3,
+        "profileId": "Codex",
+        "grantEpoch": 7,
+        "clientNonce": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+        "serverNonce": "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f"
+      },
+      "serverProof": "f9817ba33377f6de996a4170985b275b347eed8ba38c396f1d1ed35057bced0b",
+      "serverTranscriptBytes": 336,
+      "clientProof": "0ea5bb20041cc72ac17c7a5e56f2a1c9de60f52962396efd039da30a1537dcdc",
+      "clientTranscriptBytes": 336
+    },
+    {
+      "name": "utf8-request-id",
+      "internalToken": "fffefdfcfbfaf9f8f7f6f5f4f3f2f1f0efeeedecebeae9e8e7e6e5e4e3e2e1e0",
+      "fields": {
+        "requestId": "请求-🚦",
+        "environmentId": "fixture",
+        "instanceId": "fixture-instance-1",
+        "productVersion": "0.1.0-dev.0",
+        "contractVersion": "2",
+        "coreManifestSha256": "abababababababababababababababababababababababababababababababab",
+        "authorityEpoch": 3,
+        "profileId": "DSH_test",
+        "grantEpoch": 7,
+        "clientNonce": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+        "serverNonce": "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f"
+      },
+      "serverProof": "e6bd7c9d8fccb5425a2c301a693e5f650d1ba387fc2167c2417d937cdf0880aa",
+      "serverTranscriptBytes": 333,
+      "clientProof": "b8751a5292f41b3961d61508538af474b2b464e9ff3f4a21db34849137334e17",
+      "clientTranscriptBytes": 333
+    },
+    {
+      "name": "safe-integer-boundary",
+      "internalToken": "606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+      "fields": {
+        "requestId": "boundary:request|3",
+        "environmentId": "fixture",
+        "instanceId": "fixture-instance-1",
+        "productVersion": "0.1.0-dev.0",
+        "contractVersion": "2",
+        "coreManifestSha256": "abababababababababababababababababababababababababababababababab",
+        "authorityEpoch": 9007199254740991,
+        "profileId": "Codex",
+        "grantEpoch": 9007199254740990,
+        "clientNonce": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+        "serverNonce": "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f"
+      },
+      "serverProof": "06240ae0a13a7cdc607419919cb61dd88e74c13e97698ebbf2f2d011ece2ed2d",
+      "serverTranscriptBytes": 367,
+      "clientProof": "317e472cfee8c8eb91f764e64506e3186f645eeeef65812b16e60d9cf9e792c3",
+      "clientTranscriptBytes": 367
+    }
+  ]
+}

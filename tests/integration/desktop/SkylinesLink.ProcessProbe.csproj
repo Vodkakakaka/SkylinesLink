@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ProcessProbe.cs" />
+    <Compile Include="HistoryProbe.cs" />
+    <Compile Include="TaskRuleProbe.cs" />
+    <Compile Include="../../../src/shared/Processes/WindowsOwnedChild.cs" Link="WindowsOwnedChild.cs" />
+    <Compile Include="../../../src/desktop/SkylinesLink.Launcher/OwnedProcess.cs" Link="OwnedProcess.cs" />
+    <Compile Include="../../../src/desktop/SkylinesLink.Launcher/StdioRelay.cs" Link="StdioRelay.cs" />
+    <Compile Include="../../../src/desktop/SkylinesLink.Setup/PreparationFiles.cs" Link="PreparationFiles.cs" />
+  </ItemGroup>
+  <ItemGroup><ProjectReference Include="../../../src/desktop/SkylinesLink.Deployment/SkylinesLink.Deployment.csproj" /></ItemGroup>
+</Project>

@@ -1,49 +1,123 @@
-# 开发工具与版本基线
+# Development toolchain / 开发工具链
 
-核实日期：2026-10-30。以下是本项目选定的起始基线；不是所有本机工具已完成升级或所有依赖已经安装的声明。架构决定见 [OpenSpec design](../../openspec/changes/establish-project-foundation/design.md)。
+[English](#english) | [简体中文](#简体中文)
 
-## 版本原则
+## English
 
-- 运行时优先最新的 LTS 系列及该系列最新稳定补丁；没有 LTS 分支的语言、SDK、包管理器与构建工具采用最新稳定版。
-- 不使用 alpha、beta、RC、nightly 或不固定的 `latest` 作为构建输入。查询最新后写入精确版本和锁文件，更新时重新核查来源及兼容性。
-- 官方游戏工具链、目标运行时及其配套库共同构成兼容边界；不得单独升级 Unity、ECS、Burst 或游戏程序集。记录该边界，而不是把游戏旧目标框架误当作开发机缺少新 SDK。
-- 使用当前稳定工具实现已确认功能；没有实际需求就不引入框架。新增依赖仍须核对最新稳定版本、许可证和传递依赖。
-- 包管理统一使用 **pnpm**；npm 仅作备用工具。项目安装、脚本和 CI 文档使用 pnpm，以 `pnpm-lock.yaml` 为唯一 JavaScript 依赖锁文件，不混用 npm 安装或提交 `package-lock.json`。
+These are contributor build instructions for Windows. They do not install the mod into a game profile or describe a player release. VS Code is suitable for editing C# and TypeScript; a full Visual Studio IDE is not required.
 
-## 起始基线
+### Pinned baseline
 
-| 用途 | 选定版本 | 权威依据 |
-|---|---|---|
-| MCP 运行时 | Node.js **26.13.0 LTS (Lithium)** | [官方发行索引](https://nodejs.org/dist/index.json)、[LTS 状态](https://nodejs.org/en/about/previous-releases) |
-| MCP 开发语言 | TypeScript **7.0.2**，启用严格检查 | [官方包元数据](https://registry.npmjs.org/typescript/7.0.2) |
-| 包管理 | pnpm **12.16.1** | [官方包元数据](https://registry.npmjs.org/pnpm/12.16.1) |
-| MCP 服务 SDK | `@modelcontextprotocol/server` **2.4.0** | [包元数据](https://registry.npmjs.org/@modelcontextprotocol/server/2.4.0) |
-| MCP HTTP 适配 | `@modelcontextprotocol/node` **2.1.2** | [包元数据](https://registry.npmjs.org/@modelcontextprotocol/node/2.1.2)，声明兼容 server `^2.4.0` |
-| 协议测试客户端 | `@modelcontextprotocol/client` **2.4.0** | [包元数据](https://registry.npmjs.org/@modelcontextprotocol/client/2.4.0) |
-| Node 类型 | `@types/node` **26.6.6** | [包元数据](https://registry.npmjs.org/@types/node/26.6.6) |
-| 输入 schema | Zod **4.6.7** | [包元数据](https://registry.npmjs.org/zod/4.6.7) |
-| 服务代码打包 | esbuild **0.28.2** | [包元数据](https://registry.npmjs.org/esbuild/0.28.2) |
-| 随包运行环境 | 所选版本的官方可移植 Node 运行时 + 构建后的 JS bundle | 从[官方发行目录](https://nodejs.org/dist/v26.13.0/)获取并核对校验值，玩家无需安装 |
-| C# 开发 SDK | .NET SDK **10.0.403**，对应运行时 **10.0.14**，LTS | [官方 .NET 10 下载页](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)、[发行元数据](https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json) |
-| 版本控制 | Git for Windows **2.56.0.windows.4** | [官方稳定发行](https://github.com/git-for-windows/git/releases/tag/v2.56.0.windows.4) |
-| 规格工具 | OpenSpec **1.15.0** | [官方包元数据](https://registry.npmjs.org/@fission-ai/openspec/1.15.0) |
+The repository pins the following baseline for reproducibility, without claiming these versions are the newest available.
 
-测试优先使用所选 Node 自带的测试能力以及实际需要的 C# 测试工具。尚未引入的测试、检查或界面依赖，在首次采用时核对稳定版本，不把调研过的所有工具都装入项目。
+| Tool | Pinned version | Source of truth |
+| --- | --- | --- |
+| Node.js | 26.13.0 | [package.json](../../package.json), [.node-version](../../.node-version), [.nvmrc](../../.nvmrc) |
+| pnpm | 12.16.1 | [package.json](../../package.json) |
+| .NET SDK | 10.0.403 | [global.json](../../global.json): SDK roll-forward disabled, prereleases excluded |
+| TypeScript | 7.0.2 | Project devDependency in [package.json](../../package.json) |
 
-官方 [SEA 单可执行机制](https://nodejs.org/api/single-executable-applications.html)仍标注 Active development，不作为首发打包前提。一个订阅包可以包含多个运行文件，免额外安装不要求所有代码合成一个二进制。
+Use PowerShell 7 (`pwsh`) for the PowerShell scripts. TypeScript is installed with the project; no global TypeScript installation is needed. Use pnpm with [pnpm-lock.yaml](../../pnpm-lock.yaml), not a second npm lockfile. Exact MCP SDK and other JavaScript dependency versions are in [the Host package](../../src/host/package.json) and the lockfile.
 
-## 游戏侧的明确约束
+### Ordinary build and checks
 
-当前随游戏提供的 `Mod.props` 设置 `TargetFramework=net48`、`LangVersion=9.0`。开发使用最新稳定 .NET SDK，但发行模组先保持官方支持的目标和语言级别。SDK 自带 C# 14 编译能力不等于游戏与其后处理器支持全部 C# 14 特性；若未来官方工具链提高支持范围，再同步采用。[Microsoft 说明](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/configure-language-version)也要求考虑语言与运行时兼容，并避免浮动 `LangVersion=latest`。
+From the repository root, with the pinned tools available:
 
-这是游戏插件边界的兼容要求，不影响 TypeScript/Node 层采用最新 LTS / 稳定版。官方 ModPublisher 的目标运行时同样由游戏工具链管理，不能私自重编译或修改它来追版本号。
+```powershell
+pnpm install --frozen-lockfile
+dotnet restore SkylinesLink.slnx --locked-mode
+pnpm build
+pnpm test
+```
 
-## 实施与更新
+`pnpm build` generates contracts, checks TypeScript, bundles the Host and builds the six game-independent C# projects in [SkylinesLink.slnx](../../SkylinesLink.slnx). The solution excludes the game Mod. `pnpm test` runs the configured offline checks and Windows integration fixtures; it is not game acceptance.
 
-初始化代码时写入固定 Node / pnpm / .NET SDK 配置与依赖锁文件，并在构建中核对；在更新前核查官方最新版本及支持状态，验证后更新基线。构建和公开发行记录实际使用版本，不能只引用这张表。
+Ordinary C# restores use each project's `packages.lock.json`. Local .NET outputs go under `artifacts/dotnet`; the Host bundle goes under `artifacts/host`.
 
-当前开发机已经通过既有 nvm 安装并选用 Node 26.13.0 LTS，官方可执行文件校验值一致；pnpm 已更新为 12.16.1，正常入口与新 PowerShell 进程均已验证。.NET SDK 与 OpenSpec 已符合基线，现有 PATH 层级与稳定入口保持不变。Git 尚未更新至表中基线，应在开发初始化时通过既有管理方式处理。上述是开发机状态，不代表项目依赖或构建已经完成。
+### Official game Mod build
 
-TypeScript 不作全局安装。代码初始化时通过 pnpm 将其作为固定版本的项目 `devDependency`，使用项目脚本执行类型检查和构建。Node 对部分 TypeScript 语法的运行支持不能代替类型检查，也不是发行源码给玩家的理由。
+This additionally needs a legitimate Cities: Skylines II installation and its configured official modding toolchain, including the matching Unity editor, project and dependencies. Use the versions required by that toolchain; do not independently upgrade Unity, Entities or Burst.
 
-发行包携带所需 Node 运行时和适用许可证，不携带 npm/pnpm 开发环境；玩家无需联网安装依赖。Node 安全更新随模组发行维护，不能把补丁责任转交给玩家。
+The [Mod project](../../src/game/SkylinesLink.Mod/SkylinesLink.Mod.csproj) targets .NET Framework 4.8 and C# 9. It resolves the official `Mod.props` and `Mod.targets` through the user-scoped `CSII_TOOLPATH`; the official tools also use their configured `CSII_*` paths and Unity version. Keep machine-specific paths outside public source and follow the toolchain's setup instructions.
+
+```powershell
+pnpm build:mod
+# Explicit Release build:
+pwsh -NoProfile -File tools/build/build-mod.ps1 -Configuration Release
+```
+
+The [build script](../../tools/build/build-mod.ps1) temporarily sets `DOTNET_ROLL_FORWARD=Major` in its process so child tools may use an installed newer runtime, then restores the previous value in `finally`. It does not change machine/user environment settings or official runtime configuration, install a runtime, or turn a post-processing failure into success.
+
+This build invokes the official post-processor. Deployment is disabled and the Mod publisher is rejected by the project. The optional `-IntegrationProbe` switch produces a separate developer build, not a player package. Compilation and post-processing do not prove runtime behavior in the game.
+
+### NativeAOT desktop outputs
+
+NativeAOT is separate from ordinary development. The current target is Windows x64 and needs the supported native C++ build tools and Windows SDK in a suitable build environment; see [Microsoft's NativeAOT prerequisites](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/?tabs=windows). This does not require the full Visual Studio IDE for ordinary C#/TypeScript work.
+
+```powershell
+pnpm build:aot
+```
+
+The [desktop publication script](../../tools/build/publish-desktop.ps1) uses locked restores and writes local Launcher/Setup executables and notices under `artifacts/nativeaot`. NativeAOT uses the separate `packages.nativeaot.lock.json` files. It does not upload a release; ordinary managed-build checks do not establish AOT compatibility or complete package acceptance.
+
+When updating the baseline, update the version files, relevant lockfiles and generated outputs together, then run the affected checks. Keep proprietary game dependencies out of the repository and release payloads. See [architecture](../architecture.md) and [licensing](../governance/licensing.md) for component and distribution boundaries.
+
+## 简体中文
+
+本文面向 Windows 贡献者构建，不会将模组安装到游戏配置中，也不是玩家发行版的安装说明。可以使用 VS Code 编辑 C# 和 TypeScript，无需安装完整 Visual Studio IDE。
+
+### 固定版本基线
+
+仓库固定以下版本以保证可复现，不表示它们是目前最新版本。
+
+| 工具 | 固定版本 | 权威配置 |
+| --- | --- | --- |
+| Node.js | 26.13.0 | [package.json](../../package.json)、[.node-version](../../.node-version)、[.nvmrc](../../.nvmrc) |
+| pnpm | 12.16.1 | [package.json](../../package.json) |
+| .NET SDK | 10.0.403 | [global.json](../../global.json)：禁止 SDK 向前滚动及预发行版 |
+| TypeScript | 7.0.2 | [package.json](../../package.json) 中的项目开发依赖 |
+
+PowerShell 脚本使用 PowerShell 7（`pwsh`）。TypeScript 随项目依赖安装，无需全局安装。使用 pnpm 及唯一的 [pnpm-lock.yaml](../../pnpm-lock.yaml)，不另建 npm 锁文件。MCP SDK 和其他 JavaScript 依赖的精确版本见 [Host 配置](../../src/host/package.json)及锁文件。
+
+### 日常构建与检查
+
+在仓库根目录执行，事先准备好固定版本的工具：
+
+```powershell
+pnpm install --frozen-lockfile
+dotnet restore SkylinesLink.slnx --locked-mode
+pnpm build
+pnpm test
+```
+
+`pnpm build` 生成契约、检查 TypeScript、打包 Host，并构建 [SkylinesLink.slnx](../../SkylinesLink.slnx) 中六个不依赖游戏的 C# 工程；该 solution 不包含游戏 Mod。`pnpm test` 执行配置的离线检查和 Windows 集成夹具，不代表游戏验收。
+
+普通 C# 依赖还原使用各工程的 `packages.lock.json`。.NET 本地输出位于 `artifacts/dotnet`，Host bundle 位于 `artifacts/host`。
+
+### 官方游戏 Mod 构建
+
+此步骤另需合法安装的《城市：天际线 II》及已配置的官方模组工具链，包括匹配的 Unity 编辑器、项目和依赖。遵循官方工具链要求的兼容版本，不单独升级 Unity、Entities 或 Burst。
+
+[Mod 工程](../../src/game/SkylinesLink.Mod/SkylinesLink.Mod.csproj) 使用 .NET Framework 4.8 和 C# 9，通过用户层 `CSII_TOOLPATH` 定位官方 `Mod.props` 和 `Mod.targets`；官方工具还使用其已配置的 `CSII_*` 路径及 Unity 版本。按工具链说明配置，本机路径不要写进公开源码。
+
+```powershell
+pnpm build:mod
+# 显式构建 Release：
+pwsh -NoProfile -File tools/build/build-mod.ps1 -Configuration Release
+```
+
+[构建脚本](../../tools/build/build-mod.ps1) 仅在自身进程中临时设置 `DOTNET_ROLL_FORWARD=Major`，让子工具可以考虑使用已安装的较新运行时，并在 `finally` 中恢复原值。它不修改机器层／用户层环境或官方运行配置，不安装运行时，也不忽略后处理失败。
+
+构建会执行官方后处理器。工程已禁用部署并拒绝调用 Mod 发布器。可选的 `-IntegrationProbe` 开关产生独立开发构建，不是玩家安装包；编译和后处理通过不代表游戏实载行为已验收。
+
+### NativeAOT 桌面输出
+
+NativeAOT 与日常开发分开。当前目标为 Windows x64，需要适用构建环境中的原生 C++ 工具及 Windows SDK，前提见 [Microsoft 官方说明](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/?tabs=windows)。普通 C#/TypeScript 开发无需因此安装完整 Visual Studio IDE。
+
+```powershell
+pnpm build:aot
+```
+
+[桌面发布脚本](../../tools/build/publish-desktop.ps1) 使用锁定还原，将本地 Launcher/Setup 可执行文件及 notices 写入 `artifacts/nativeaot`。NativeAOT 使用独立的 `packages.nativeaot.lock.json`；该命令不会上传发行版，普通托管构建检查也不能替代 AOT 及完整安装包验收。
+
+更新基线时，同步版本配置、相关锁文件与生成文件，再运行受影响的检查。专有游戏依赖不得进入仓库或发行包；组件和分发边界见[架构](../architecture.md)与[许可说明](../governance/licensing.md)。

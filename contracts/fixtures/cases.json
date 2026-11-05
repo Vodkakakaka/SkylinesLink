@@ -1,0 +1,562 @@
+[
+  {
+    "name": "\u6b63\u5e38\u5d4c\u5957\u8054\u5408\u53ca\u672c\u5730\u5f15\u7528",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": true
+  },
+  {
+    "name": "\u53ef\u9009\u7f3a\u5931",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": true
+  },
+  {
+    "name": "\u53ef\u9009null",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}},\"label\":null,\"optionalNumber\":null,\"optionalChild\":null}",
+    "valid": true
+  },
+  {
+    "name": "Unicode\u6807\u91cf\u957f\u5ea6",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}},\"label\":\"\\u57ce\\ud83d\\udea6\"}",
+    "valid": true
+  },
+  {
+    "name": "\u5b89\u5168\u6574\u6570\u8fb9\u754c",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":9007199254740991,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": true
+  },
+  {
+    "name": "\u8d1f\u5b89\u5168\u6574\u6570\u8fb9\u754c",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":-9007199254740991,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": true
+  },
+  {
+    "name": "\u7a7a\u6570\u7ec4\u4e0efalse",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":false,\"tags\":[],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": true
+  },
+  {
+    "name": "\u5d4c\u5957\u6570\u7ec4",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}},\"matrix\":[[1,2],[-1]]}",
+    "valid": true
+  },
+  {
+    "name": "\u7b2c\u4e8c\u8054\u5408\u5206\u652f",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"none\"}}",
+    "valid": true
+  },
+  {
+    "name": "\u53ef\u9009\u503c\u4e0e\u9ed8\u8ba4\u6ce8\u89e3",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}},\"defaulted\":false,\"optionalNumber\":0.5}",
+    "valid": true
+  },
+  {
+    "name": "\u591a\u4f59\u5b57\u6bb5",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}},\"bad\":1}",
+    "valid": false,
+    "code": "EXTRA_PROPERTY"
+  },
+  {
+    "name": "null\u4e0d\u4ee3\u7f3a\u5931",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":null,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "TYPE"
+  },
+  {
+    "name": "\u62d2\u7edd\u5b57\u7b26\u4e32\u6570\u5b57",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":\"2\",\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "TYPE"
+  },
+  {
+    "name": "\u975e\u6574\u6570",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":1.2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "INTEGER"
+  },
+  {
+    "name": "\u6574\u6570\u8d85\u5b89\u5168\u8303\u56f4",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":9007199254740992,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "INTEGER"
+  },
+  {
+    "name": "\u6570\u5b57\u8d8a\u754c",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":101,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "RANGE"
+  },
+  {
+    "name": "\u6807\u91cf\u957f\u5ea6\u8d85\u9650",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}},\"label\":\"\\u57ce\\u5e02\\ud83d\\udea6A\"}",
+    "valid": false,
+    "code": "LENGTH"
+  },
+  {
+    "name": "\u6570\u7ec4\u8d8a\u754c",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\",\"\\u4e2d\",\"\\u4e2d\",\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "LENGTH"
+  },
+  {
+    "name": "\u672a\u77e5enum",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"no\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "ENUM"
+  },
+  {
+    "name": "\u672a\u77e5\u8054\u5408\u5224\u522b",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"other\"}}",
+    "valid": false,
+    "code": "DISCRIMINATOR"
+  },
+  {
+    "name": "\u8054\u5408\u5206\u652f\u591a\u5b57\u6bb5",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"none\",\"note\":null,\"point\":{}}}",
+    "valid": false,
+    "code": "PROPERTIES"
+  },
+  {
+    "name": "decimal\u6307\u6570",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"1e2\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "LENGTH"
+  },
+  {
+    "name": "decimal\u524d\u5bfc\u96f6",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"01.20\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "DECIMAL"
+  },
+  {
+    "name": "decimal\u52a0\u53f7",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"+1.20\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "DECIMAL"
+  },
+  {
+    "name": "decimal\u8d1f\u96f6",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"-0.00\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "DECIMAL"
+  },
+  {
+    "name": "decimal\u9519\u8befscale",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"1.2\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "LENGTH"
+  },
+  {
+    "name": "decimal\u8d85\u4f4d\u6570",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"1234567.89\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "DECIMAL"
+  },
+  {
+    "name": "\u5b64\u7acb\u9ad8surrogate",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}},\"label\":\"\\ud800\"}",
+    "valid": false,
+    "code": "UNICODE"
+  },
+  {
+    "name": "\u5b64\u7acb\u4f4esurrogate",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}},\"label\":\"\\udc00\"}",
+    "valid": false,
+    "code": "UNICODE"
+  },
+  {
+    "name": "\u5fc5\u9700\u5b57\u6bb5\u7f3a\u5931",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "REQUIRED"
+  },
+  {
+    "name": "\u91cd\u590d\u952e\u53d6\u540e\u503c",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1.5,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}},\"count\":3}",
+    "valid": true
+  },
+  {
+    "name": "\u62d2\u7edd\u5c3e\u9017\u53f7",
+    "schemaId": "urn:skylineslink:contract:operation-query:1",
+    "json": "{\"operationId\":\"a\",}",
+    "valid": false,
+    "code": "JSON"
+  },
+  {
+    "name": "\u62d2\u7edd\u5355\u5f15\u53f7",
+    "schemaId": "urn:skylineslink:contract:operation-query:1",
+    "json": "{'operationId':'a'}",
+    "valid": false,
+    "code": "JSON"
+  },
+  {
+    "name": "\u62d2\u7edd\u88f8\u952e",
+    "schemaId": "urn:skylineslink:contract:operation-query:1",
+    "json": "{operationId:\"a\"}",
+    "valid": false,
+    "code": "JSON"
+  },
+  {
+    "name": "\u62d2\u7edd\u6ce8\u91ca",
+    "schemaId": "urn:skylineslink:contract:operation-query:1",
+    "json": "{/*x*/\"operationId\":\"a\"}",
+    "valid": false,
+    "code": "JSON"
+  },
+  {
+    "name": "\u62d2\u7eddNaN",
+    "schemaId": "urn:skylineslink:contract:operation-query:1",
+    "json": "{\"operationId\":NaN}",
+    "valid": false,
+    "code": "JSON"
+  },
+  {
+    "name": "\u62d2\u7edd\u591a\u6839",
+    "schemaId": "urn:skylineslink:contract:operation-query:1",
+    "json": "{} {}",
+    "valid": false,
+    "code": "JSON"
+  },
+  {
+    "name": "\u975e\u6709\u9650\u6307\u6570",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\":\"12.30\",\"count\":2,\"distance\":1e999,\"enabled\":true,\"tags\":[\"\\u4e2d\"],\"choice\":{\"kind\":\"point\",\"point\":{\"x\":1,\"y\":2,\"mode\":{\"kind\":\"fast\",\"count\":1}}}}",
+    "valid": false,
+    "code": "NUMBER"
+  },
+  {
+    "name": "\u5df2\u6ce8\u518c\u5185\u5c42\u6709\u6548",
+    "schemaId": "urn:skylineslink:contract:wire-request:1",
+    "json": "{\"kind\":\"request\",\"requestId\":\"req-1\",\"capabilityId\":\"system.context\",\"schemaRevision\":\"2\",\"arguments\":{}}",
+    "valid": true
+  },
+  {
+    "name": "\u5185\u5c42\u591a\u4f59\u5b57\u6bb5",
+    "schemaId": "urn:skylineslink:contract:wire-request:1",
+    "json": "{\"kind\":\"request\",\"requestId\":\"req-1\",\"capabilityId\":\"system.context\",\"schemaRevision\":\"2\",\"arguments\":{\"bad\":1}}",
+    "valid": false,
+    "code": "PROPERTIES"
+  },
+  {
+    "name": "\u672a\u77e5\u80fd\u529b",
+    "schemaId": "urn:skylineslink:contract:wire-request:1",
+    "json": "{\"kind\":\"request\",\"requestId\":\"req-1\",\"capabilityId\":\"arbitrary.eval\",\"schemaRevision\":\"1\",\"arguments\":{}}",
+    "valid": false,
+    "code": "UNKNOWN_CAPABILITY"
+  },
+  {
+    "name": "\u65e7schema\u7248\u672c",
+    "schemaId": "urn:skylineslink:contract:wire-request:1",
+    "json": "{\"kind\":\"request\",\"requestId\":\"req-1\",\"capabilityId\":\"system.context\",\"schemaRevision\":\"1\",\"arguments\":{}}",
+    "valid": false,
+    "code": "SCHEMA_REVISION"
+  },
+  {
+    "name": "\u7ed3\u679c\u6355\u83b7\u7ed1\u5b9a",
+    "schemaId": "urn:skylineslink:contract:wire-result:1",
+    "json": "{\"kind\":\"result\",\"requestId\":\"req-1\",\"result\":{\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"1\",\"instanceId\":\"test-instance\",\"world\":null,\"gameState\":\"menu\",\"catalogRevision\":\"1\"}}",
+    "valid": true,
+    "binding": {
+      "capabilityId": "system.context",
+      "schemaRevision": "2"
+    }
+  },
+  {
+    "name": "\u7ed3\u679c\u7f3a\u5c11\u7ed1\u5b9a",
+    "schemaId": "urn:skylineslink:contract:wire-result:1",
+    "json": "{\"kind\":\"result\",\"requestId\":\"req-1\",\"result\":{\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"1\",\"instanceId\":\"test-instance\",\"world\":null,\"gameState\":\"menu\",\"catalogRevision\":\"1\"}}",
+    "valid": false,
+    "code": "BINDING_REQUIRED"
+  },
+  {
+    "name": "\u53d7\u63a7schema\u539f\u6587",
+    "schemaId": "urn:skylineslink:contract:capability-description:1",
+    "json": "{\"capabilityId\":\"system.context\",\"schemaRevision\":\"1\",\"inputSchema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"$id\":\"urn:skylineslink:contract:empty:1\",\"type\":\"object\",\"properties\":{},\"required\":[],\"additionalProperties\":false},\"outputSchema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"$id\":\"urn:skylineslink:contract:context:1\",\"type\":\"object\",\"properties\":{\"productVersion\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":64},\"contractVersion\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":64},\"instanceId\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":128},\"world\":{\"anyOf\":[{\"$ref\":\"#/$defs/World\"},{\"type\":\"null\"}]},\"gameState\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":11,\"enum\":[\"menu\",\"loading\",\"ready\",\"unavailable\"]},\"catalogRevision\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":128}},\"required\":[\"productVersion\",\"contractVersion\",\"instanceId\",\"world\",\"gameState\",\"catalogRevision\"],\"additionalProperties\":false,\"$defs\":{\"World\":{\"type\":\"object\",\"properties\":{\"cityId\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":128},\"generation\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":128}},\"required\":[\"cityId\",\"generation\"],\"additionalProperties\":false}}}}",
+    "valid": true
+  },
+  {
+    "name": "\u62d2\u7edd\u5ba2\u6237\u7aefschema",
+    "schemaId": "urn:skylineslink:contract:capability-description:1",
+    "json": "{\"capabilityId\":\"system.context\",\"schemaRevision\":\"1\",\"inputSchema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"$id\":\"urn:skylineslink:contract:empty:1\",\"type\":\"object\",\"properties\":{},\"required\":[],\"additionalProperties\":false,\"title\":\"client edit\"},\"outputSchema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"$id\":\"urn:skylineslink:contract:context:1\",\"type\":\"object\",\"properties\":{\"productVersion\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":64},\"contractVersion\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":64},\"instanceId\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":128},\"world\":{\"anyOf\":[{\"$ref\":\"#/$defs/World\"},{\"type\":\"null\"}]},\"gameState\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":11,\"enum\":[\"menu\",\"loading\",\"ready\",\"unavailable\"]},\"catalogRevision\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":128}},\"required\":[\"productVersion\",\"contractVersion\",\"instanceId\",\"world\",\"gameState\",\"catalogRevision\"],\"additionalProperties\":false,\"$defs\":{\"World\":{\"type\":\"object\",\"properties\":{\"cityId\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":128},\"generation\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":128}},\"required\":[\"cityId\",\"generation\"],\"additionalProperties\":false}}}}",
+    "valid": false,
+    "code": "SCHEMA_DOCUMENT"
+  },
+  {
+    "name": "\u8d1f\u5341\u8fdb\u5236\u6709\u6548",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\": \"-12.30\", \"count\": 2, \"distance\": 1.5, \"enabled\": true, \"tags\": [\"\\u4e2d\"], \"choice\": {\"kind\": \"point\", \"point\": {\"x\": 1, \"y\": 2, \"mode\": {\"kind\": \"fast\", \"count\": 1}}}}",
+    "valid": true
+  },
+  {
+    "name": "\u91cd\u590d\u952e\u5f52\u5e76\u524d\u9884\u7b97",
+    "schemaId": "urn:skylineslink:contract:operation-query:1",
+    "json": "{\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0,\"a\":0}",
+    "valid": false,
+    "code": "BUDGET"
+  },
+  {
+    "name": "\u6df1\u5ea6\u9884\u7b97",
+    "schemaId": "urn:skylineslink:contract:operation-query:1",
+    "json": "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[0]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]",
+    "valid": false,
+    "code": "BUDGET"
+  },
+  {
+    "name": "enum\u4e0enullable\u7c7b\u578b\u76f8\u4ea4\u62d2null",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\": \"12.30\", \"count\": 2, \"distance\": 1.5, \"enabled\": true, \"tags\": [\"\\u4e2d\"], \"choice\": {\"kind\": \"point\", \"point\": {\"x\": 1, \"y\": 2, \"mode\": {\"kind\": \"fast\", \"count\": 1}}}, \"enumIntersection\": null}",
+    "valid": false,
+    "code": "TYPE"
+  },
+  {
+    "name": "const\u4e0enullable\u7c7b\u578b\u76f8\u4ea4\u62d2null",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\": \"12.30\", \"count\": 2, \"distance\": 1.5, \"enabled\": true, \"tags\": [\"\\u4e2d\"], \"choice\": {\"kind\": \"point\", \"point\": {\"x\": 1, \"y\": 2, \"mode\": {\"kind\": \"fast\", \"count\": 1}}}, \"constantIntersection\": null}",
+    "valid": false,
+    "code": "TYPE"
+  },
+  {
+    "name": "\u660e\u786enullable\u679a\u4e3e\u5141\u8bb8null",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\": \"12.30\", \"count\": 2, \"distance\": 1.5, \"enabled\": true, \"tags\": [\"\\u4e2d\"], \"choice\": {\"kind\": \"point\", \"point\": {\"x\": 1, \"y\": 2, \"mode\": {\"kind\": \"fast\", \"count\": 1}}}, \"enumNullable\": null}",
+    "valid": true
+  },
+  {
+    "name": "\u679a\u4e3e\u4ea4\u96c6\u6709\u6548\u5b57\u7b26\u4e32",
+    "schemaId": "urn:skylineslink:contract:profile-fixture:1",
+    "json": "{\"amount\": \"12.30\", \"count\": 2, \"distance\": 1.5, \"enabled\": true, \"tags\": [\"\\u4e2d\"], \"choice\": {\"kind\": \"point\", \"point\": {\"x\": 1, \"y\": 2, \"mode\": {\"kind\": \"fast\", \"count\": 1}}}, \"enumIntersection\": \"ok\", \"constantIntersection\": \"ok\", \"enumNullable\": \"no\"}",
+    "valid": true
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u672a\u6fc0\u6d3b\u7a7a\u6388\u6743\u5feb\u7167",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:1",
+    "json": "{\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":1,\"authorityEpoch\":0,\"profiles\":[]}",
+    "valid": true
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u5df2\u6fc0\u6d3b\u6388\u6743\u4e14HTTP\u672a\u914d\u7f6e",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:1",
+    "json": "{\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":8,\"authorityEpoch\":3,\"profiles\":[{\"profileId\":\"Codex\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null}]}",
+    "valid": true
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u53cc\u8df3\u51ed\u636e\u5206\u522b\u5b58\u5728",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:1",
+    "json": "{\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":8,\"authorityEpoch\":3,\"profiles\":[{\"profileId\":\"Codex\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":\"fefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefe\"}]}",
+    "valid": true
+  },
+  {
+    "name": "\u63a5\u51652\uff1aHTTP\u51ed\u636e\u5fc5\u987b\u663e\u5f0fnull\u800c\u975e\u7f3a\u5931",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:1",
+    "json": "{\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":8,\"authorityEpoch\":3,\"profiles\":[{\"profileId\":\"Codex\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\"}]}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u672a\u77e5scope\u4f4d\u62d2\u7edd",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:1",
+    "json": "{\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":8,\"authorityEpoch\":3,\"profiles\":[{\"profileId\":\"Codex\",\"grantEpoch\":7,\"scopeMask\":8,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null}]}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1arevision\u8d85\u5b89\u5168\u6574\u6570\u62d2\u7edd",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:1",
+    "json": "{\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":9007199254740992,\"authorityEpoch\":3,\"profiles\":[{\"profileId\":\"Codex\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null}]}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u672a\u6fc0\u6d3b\u4ee3\u6b21\u4e0d\u80fd\u8d1f\u6570",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:1",
+    "json": "{\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":8,\"authorityEpoch\":-1,\"profiles\":[{\"profileId\":\"Codex\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null}]}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1aprofile\u6570\u91cf\u6709\u754c",
+    "schemaId": "urn:skylineslink:contract:authorization-snapshot:1",
+    "json": "{\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"recordRevision\":8,\"authorityEpoch\":3,\"profiles\":[{\"profileId\":\"p0\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p1\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p2\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p3\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p4\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p5\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p6\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p7\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p8\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p9\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p10\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p11\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p12\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p13\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p14\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p15\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p16\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p17\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p18\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p19\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p20\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p21\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p22\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p23\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p24\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p25\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p26\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p27\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p28\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p29\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p30\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p31\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p32\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p33\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p34\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p35\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p36\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p37\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p38\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p39\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p40\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p41\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p42\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p43\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p44\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p45\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p46\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p47\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p48\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p49\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p50\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p51\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p52\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p53\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p54\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p55\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p56\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p57\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p58\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p59\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p60\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p61\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p62\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p63\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null},{\"profileId\":\"p64\",\"grantEpoch\":7,\"scopeMask\":1,\"internalToken\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"externalHttpToken\":null}]}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u53d7\u63a7\u53d1\u73b0\u8bb0\u5f55",
+    "schemaId": "urn:skylineslink:contract:environment-discovery:1",
+    "json": "{\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"instanceId\":\"fixture-instance-1\",\"authorityEpoch\":3,\"pipeName\":\"skylineslink-fixture-001\",\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"coreManifestSha256\":\"abababababababababababababababababababababababababababababababab\",\"processId\":42}",
+    "valid": true
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u53d1\u73b0\u4e0d\u80fd\u516c\u5e03\u672a\u6fc0\u6d3b\u4ee3\u6b21",
+    "schemaId": "urn:skylineslink:contract:environment-discovery:1",
+    "json": "{\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"instanceId\":\"fixture-instance-1\",\"authorityEpoch\":0,\"pipeName\":\"skylineslink-fixture-001\",\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"coreManifestSha256\":\"abababababababababababababababababababababababababababababababab\",\"processId\":42}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u53d1\u73b0\u4e0d\u80fd\u643a\u5e26token",
+    "schemaId": "urn:skylineslink:contract:environment-discovery:1",
+    "json": "{\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"instanceId\":\"fixture-instance-1\",\"authorityEpoch\":3,\"pipeName\":\"skylineslink-fixture-001\",\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"coreManifestSha256\":\"abababababababababababababababababababababababababababababababab\",\"processId\":42,\"token\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\"}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1aPID\u8d85\u8fc7uint32\u62d2\u7edd",
+    "schemaId": "urn:skylineslink:contract:environment-discovery:1",
+    "json": "{\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"instanceId\":\"fixture-instance-1\",\"authorityEpoch\":3,\"pipeName\":\"skylineslink-fixture-001\",\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"coreManifestSha256\":\"abababababababababababababababababababababababababababababababab\",\"processId\":4294967296}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u7ba1\u9053\u540d\u8d85\u8fc7\u4e24\u7aef\u4e00\u81f4\u4e0a\u9650\u62d2\u7edd",
+    "schemaId": "urn:skylineslink:contract:environment-discovery:1",
+    "json": "{\"productId\":\"skylineslink\",\"environmentId\":\"fixture\",\"instanceId\":\"fixture-instance-1\",\"authorityEpoch\":3,\"pipeName\":\"skylineslink-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"coreManifestSha256\":\"abababababababababababababababababababababababababababababababab\",\"processId\":42}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u65b0\u7248\u516c\u5f00\u8eab\u4efdhello",
+    "schemaId": "urn:skylineslink:contract:wire-authenticate:2",
+    "json": "{\"kind\":\"authenticate\",\"requestId\":\"fixture-request-1\",\"environmentId\":\"fixture\",\"profileId\":\"Codex\",\"expectedInstanceId\":\"fixture-instance-1\",\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"coreManifestSha256\":\"abababababababababababababababababababababababababababababababab\",\"expectedAuthorityEpoch\":3,\"expectedGrantEpoch\":7,\"clientNonce\":\"202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f\"}",
+    "valid": true
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u65b0\u7248hello\u4e0d\u518d\u63a5\u53d7token",
+    "schemaId": "urn:skylineslink:contract:wire-authenticate:2",
+    "json": "{\"kind\":\"authenticate\",\"requestId\":\"fixture-request-1\",\"environmentId\":\"fixture\",\"profileId\":\"Codex\",\"expectedInstanceId\":\"fixture-instance-1\",\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"coreManifestSha256\":\"abababababababababababababababababababababababababababababababab\",\"expectedAuthorityEpoch\":3,\"expectedGrantEpoch\":7,\"clientNonce\":\"202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f\",\"token\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\"}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1ahello\u5fc5\u987b\u671f\u5f85\u6d3b\u8dc3\u4ee3\u6b21",
+    "schemaId": "urn:skylineslink:contract:wire-authenticate:2",
+    "json": "{\"kind\":\"authenticate\",\"requestId\":\"fixture-request-1\",\"environmentId\":\"fixture\",\"profileId\":\"Codex\",\"expectedInstanceId\":\"fixture-instance-1\",\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"coreManifestSha256\":\"abababababababababababababababababababababababababababababababab\",\"expectedAuthorityEpoch\":0,\"expectedGrantEpoch\":7,\"clientNonce\":\"202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f\"}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1ahello\u62d2\u7edd\u5185\u90e8\u65e7\u7248\u672c",
+    "schemaId": "urn:skylineslink:contract:wire-authenticate:2",
+    "json": "{\"kind\":\"authenticate\",\"requestId\":\"fixture-request-1\",\"environmentId\":\"fixture\",\"profileId\":\"Codex\",\"expectedInstanceId\":\"fixture-instance-1\",\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"1\",\"coreManifestSha256\":\"abababababababababababababababababababababababababababababababab\",\"expectedAuthorityEpoch\":3,\"expectedGrantEpoch\":7,\"clientNonce\":\"202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f\"}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1ahello\u5fc5\u987b\u7ed1\u5b9a\u5b9e\u4f8b",
+    "schemaId": "urn:skylineslink:contract:wire-authenticate:2",
+    "json": "{\"kind\":\"authenticate\",\"requestId\":\"fixture-request-1\",\"environmentId\":\"fixture\",\"profileId\":\"Codex\",\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"coreManifestSha256\":\"abababababababababababababababababababababababababababababababab\",\"expectedAuthorityEpoch\":3,\"expectedGrantEpoch\":7,\"clientNonce\":\"202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f\"}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u65b0\u7248server\u6311\u6218",
+    "schemaId": "urn:skylineslink:contract:wire-challenge:2",
+    "json": "{\"kind\":\"challenge\",\"requestId\":\"fixture-request-1\",\"environmentId\":\"fixture\",\"profileId\":\"Codex\",\"instanceId\":\"fixture-instance-1\",\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"coreManifestSha256\":\"abababababababababababababababababababababababababababababababab\",\"authorityEpoch\":3,\"grantEpoch\":7,\"clientNonce\":\"202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f\",\"serverNonce\":\"404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f\",\"serverProof\":\"f9817ba33377f6de996a4170985b275b347eed8ba38c396f1d1ed35057bced0b\"}",
+    "valid": true
+  },
+  {
+    "name": "\u63a5\u51652\uff1aserver\u6311\u6218\u4e0d\u5f97\u56de\u663etoken",
+    "schemaId": "urn:skylineslink:contract:wire-challenge:2",
+    "json": "{\"kind\":\"challenge\",\"requestId\":\"fixture-request-1\",\"environmentId\":\"fixture\",\"profileId\":\"Codex\",\"instanceId\":\"fixture-instance-1\",\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"coreManifestSha256\":\"abababababababababababababababababababababababababababababababab\",\"authorityEpoch\":3,\"grantEpoch\":7,\"clientNonce\":\"202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f\",\"serverNonce\":\"404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f\",\"serverProof\":\"f9817ba33377f6de996a4170985b275b347eed8ba38c396f1d1ed35057bced0b\",\"token\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\"}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u65b0\u7248client\u8bc1\u660e",
+    "schemaId": "urn:skylineslink:contract:wire-proof:2",
+    "json": "{\"kind\":\"proof\",\"requestId\":\"fixture-request-1\",\"clientProof\":\"0ea5bb20041cc72ac17c7a5e56f2a1c9de60f52962396efd039da30a1537dcdc\"}",
+    "valid": true
+  },
+  {
+    "name": "\u63a5\u51652\uff1aclient\u8bc1\u660e\u957f\u5ea6\u9519\u8bef\u62d2\u7edd",
+    "schemaId": "urn:skylineslink:contract:wire-proof:2",
+    "json": "{\"kind\":\"proof\",\"requestId\":\"fixture-request-1\",\"clientProof\":\"0ea5bb20041cc72ac17c7a5e56f2a1c9de60f52962396efd039da30a1537dcd\"}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u65b0\u7248\u6210\u529f\u8eab\u4efd",
+    "schemaId": "urn:skylineslink:contract:wire-authenticated:2",
+    "json": "{\"kind\":\"authenticated\",\"requestId\":\"fixture-request-1\",\"environmentId\":\"fixture\",\"profileId\":\"Codex\",\"instanceId\":\"fixture-instance-1\",\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"coreManifestSha256\":\"abababababababababababababababababababababababababababababababab\",\"authorityEpoch\":3,\"grantEpoch\":7}",
+    "valid": true
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u6210\u529f\u56de\u590d\u5fc5\u987b\u8fd4\u56de\u5b9e\u9645\u6388\u6743\u4ee3\u6b21",
+    "schemaId": "urn:skylineslink:contract:wire-authenticated:2",
+    "json": "{\"kind\":\"authenticated\",\"requestId\":\"fixture-request-1\",\"environmentId\":\"fixture\",\"profileId\":\"Codex\",\"instanceId\":\"fixture-instance-1\",\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"coreManifestSha256\":\"abababababababababababababababababababababababababababababababab\",\"authorityEpoch\":3}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u65e7schema\u4fdd\u7559\u65e7\u6d88\u606f\u5f62\u72b6",
+    "schemaId": "urn:skylineslink:contract:wire-authenticate:1",
+    "json": "{\"kind\":\"authenticate\",\"requestId\":\"v1-fixture\",\"profileId\":\"Codex\",\"token\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"contractVersion\":\"1\",\"productVersion\":\"0.1.0-dev.0\"}",
+    "valid": true
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u65e7schema\u4e0d\u88ab\u6269\u5c55\u65b0\u5b57\u6bb5",
+    "schemaId": "urn:skylineslink:contract:wire-authenticate:1",
+    "json": "{\"kind\":\"authenticate\",\"requestId\":\"v1-fixture\",\"profileId\":\"Codex\",\"token\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"contractVersion\":\"1\",\"productVersion\":\"0.1.0-dev.0\",\"clientNonce\":\"202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f\"}",
+    "valid": false
+  },
+  {
+    "name": "\u63a5\u51652\uff1a\u65b0\u7248\u5165\u53e3\u62d2\u7edd\u65e7token\u63e1\u624b",
+    "schemaId": "urn:skylineslink:contract:wire-authenticate:2",
+    "json": "{\"kind\":\"authenticate\",\"requestId\":\"v1-fixture\",\"profileId\":\"Codex\",\"token\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\",\"contractVersion\":\"1\",\"productVersion\":\"0.1.0-dev.0\"}",
+    "valid": false
+  },
+  {
+    "name": "\u4e0a\u4e0b\u65872\uff1a\u5df2\u6838\u52a0\u8f7d\u800c\u6301\u4e45\u57ce\u5e02\u8eab\u4efd\u672a\u77e5",
+    "schemaId": "urn:skylineslink:contract:context:2",
+    "json": "{\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"instanceId\":\"test-instance\",\"world\":{\"generation\":\"1\",\"cityId\":null},\"gameState\":\"ready\",\"catalogRevision\":\"1\"}",
+    "valid": true
+  },
+  {
+    "name": "\u4e0a\u4e0b\u65871\uff1a\u65e7\u57ce\u5e02\u8eab\u4efd\u7ea6\u675f\u4e0d\u88ab\u9759\u9ed8\u6539\u5199",
+    "schemaId": "urn:skylineslink:contract:context:1",
+    "json": "{\"productVersion\":\"0.1.0-dev.0\",\"contractVersion\":\"2\",\"instanceId\":\"test-instance\",\"world\":{\"generation\":\"1\",\"cityId\":null},\"gameState\":\"ready\",\"catalogRevision\":\"1\"}",
+    "valid": false,
+    "code": "TYPE"
+  },
+  {
+    "name": "Core\u6a21\u5757\u7d22\u5f15\uff1a\u56fa\u5b9a\u56db\u6a21\u5757",
+    "schemaId": "urn:skylineslink:contract:managed-components:1",
+    "json": "{\"formatVersion\":1,\"productId\":\"skylineslink\",\"components\":[{\"path\":\"mod/SkylinesLink.Contracts.dll\",\"moduleId\":\"11111111111111111111111111111111\"},{\"path\":\"mod/SkylinesLink.Application.dll\",\"moduleId\":\"22222222222222222222222222222222\"},{\"path\":\"mod/SkylinesLink.Infrastructure.dll\",\"moduleId\":\"33333333333333333333333333333333\"},{\"path\":\"mod/SkylinesLink.Mod.dll\",\"moduleId\":\"44444444444444444444444444444444\"}]}",
+    "valid": true
+  },
+  {
+    "name": "Core\u6a21\u5757\u7d22\u5f15\uff1a\u5927\u5199MVID\u62d2\u7edd",
+    "schemaId": "urn:skylineslink:contract:managed-components:1",
+    "json": "{\"formatVersion\":1,\"productId\":\"skylineslink\",\"components\":[{\"path\":\"mod/SkylinesLink.Contracts.dll\",\"moduleId\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"},{\"path\":\"mod/SkylinesLink.Application.dll\",\"moduleId\":\"22222222222222222222222222222222\"},{\"path\":\"mod/SkylinesLink.Infrastructure.dll\",\"moduleId\":\"33333333333333333333333333333333\"},{\"path\":\"mod/SkylinesLink.Mod.dll\",\"moduleId\":\"44444444444444444444444444444444\"}]}",
+    "valid": false,
+    "code": "PATTERN"
+  },
+  {
+    "name": "Core\u6a21\u5757\u7d22\u5f15\uff1a\u672a\u77e5\u6a21\u5757\u8def\u5f84\u62d2\u7edd",
+    "schemaId": "urn:skylineslink:contract:managed-components:1",
+    "json": "{\"formatVersion\":1,\"productId\":\"skylineslink\",\"components\":[{\"path\":\"mod/other.dll\",\"moduleId\":\"11111111111111111111111111111111\"},{\"path\":\"mod/SkylinesLink.Application.dll\",\"moduleId\":\"22222222222222222222222222222222\"},{\"path\":\"mod/SkylinesLink.Infrastructure.dll\",\"moduleId\":\"33333333333333333333333333333333\"},{\"path\":\"mod/SkylinesLink.Mod.dll\",\"moduleId\":\"44444444444444444444444444444444\"}]}",
+    "valid": false,
+    "code": "ENUM"
+  },
+  {
+    "name": "Core\u6a21\u5757\u7d22\u5f15\uff1a\u7b2c\u4e94\u6761\u62d2\u7edd",
+    "schemaId": "urn:skylineslink:contract:managed-components:1",
+    "json": "{\"formatVersion\":1,\"productId\":\"skylineslink\",\"components\":[{\"path\":\"mod/SkylinesLink.Contracts.dll\",\"moduleId\":\"11111111111111111111111111111111\"},{\"path\":\"mod/SkylinesLink.Application.dll\",\"moduleId\":\"22222222222222222222222222222222\"},{\"path\":\"mod/SkylinesLink.Infrastructure.dll\",\"moduleId\":\"33333333333333333333333333333333\"},{\"path\":\"mod/SkylinesLink.Mod.dll\",\"moduleId\":\"44444444444444444444444444444444\"},{\"path\":\"mod/SkylinesLink.Contracts.dll\",\"moduleId\":\"11111111111111111111111111111111\"}]}",
+    "valid": false,
+    "code": "LENGTH"
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2024"],
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@modelcontextprotocol/client": ["./node_modules/@modelcontextprotocol/client/dist/index.d.mts"],
+      "@modelcontextprotocol/client/stdio": ["./node_modules/@modelcontextprotocol/client/dist/stdio.d.mts"],
+      "@modelcontextprotocol/server": ["./node_modules/@modelcontextprotocol/server/dist/index.d.mts"],
+      "@modelcontextprotocol/server/stdio": ["./node_modules/@modelcontextprotocol/server/dist/stdio.d.mts"],
+      "@modelcontextprotocol/node": ["./node_modules/@modelcontextprotocol/node/dist/index.d.mts"]
+    }
+  },
+  "include": ["src/**/*.ts", "../../tests/host/**/*.ts"]
+}

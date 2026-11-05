@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:capability-query:1",
+  "type": "object",
+  "properties": {
+    "capabilityId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "schemaRevision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "When supplied, this exact declared revision is required; there is no fallback."
+    }
+  },
+  "required": [
+    "capabilityId"
+  ],
+  "additionalProperties": false
+}

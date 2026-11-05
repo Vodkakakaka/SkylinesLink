@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:guidance-document:1",
+  "type": "object",
+  "properties": {
+    "sourceKind": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 12,
+      "const": "productGuide"
+    },
+    "productVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "language": {
+      "$ref": "#/$defs/Language"
+    },
+    "guideId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "capabilityRefs": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 16,
+      "items": {
+        "$ref": "#/$defs/CapabilityReference"
+      }
+    },
+    "bodyMarkdown": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 12000
+    }
+  },
+  "required": [
+    "sourceKind",
+    "productVersion",
+    "language",
+    "guideId",
+    "revision",
+    "title",
+    "summary",
+    "capabilityRefs",
+    "bodyMarkdown"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Language": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 5,
+      "enum": [
+        "en",
+        "zh-CN"
+      ]
+    },
+    "CapabilityReference": {
+      "type": "object",
+      "properties": {
+        "capabilityId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "schemaRevision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "capabilityId",
+        "schemaRevision"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

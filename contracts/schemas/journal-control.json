@@ -1,0 +1,330 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:journal-control:1",
+  "description": "固定双区日志的有界物理控制；结构校验不替代槽位完整性、实际业务前缀或代际关系验证。",
+  "type": "object",
+  "properties": {
+    "formatVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1
+    },
+    "entry": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 4,
+              "const": "root"
+            },
+            "containerId": {
+              "$ref": "#/$defs/StoreIdentity"
+            },
+            "environmentId": {
+              "$ref": "#/$defs/EnvironmentId"
+            },
+            "layoutVersion": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "kind",
+            "containerId",
+            "environmentId",
+            "layoutVersion"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 9,
+              "maxLength": 9,
+              "const": "preparing"
+            },
+            "containerId": {
+              "$ref": "#/$defs/StoreIdentity"
+            },
+            "environmentId": {
+              "$ref": "#/$defs/EnvironmentId"
+            },
+            "targetBank": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "targetGeneration": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "targetStoreId": {
+              "$ref": "#/$defs/StoreIdentity"
+            },
+            "source": {
+              "$ref": "#/$defs/SourceCut"
+            }
+          },
+          "required": [
+            "kind",
+            "containerId",
+            "environmentId",
+            "targetBank",
+            "targetGeneration",
+            "targetStoreId",
+            "source"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 10,
+              "maxLength": 10,
+              "const": "generation"
+            },
+            "containerId": {
+              "$ref": "#/$defs/StoreIdentity"
+            },
+            "environmentId": {
+              "$ref": "#/$defs/EnvironmentId"
+            },
+            "bank": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "generation": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "storeId": {
+              "$ref": "#/$defs/StoreIdentity"
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceCut"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "seedFrameCount": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 129
+            },
+            "seedBytes": {
+              "type": "integer",
+              "minimum": 44,
+              "maximum": 534060
+            },
+            "seedDigest": {
+              "$ref": "#/$defs/Digest"
+            },
+            "retentionApplied": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind",
+            "containerId",
+            "environmentId",
+            "bank",
+            "generation",
+            "storeId",
+            "source",
+            "seedFrameCount",
+            "seedBytes",
+            "seedDigest",
+            "retentionApplied"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 4,
+              "const": "seal"
+            },
+            "containerId": {
+              "$ref": "#/$defs/StoreIdentity"
+            },
+            "environmentId": {
+              "$ref": "#/$defs/EnvironmentId"
+            },
+            "source": {
+              "$ref": "#/$defs/SourceCut"
+            },
+            "successorBank": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "successorGeneration": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "successorStoreId": {
+              "$ref": "#/$defs/StoreIdentity"
+            },
+            "successorDescriptorDigest": {
+              "$ref": "#/$defs/Digest"
+            }
+          },
+          "required": [
+            "kind",
+            "containerId",
+            "environmentId",
+            "source",
+            "successorBank",
+            "successorGeneration",
+            "successorStoreId",
+            "successorDescriptorDigest"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 10,
+              "maxLength": 10,
+              "const": "activation"
+            },
+            "containerId": {
+              "$ref": "#/$defs/StoreIdentity"
+            },
+            "environmentId": {
+              "$ref": "#/$defs/EnvironmentId"
+            },
+            "bank": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "generation": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "storeId": {
+              "$ref": "#/$defs/StoreIdentity"
+            },
+            "descriptorDigest": {
+              "$ref": "#/$defs/Digest"
+            },
+            "predecessorSealDigest": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Digest"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "containerId",
+            "environmentId",
+            "bank",
+            "generation",
+            "storeId",
+            "descriptorDigest",
+            "predecessorSealDigest"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "required": [
+    "formatVersion",
+    "entry"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "StoreIdentity": {
+      "type": "string",
+      "minLength": 32,
+      "maxLength": 32
+    },
+    "EnvironmentId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "Digest": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64
+    },
+    "SourceCut": {
+      "type": "object",
+      "properties": {
+        "bank": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "storeId": {
+          "$ref": "#/$defs/StoreIdentity"
+        },
+        "descriptorDigest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "activationDigest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "throughSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 129
+        },
+        "throughBytes": {
+          "type": "integer",
+          "minimum": 44,
+          "maximum": 534060
+        },
+        "prefixDigest": {
+          "$ref": "#/$defs/Digest"
+        }
+      },
+      "required": [
+        "bank",
+        "generation",
+        "storeId",
+        "descriptorDigest",
+        "activationDigest",
+        "throughSequence",
+        "throughBytes",
+        "prefixDigest"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

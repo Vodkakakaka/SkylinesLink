@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:task-stop-query:1",
+  "description": "按任务与原预期控制版本请求停止；身份不依赖目标修订或当前加载世界。",
+  "type": "object",
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "expectedControlVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740990
+    }
+  },
+  "required": [
+    "taskId",
+    "expectedControlVersion"
+  ],
+  "additionalProperties": false
+}

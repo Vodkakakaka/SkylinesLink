@@ -1,0 +1,1001 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:native-history-capture:3",
+  "description": "Native3独立小结果；source仍为CP2格式2/journal family3。tasks为本出版物全部保留Task（最多8，Ordinal排序），不是当前现场或全历史；停止决定按任务/预期控制版本选择并保原decision/key。notCovered不代表absent/expired，48KiB仅为本显式版本输出档。",
+  "type": "object",
+  "properties": {
+    "formatVersion": {
+      "type": "integer",
+      "minimum": 3,
+      "maximum": 3
+    },
+    "environmentId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "profileId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "profileInstanceId": {
+      "type": "string",
+      "minLength": 32,
+      "maxLength": 32,
+      "description": "本次读取租约核权的当前profile主体；不是历史Task owner。小写十六进制语义由读取边界核对。"
+    },
+    "authorizationRecordRevision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "authorityEpoch": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "grantEpoch": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "source": {
+      "$ref": "#/$defs/HistorySource"
+    },
+    "query": {
+      "$ref": "#/$defs/NativeHistoryQuery"
+    },
+    "result": {
+      "$ref": "#/$defs/NativeHistoryResult"
+    }
+  },
+  "required": [
+    "formatVersion",
+    "environmentId",
+    "profileId",
+    "profileInstanceId",
+    "authorizationRecordRevision",
+    "authorityEpoch",
+    "grantEpoch",
+    "source",
+    "query",
+    "result"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Identity": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "PositiveSafeInteger": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "OperationSelector": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "operationId",
+              "minLength": 11,
+              "maxLength": 11
+            },
+            "operationId": {
+              "$ref": "#/$defs/Identity"
+            }
+          },
+          "required": [
+            "kind",
+            "operationId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "submissionKey",
+              "minLength": 13,
+              "maxLength": 13
+            },
+            "submissionKey": {
+              "type": "object",
+              "properties": {
+                "writeContextId": {
+                  "$ref": "#/$defs/Identity"
+                },
+                "requestId": {
+                  "$ref": "#/$defs/Identity"
+                }
+              },
+              "required": [
+                "writeContextId",
+                "requestId"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "kind",
+            "submissionKey"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "SubmissionKey": {
+      "type": "object",
+      "properties": {
+        "writeContextId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "requestId": {
+          "$ref": "#/$defs/Identity"
+        }
+      },
+      "required": [
+        "writeContextId",
+        "requestId"
+      ],
+      "additionalProperties": false
+    },
+    "NativeHistoryQuery": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 9,
+              "maxLength": 9,
+              "const": "operation"
+            },
+            "selector": {
+              "$ref": "#/$defs/OperationSelector"
+            }
+          },
+          "required": [
+            "kind",
+            "selector"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 4,
+              "const": "task"
+            },
+            "taskId": {
+              "$ref": "#/$defs/Identity"
+            }
+          },
+          "required": [
+            "kind",
+            "taskId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 12,
+              "maxLength": 12,
+              "const": "taskDecision"
+            },
+            "submissionKey": {
+              "$ref": "#/$defs/SubmissionKey"
+            }
+          },
+          "required": [
+            "kind",
+            "submissionKey"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 8,
+              "const": "taskGoal"
+            },
+            "taskId": {
+              "$ref": "#/$defs/Identity"
+            },
+            "goalRevision": {
+              "$ref": "#/$defs/PositiveSafeInteger"
+            },
+            "section": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 15,
+              "enum": [
+                "title",
+                "requestText",
+                "constraintsText",
+                "acceptanceText"
+              ]
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2048
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 512
+            }
+          },
+          "required": [
+            "kind",
+            "taskId",
+            "goalRevision",
+            "section",
+            "offset",
+            "limit"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "tasks",
+              "minLength": 5,
+              "maxLength": 5
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "taskStopDecision",
+              "minLength": 16,
+              "maxLength": 16
+            },
+            "taskId": {
+              "$ref": "#/$defs/Identity"
+            },
+            "expectedControlVersion": {
+              "$ref": "#/$defs/PositiveSafeInteger"
+            }
+          },
+          "required": [
+            "kind",
+            "taskId",
+            "expectedControlVersion"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "description": "只查询已确认历史；文本offset与limit按Unicode标量，列表按项且limit不得超过4、offset不得超过16，由读取边界按section核对。"
+    },
+    "HistorySource": {
+      "type": "object",
+      "properties": {
+        "formatVersion": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 2
+        },
+        "productId": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 12,
+          "const": "skylineslink"
+        },
+        "environmentId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "storeId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "throughSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "producerVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "producerInstanceId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "producerCoreManifestSha256": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "journalSchemaRevision": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 3
+        },
+        "publishedAtUnixMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "selection": {
+          "type": "string",
+          "minLength": 42,
+          "maxLength": 42,
+          "const": "confirmedTaskMetadataAndOperationTerminals"
+        },
+        "throughBytes": {
+          "type": "integer",
+          "minimum": 45,
+          "maximum": 2097152
+        }
+      },
+      "required": [
+        "formatVersion",
+        "productId",
+        "environmentId",
+        "storeId",
+        "throughSequence",
+        "producerVersion",
+        "producerInstanceId",
+        "producerCoreManifestSha256",
+        "journalSchemaRevision",
+        "publishedAtUnixMs",
+        "selection",
+        "throughBytes"
+      ],
+      "additionalProperties": false
+    },
+    "HistoryContext": {
+      "type": "object",
+      "properties": {
+        "instanceId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "generation": {
+          "$ref": "#/$defs/Identity"
+        },
+        "gameState": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 11,
+          "enum": [
+            "menu",
+            "loading",
+            "ready",
+            "unavailable"
+          ]
+        },
+        "cityId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "instanceId",
+        "generation",
+        "gameState",
+        "cityId"
+      ],
+      "additionalProperties": false
+    },
+    "HistoryLoad": {
+      "type": "object",
+      "properties": {
+        "physicalTaskState": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 15,
+          "enum": [
+            "notStarted",
+            "running",
+            "ranToCompletion",
+            "faulted",
+            "cancelled",
+            "unknown"
+          ],
+          "description": "实际原生 Task 的物理状态；正常完成不等于 Load 返回 true 或目标 Ready。"
+        },
+        "loadReturnValue": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "实际 Task<bool> 正常完成时的原始返回值；未取得该值时为 null。"
+        },
+        "targetMatch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12,
+          "enum": [
+            "unknown",
+            "different",
+            "identityOnly",
+            "exact"
+          ]
+        },
+        "isObservationCurrent": {
+          "type": "boolean",
+          "description": "历史语义必须为false；不把已持久观察提升为当前世界事实。"
+        },
+        "correlatedTargetReady": {
+          "type": "boolean"
+        },
+        "historicalCompletionProven": {
+          "type": "boolean"
+        },
+        "observationEnd": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12,
+          "enum": [
+            "open",
+            "expired",
+            "interrupted",
+            "ownerStopped"
+          ]
+        },
+        "observationContext": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HistoryContext"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "physicalTaskState",
+        "loadReturnValue",
+        "targetMatch",
+        "isObservationCurrent",
+        "correlatedTargetReady",
+        "historicalCompletionProven",
+        "observationEnd",
+        "observationContext"
+      ],
+      "additionalProperties": false
+    },
+    "HistoryRecord": {
+      "type": "object",
+      "properties": {
+        "terminalSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "submissionKey": {
+          "type": "object",
+          "properties": {
+            "writeContextId": {
+              "$ref": "#/$defs/Identity"
+            },
+            "requestId": {
+              "$ref": "#/$defs/Identity"
+            }
+          },
+          "required": [
+            "writeContextId",
+            "requestId"
+          ],
+          "additionalProperties": false
+        },
+        "operationId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "originInstanceId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "sourceContext": {
+          "$ref": "#/$defs/HistoryContext"
+        },
+        "state": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 9,
+          "enum": [
+            "succeeded",
+            "failed",
+            "cancelled",
+            "unknown"
+          ]
+        },
+        "mayHaveApplied": {
+          "type": "boolean"
+        },
+        "durability": {
+          "type": "string",
+          "minLength": 7,
+          "maxLength": 7,
+          "const": "durable"
+        },
+        "load": {
+          "$ref": "#/$defs/HistoryLoad"
+        }
+      },
+      "required": [
+        "terminalSequence",
+        "submissionKey",
+        "operationId",
+        "originInstanceId",
+        "sourceContext",
+        "state",
+        "mayHaveApplied",
+        "durability",
+        "load"
+      ],
+      "additionalProperties": false
+    },
+    "ContextSource": {
+      "type": "object",
+      "properties": {
+        "instanceId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "generation": {
+          "$ref": "#/$defs/Identity"
+        },
+        "gameState": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 11,
+          "enum": [
+            "menu",
+            "loading",
+            "ready",
+            "unavailable"
+          ]
+        },
+        "cityId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "instanceId",
+        "generation",
+        "gameState",
+        "cityId"
+      ],
+      "additionalProperties": false
+    },
+    "TaskDecisionActor": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "profileInstanceId": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 32
+        },
+        "authorityEpoch": {
+          "$ref": "#/$defs/PositiveSafeInteger"
+        },
+        "grantEpoch": {
+          "$ref": "#/$defs/PositiveSafeInteger"
+        }
+      },
+      "required": [
+        "profileId",
+        "profileInstanceId",
+        "authorityEpoch",
+        "grantEpoch"
+      ],
+      "additionalProperties": false
+    },
+    "TaskDecision": {
+      "type": "object",
+      "properties": {
+        "submissionKey": {
+          "$ref": "#/$defs/SubmissionKey"
+        },
+        "actor": {
+          "$ref": "#/$defs/TaskDecisionActor"
+        },
+        "source": {
+          "$ref": "#/$defs/ContextSource"
+        },
+        "commandHash": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "submissionKey",
+        "actor",
+        "source",
+        "commandHash"
+      ],
+      "additionalProperties": false
+    },
+    "TaskHistorySummary": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "cityId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "owner": {
+          "$ref": "#/$defs/TaskDecisionActor"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "goalRevision": {
+          "$ref": "#/$defs/PositiveSafeInteger"
+        },
+        "controlVersion": {
+          "$ref": "#/$defs/PositiveSafeInteger"
+        },
+        "isStopped": {
+          "type": "boolean"
+        },
+        "createdSequence": {
+          "$ref": "#/$defs/PositiveSafeInteger"
+        },
+        "lastDecisionSequence": {
+          "$ref": "#/$defs/PositiveSafeInteger"
+        }
+      },
+      "required": [
+        "taskId",
+        "cityId",
+        "owner",
+        "title",
+        "goalRevision",
+        "controlVersion",
+        "isStopped",
+        "createdSequence",
+        "lastDecisionSequence"
+      ],
+      "additionalProperties": false
+    },
+    "TaskHistoryDecisionReceipt": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "$ref": "#/$defs/Identity"
+        },
+        "decisionKind": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 10,
+          "enum": [
+            "create",
+            "reviseGoal",
+            "stop"
+          ]
+        },
+        "goalRevision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PositiveSafeInteger"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "controlVersion": {
+          "$ref": "#/$defs/PositiveSafeInteger"
+        },
+        "sequence": {
+          "$ref": "#/$defs/PositiveSafeInteger"
+        },
+        "decision": {
+          "$ref": "#/$defs/TaskDecision"
+        }
+      },
+      "required": [
+        "taskId",
+        "decisionKind",
+        "goalRevision",
+        "controlVersion",
+        "sequence",
+        "decision"
+      ],
+      "additionalProperties": false,
+      "description": "原Task决定的历史回执；Stop的goalRevision必须为null，create/reviseGoal必须为原决定版本，由读取边界核对。"
+    },
+    "TaskHistoryGoalPage": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 4,
+              "const": "text"
+            },
+            "taskId": {
+              "$ref": "#/$defs/Identity"
+            },
+            "goalRevision": {
+              "$ref": "#/$defs/PositiveSafeInteger"
+            },
+            "section": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 11,
+              "enum": [
+                "title",
+                "requestText"
+              ]
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2048
+            },
+            "nextOffset": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2048
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "text": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 512
+            },
+            "sequence": {
+              "$ref": "#/$defs/PositiveSafeInteger"
+            }
+          },
+          "required": [
+            "kind",
+            "taskId",
+            "goalRevision",
+            "section",
+            "offset",
+            "nextOffset",
+            "text",
+            "sequence"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 5,
+              "const": "items"
+            },
+            "taskId": {
+              "$ref": "#/$defs/Identity"
+            },
+            "goalRevision": {
+              "$ref": "#/$defs/PositiveSafeInteger"
+            },
+            "section": {
+              "type": "string",
+              "minLength": 14,
+              "maxLength": 15,
+              "enum": [
+                "constraintsText",
+                "acceptanceText"
+              ]
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 16
+            },
+            "nextOffset": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 16
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "items": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 4,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            },
+            "sequence": {
+              "$ref": "#/$defs/PositiveSafeInteger"
+            }
+          },
+          "required": [
+            "kind",
+            "taskId",
+            "goalRevision",
+            "section",
+            "offset",
+            "nextOffset",
+            "items",
+            "sequence"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "description": "原目标修订的单字段有限页；文本按Unicode标量分页，列表按项分页。sequence保留该goal决定在源日志的原全局序号，不代表当前现场。"
+    },
+    "NativeHistoryResult": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 10,
+              "maxLength": 10,
+              "const": "notCovered"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 9,
+              "maxLength": 9,
+              "const": "operation"
+            },
+            "record": {
+              "$ref": "#/$defs/HistoryRecord"
+            }
+          },
+          "required": [
+            "kind",
+            "record"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 4,
+              "const": "task"
+            },
+            "summary": {
+              "$ref": "#/$defs/TaskHistorySummary"
+            }
+          },
+          "required": [
+            "kind",
+            "summary"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 12,
+              "maxLength": 12,
+              "const": "taskDecision"
+            },
+            "receipt": {
+              "$ref": "#/$defs/TaskHistoryDecisionReceipt"
+            }
+          },
+          "required": [
+            "kind",
+            "receipt"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 8,
+              "const": "taskGoal"
+            },
+            "page": {
+              "$ref": "#/$defs/TaskHistoryGoalPage"
+            }
+          },
+          "required": [
+            "kind",
+            "page"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "tasks",
+              "minLength": 5,
+              "maxLength": 5
+            },
+            "tasks": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 8,
+              "items": {
+                "$ref": "#/$defs/TaskHistorySummary"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "tasks"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}
