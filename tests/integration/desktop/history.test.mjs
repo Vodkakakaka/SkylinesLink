@@ -188,12 +188,17 @@ test('Native只读existing边界：缺失不创建、真实lock busy、输入未
 
 test('Native拒绝重解析connection，不跟随测试junction', { timeout: 10000 }, async () => {
   const f = await fixture(); let linked = false;
+  const originalHistory = await readFile(join(f.connection, 'operations.history'));
   try {
     await rename(f.connection, join(f.directory, 'connection-original'));
     await symlink(join(f.directory, 'connection-original'), f.connection, 'junction'); linked = true;
     await rejected(f, 87);
   } finally {
-    if (linked) execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-File', join(import.meta.dirname, 'remove-history-link.ps1'), '-ProbeRoot', f.directory], { windowsHide: true, stdio: 'pipe' });
+    if (linked) {
+      execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-File', join(import.meta.dirname, 'remove-history-link.ps1'), '-ProbeRoot', f.directory], { windowsHide: true, stdio: 'pipe' });
+      assert.equal((await lstat(f.connection)).isSymbolicLink(), false);
+      assert.deepEqual(await readFile(join(f.connection, 'operations.history')), originalHistory);
+    }
     cleanup(f);
   }
 });

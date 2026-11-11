@@ -13,5 +13,7 @@ $historyProbeLink = Join-Path $historyProbeRoot 'connection'
 $historyProbeOriginal = Join-Path $historyProbeRoot 'connection-original'
 if (!((Get-Item -LiteralPath $historyProbeLink).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Expected owned junction missing.' }
 if ((Get-Item -LiteralPath $historyProbeOriginal).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Original fixture is redirected.' }
-Remove-Item -LiteralPath $historyProbeLink
+# Windows PowerShell prompts on a nonempty junction even when only the link
+# should be removed. Delete this verified link nonrecursively; its target stays.
+[IO.Directory]::Delete($historyProbeLink, $false)
 Move-Item -LiteralPath $historyProbeOriginal -Destination $historyProbeLink
