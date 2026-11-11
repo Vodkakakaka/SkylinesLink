@@ -15,7 +15,7 @@ using NativeSubObjectSystem = Game.Objects.SubObjectSystem;
 
 namespace SkylinesLink.Mod.Native
 {
-    /// <summary>Own native SubObject producer for the admitted two-owner leaf branch.</summary>
+    /// <summary>Own native SubObject producer for the admitted construction and relocation leaf branches.</summary>
     [DisableAutoCreation]
     public sealed partial class SubObjectGenerationProducer : NativeSubObjectSystem
     {
@@ -42,6 +42,7 @@ namespace SkylinesLink.Mod.Native
         internal bool DestructionReturned { get; private set; }
         internal int OnUpdateEntries { get; private set; }
         internal bool NativeCallStarted => nativeStarted;
+        internal bool GlobalRandomSeedAdvanceConfirmed => nativeReturned;
         internal bool NativeWorkMayReadSource => nativeStarted && !completed;
         internal bool StorageReleased => (!queueAllocationAttempted || queueReleaseReturned)
             && membersAttempted == membersAcquired && membersAcquired == membersDisposed;
@@ -147,10 +148,17 @@ namespace SkylinesLink.Mod.Native
             catch (Exception error) { RecordFailure(error); throw; }
         }
 
-        internal void GenerateOnce(SubObjectGenerationPreflight input, Action requireCurrentScope)
+        internal void GenerateOnce(SubObjectGenerationPreflight input, Action requireCurrentScope) =>
+            GenerateOnce(input, requireCurrentScope, relocation: false);
+
+        internal void GenerateRelocationOnce(SubObjectGenerationPreflight input, Action requireCurrentScope) =>
+            GenerateOnce(input, requireCurrentScope, relocation: true);
+
+        private void GenerateOnce(SubObjectGenerationPreflight input, Action requireCurrentScope, bool relocation)
         {
             RequireMainThread();
             if (input == null || requireCurrentScope == null) throw new ArgumentNullException();
+            Require(input.IsRelocation == relocation, "SUBOBJECT_GENERATION_BRANCH_MISMATCH");
             Require(CreationReturned && emptyPassed && !DestructionStarted && !requested && failureCode == null,
                 "SUBOBJECT_GENERATION_REQUEST_REJECTED");
             requested = true; admitted = input;
@@ -166,6 +174,7 @@ namespace SkylinesLink.Mod.Native
                 }
                 finally { armed = false; Enabled = false; currentScope = null; }
                 Guard(requireCurrentScope);
+                if (relocation) RequireScopedMembers(input, requireCurrentScope);
                 int pending = PendingCount; Guard(requireCurrentScope);
                 Require(pending == 2 && OnUpdateEntries == 1, "SUBOBJECT_GENERATION_OUTPUT_NOT_CONFIRMED");
                 queueEmptyObserved = loopErrors.IsEmpty(); Guard(requireCurrentScope);
@@ -193,16 +202,34 @@ namespace SkylinesLink.Mod.Native
             Guard(scope);
             Require(ReferenceEquals(input.Source, World) && input.Actor == actor && input.Root != Entity.Null
                 && input.Node != Entity.Null && input.Root != input.Node, "SUBOBJECT_GENERATION_SOURCE_MISMATCH");
+            if (input.IsRelocation)
+                Require(input.OldNode != Entity.Null && input.OldNode != input.Root && input.OldNode != input.Node,
+                    "SUBOBJECT_GENERATION_OLD_NODE_MISMATCH");
             input.Run(scope); Guard(scope);
-            Require(input.Passed && input.ResourcesReleased && input.CreateUpperBound == 5 && input.CommandUpperBound == 47,
+            int createLimit = input.IsRelocation ? 6 : 5;
+            int commandLimit = input.IsRelocation ? 57 : 47;
+            Require(input.Passed && input.ResourcesReleased && input.CreateUpperBound == createLimit
+                && input.CommandUpperBound == commandLimit,
                 "SUBOBJECT_GENERATION_OUTPUT_BOUND_UNQUALIFIED");
             ObserveBindings(scope);
             int pending = PendingCount; Guard(scope);
             Require(pending == 0, "SUBOBJECT_GENERATION_OUTPUT_NOT_EMPTY");
+            RequireScopedMembers(input, scope);
+            int buildingCount = buildings.CalculateEntityCount(); Guard(scope);
+            int happinessCount = happiness.CalculateEntityCount(); Guard(scope);
+            Require(buildingCount == 1 && happinessCount == 1, "SUBOBJECT_GENERATION_ENVIRONMENT_SINGLETONS");
+            shouldRun = ShouldRunSystem(); Guard(scope);
+            queueEmptyObserved = loopErrors.IsEmpty(); Guard(scope);
+            Require(shouldRun && queueEmptyObserved, "SUBOBJECT_GENERATION_NATIVE_GATE_CHANGED");
+        }
+
+        private void RequireScopedMembers(SubObjectGenerationPreflight input, Action scope)
+        {
+            int expected = input.IsRelocation ? 3 : 2;
             updateCount = updates.CalculateEntityCount(); Guard(scope);
             updateChunks = updates.CalculateChunkCount(); Guard(scope);
             tempCount = temps.CalculateEntityCount(); Guard(scope);
-            Require(updateCount == 2 && updateChunks >= 1 && updateChunks <= 2 && tempCount == 0,
+            Require(updateCount == expected && updateChunks >= 1 && updateChunks <= expected && tempCount == 0,
                 "SUBOBJECT_GENERATION_QUERY_BUDGET");
             // A bounded exact membership witness also excludes the event role.
             membersAttempted++;
@@ -210,26 +237,32 @@ namespace SkylinesLink.Mod.Native
             try
             {
                 Guard(scope);
-                Require(members.Length == 2, "SUBOBJECT_GENERATION_MEMBERS_CHANGED");
+                Require(members.Length == expected, "SUBOBJECT_GENERATION_MEMBERS_CHANGED");
                 bool rootSeen = false, nodeSeen = false;
+                bool oldNodeSeen = !input.IsRelocation;
                 EntityManager entities = EntityManager; Guard(scope);
                 foreach (Entity member in members)
                 {
                     bool isEvent = entities.HasComponent<Game.Common.Event>(member); Guard(scope);
                     Require(!isEvent, "SUBOBJECT_GENERATION_EVENT_OUTSIDE_BRANCH");
+                    if (input.IsRelocation)
+                    {
+                        // The old node's TempFlags.Delete is input to child generation.
+                        // An ECS Deleted marker would select the native deletion branch instead.
+                        bool isLiveTemp = entities.HasComponent<Temp>(member) && entities.HasComponent<Updated>(member)
+                            && !entities.HasComponent<Deleted>(member);
+                        Guard(scope);
+                        Require(isLiveTemp, "SUBOBJECT_GENERATION_RELOCATION_MARKERS_CHANGED");
+                    }
                     if (member == input.Root) { Require(!rootSeen, "SUBOBJECT_GENERATION_DUPLICATE_MEMBER"); rootSeen = true; }
                     else if (member == input.Node) { Require(!nodeSeen, "SUBOBJECT_GENERATION_DUPLICATE_MEMBER"); nodeSeen = true; }
+                    else if (input.IsRelocation && member == input.OldNode)
+                    { Require(!oldNodeSeen, "SUBOBJECT_GENERATION_DUPLICATE_MEMBER"); oldNodeSeen = true; }
                     else throw Failure("SUBOBJECT_GENERATION_FOREIGN_MEMBER");
                 }
-                Require(rootSeen && nodeSeen, "SUBOBJECT_GENERATION_OWNERS_NOT_FOUND");
+                Require(rootSeen && nodeSeen && oldNodeSeen, "SUBOBJECT_GENERATION_OWNERS_NOT_FOUND");
             }
             finally { members.Dispose(); membersDisposed++; }
-            int buildingCount = buildings.CalculateEntityCount(); Guard(scope);
-            int happinessCount = happiness.CalculateEntityCount(); Guard(scope);
-            Require(buildingCount == 1 && happinessCount == 1, "SUBOBJECT_GENERATION_ENVIRONMENT_SINGLETONS");
-            shouldRun = ShouldRunSystem(); Guard(scope);
-            queueEmptyObserved = loopErrors.IsEmpty(); Guard(scope);
-            Require(shouldRun && queueEmptyObserved, "SUBOBJECT_GENERATION_NATIVE_GATE_CHANGED");
         }
 
         protected override void OnUpdate()
@@ -337,7 +370,9 @@ namespace SkylinesLink.Mod.Native
             ["generationPassed"] = GenerationPassed, ["createUpperBound"] = CreateUpperBound,
             ["commandUpperBound"] = OutputCommandUpperBound, ["inspectionMask"] = inspectionMask,
             ["nativeTransientCleanupScheduled"] = nativeReturned, ["nativeTransientReclamationObserved"] = false,
-            ["globalRandomSeedAdvanceMayHaveOccurred"] = nativeStarted, ["sourcePlaybackCalled"] = false,
+            ["relocationInputs"] = admitted?.IsRelocation ?? false,
+            ["globalRandomSeedAdvanceMayHaveOccurred"] = nativeStarted,
+            ["globalRandomSeedAdvanceConfirmed"] = GlobalRandomSeedAdvanceConfirmed, ["sourcePlaybackCalled"] = false,
             ["failureCode"] = Text(failureCode), ["exceptionType"] = Text(exceptionType)
         };
 

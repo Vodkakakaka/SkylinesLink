@@ -3,7 +3,14 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { archiveFiles } from './core.mjs';
-import { managedNames, managedComponentIndex, rejectPrivatePrefixes, requireInspectedBytes, validateManagedClosure, validateOutputInventory, validateSourcePath } from './core-policy.mjs';
+import { managedNames, managedComponentIndex, meetsMinimumVersion, rejectPrivatePrefixes, requireInspectedBytes, validateManagedClosure, validateOutputInventory, validateSourcePath } from './core-policy.mjs';
+
+test('开发工具接受基线及更高稳定版本，拒绝旧版及预发布版', () => {
+  for (const actual of ['v26.13.0', '26.13.1', '26.14.0', '27.0.0'])
+    assert.equal(meetsMinimumVersion(actual, '>=26.13.0'), true);
+  for (const actual of ['26.12.99', '25.99.99', '26.13.0-rc.1', 'invalid'])
+    assert.equal(meetsMinimumVersion(actual, '>=26.13.0'), false);
+});
 
 const root = resolve(import.meta.dirname, '../..');
 const informationalVersion = '0.1.0-dev.0+' + 'a'.repeat(40);

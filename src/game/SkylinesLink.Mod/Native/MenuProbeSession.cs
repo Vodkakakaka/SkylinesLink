@@ -57,6 +57,7 @@ namespace SkylinesLink.Mod.Native
         private StopIntent stopIntent;
         private Task<bool>? closing;
         private Task statusWork = Task.CompletedTask;
+        private int? statusIoHResult;
         private bool writerActive, seenMenu, connectionReleased, reportedFailure;
         private string? failureCode, exceptionType;
         private string initializationStage = "starting";
@@ -643,7 +644,10 @@ namespace SkylinesLink.Mod.Native
         private void ReportFailure()
         {
             if (reportedFailure || failureCode == null) return;
-            reportedFailure = true; report?.Invoke("SkylinesLink menu probe: " + failureCode + (exceptionType == null ? "" : " (" + exceptionType + ")"));
+            reportedFailure = true;
+            string detail = exceptionType == null ? "" : " (" + exceptionType + ")";
+            if (statusIoHResult is int hresult) detail += " HRESULT=0x" + hresult.ToString("X8", CultureInfo.InvariantCulture);
+            report?.Invoke("SkylinesLink menu probe: " + failureCode + detail);
             if (initializationFailureSite != null) report?.Invoke("SkylinesLink menu probe initialization site: " + initializationFailureSite);
         }
 
@@ -685,7 +689,17 @@ namespace SkylinesLink.Mod.Native
                     }
                 }
                 catch (Exception error)
-                { lock (sync) { SetFailure(error is ProbeFailure failure ? failure.Code : "PROBE_STATUS_IO_FAILED", error.GetType().Name); pendingSnapshot = null; writerActive = false; } return; }
+                {
+                    lock (sync)
+                    {
+                        var cause = error.InnerException as IOException ?? error;
+                        if (failureCode == null && cause is IOException io) statusIoHResult = io.HResult;
+                        SetFailure(error is ProbeFailure failure ? failure.Code : "PROBE_STATUS_IO_FAILED", cause.GetType().Name);
+                        pendingSnapshot = null;
+                        writerActive = false;
+                    }
+                    return;
+                }
             }
         }
         private static void WriteStatus(PrivateConnectionStorage storage, string runId, JObject status)
@@ -705,6 +719,42 @@ namespace SkylinesLink.Mod.Native
                 var geometry = commands?["netCourseGeometry"] as JArray;
                 int geometryBytes = geometry == null ? 2 : encoding.GetByteCount(geometry.ToString(Formatting.None));
                 var generation = connection?["objectGeneration"] as JObject;
+                JToken? rootReceipt = generation?["generatedEntity"];
+                JToken? nodeReceipt = generation?["generatedNode"];
+                var roundTrip = connection?["compositionRoundTrip"] as JObject;
+                JToken? site = roundTrip?["site"];
+                JToken? followups = (roundTrip?["reuse"] as JObject)?["followups"];
+                JToken? commit = roundTrip?["commit"];
+                JToken? relocation = roundTrip?["relocation"];
+                JToken? relocationGeneration = roundTrip?["relocationGeneration"];
+                JToken? relocationPreview = roundTrip?["relocationPreview"];
+                JToken? relocationCommit = roundTrip?["relocationCommit"];
+                JToken? rebuild = roundTrip?["rebuild"];
+                int relocationCommitBytes = relocationCommit == null ? 0 : encoding.GetByteCount(relocationCommit.ToString(Formatting.None));
+                int rebuildBytes = rebuild == null ? 0 : encoding.GetByteCount(rebuild.ToString(Formatting.None));
+                var relocationSuccessors = (relocationPreview as JObject)?["successors"] as JObject;
+                JToken? relocationEligibility = relocationSuccessors?["eligibility"];
+                JToken? relocationCancellation = relocationSuccessors?["cancellation"];
+                JToken? relocationApplyPreparation = relocationSuccessors?["applyPreparation"];
+                int rootReceiptBytes = rootReceipt == null ? 0 : encoding.GetByteCount(rootReceipt.ToString(Formatting.None));
+                int nodeReceiptBytes = nodeReceipt == null ? 0 : encoding.GetByteCount(nodeReceipt.ToString(Formatting.None));
+                int siteBytes = site == null ? 0 : encoding.GetByteCount(site.ToString(Formatting.None));
+                int followupBytes = followups == null ? 0 : encoding.GetByteCount(followups.ToString(Formatting.None));
+                int commitBytes = commit == null ? 0 : encoding.GetByteCount(commit.ToString(Formatting.None));
+                int relocationBytes = relocation == null ? 0 : encoding.GetByteCount(relocation.ToString(Formatting.None));
+                int relocationGenerationBytes = relocationGeneration == null ? 0 : encoding.GetByteCount(relocationGeneration.ToString(Formatting.None));
+                int relocationPreviewBytes = relocationPreview == null ? 0 : encoding.GetByteCount(relocationPreview.ToString(Formatting.None));
+                int relocationEligibilityBytes = relocationEligibility == null ? 0 : encoding.GetByteCount(relocationEligibility.ToString(Formatting.None));
+                // Cost and eligibility add nine cost rows and bounded private error,
+                // cancellation and icon rows. The shared and file caps still
+                // include the entire preview and therefore charge these bytes once.
+                int relocationCancellationBytes = relocationCancellation == null ? 0 : encoding.GetByteCount(relocationCancellation.ToString(Formatting.None));
+                int relocationApplyPreparationBytes = relocationApplyPreparation == null ? 0
+                    : encoding.GetByteCount(relocationApplyPreparation.ToString(Formatting.None));
+                int relocationGraphBytes = relocationPreviewBytes;
+                if (relocationEligibility != null) relocationGraphBytes -= relocationEligibilityBytes - 4;
+                if (relocationCancellation != null) relocationGraphBytes -= relocationCancellationBytes - 4;
+                if (relocationApplyPreparation != null) relocationGraphBytes -= relocationApplyPreparationBytes - 4;
                 JToken? postGeneration = generation?["postGeneration"];
                 int postGenerationBytes = postGeneration == null ? 0 : encoding.GetByteCount(postGeneration.ToString(Formatting.None));
                 JToken? subObjects = (postGeneration as JObject)?["subObjects"];
@@ -726,10 +776,42 @@ namespace SkylinesLink.Mod.Native
                 int otherBytes = bytes.Length - geometryBytes + 2;
                 if (postGeneration != null) otherBytes = otherBytes - postGenerationBytes + 4;
                 if (subObjectSurvey != null) otherBytes = otherBytes - surveyBytes + 4;
+                if (rootReceipt != null) otherBytes = otherBytes - rootReceiptBytes + 4;
+                if (nodeReceipt != null) otherBytes = otherBytes - nodeReceiptBytes + 4;
+                if (site != null) otherBytes = otherBytes - siteBytes + 4;
+                if (followups != null) otherBytes = otherBytes - followupBytes + 4;
+                if (commit != null) otherBytes = otherBytes - commitBytes + 4;
+                if (relocation != null) otherBytes = otherBytes - relocationBytes + 4;
+                if (relocationGeneration != null) otherBytes = otherBytes - relocationGenerationBytes + 4;
+                if (relocationPreview != null) otherBytes = otherBytes - relocationPreviewBytes + 4;
+                if (relocationCommit != null) otherBytes = otherBytes - relocationCommitBytes + 4;
+                if (rebuild != null) otherBytes = otherBytes - rebuildBytes + 4;
                 // The first-layer survey has two exact owners and a finite row
                 // budget. Its 16KiB profile keeps the full file below 512KiB
                 // even with the maximum geometry and post-generation profiles.
-                if ((geometry?.Count ?? 0) > 256 || geometryBytes + subObjectBytes + subNetBytes + compositionBytes > 465409 ||
+                int sharedBytes = geometryBytes + subObjectBytes + subNetBytes + compositionBytes
+                    + rootReceiptBytes + nodeReceiptBytes + siteBytes + followupBytes + commitBytes + relocationBytes
+                    + relocationGenerationBytes + relocationPreviewBytes + relocationCommitBytes + rebuildBytes;
+                if ((geometry?.Count ?? 0) > 256 || sharedBytes > 465409 ||
+                    rootReceiptBytes > 4096 || nodeReceiptBytes > 8192 || siteBytes > 2048 || followupBytes > 12288 || commitBytes > 8192 ||
+                    relocationCommitBytes > 4096 || relocationCommit != null && relocationCommit.Type != JTokenType.Null && !(relocationCommit is JObject) ||
+                    rebuildBytes > 8192 || rebuild != null && rebuild.Type != JTokenType.Null && !(rebuild is JObject) ||
+                    relocationBytes > 2048 || relocation != null && relocation.Type != JTokenType.Null && !(relocation is JObject) ||
+                    relocationGenerationBytes > 2048 || relocationGeneration != null && relocationGeneration.Type != JTokenType.Null
+                        && !(relocationGeneration is JObject) ||
+                    relocationEligibilityBytes > 8192 || relocationEligibility != null && relocationEligibility.Type != JTokenType.Null
+                        && !(relocationEligibility is JObject) ||
+                    relocationCancellationBytes > 4096 || relocationCancellation != null && relocationCancellation.Type != JTokenType.Null
+                        && !(relocationCancellation is JObject) ||
+                    relocationApplyPreparationBytes > 2048 || relocationApplyPreparation != null
+                        && relocationApplyPreparation.Type != JTokenType.Null && !(relocationApplyPreparation is JObject) ||
+                    relocationGraphBytes > 12288 || relocationPreview != null && relocationPreview.Type != JTokenType.Null
+                        && !(relocationPreview is JObject) ||
+                    rootReceipt != null && rootReceipt.Type != JTokenType.Null && !(rootReceipt is JObject) ||
+                    nodeReceipt != null && nodeReceipt.Type != JTokenType.Null && !(nodeReceipt is JObject) ||
+                    site != null && site.Type != JTokenType.Null && !(site is JObject) ||
+                    followups != null && followups.Type != JTokenType.Null && !(followups is JObject) ||
+                    commit != null && commit.Type != JTokenType.Null && !(commit is JObject) ||
                     subObjectBytes > 65536 || subNetBytes > 8192 || compositionBytes > 65536 || commandBytes > 32768 || lifecycleBytes > 8192 || surveyBytes > 16384 || otherBytes > 32768 ||
                     postGeneration != null && postGeneration.Type != JTokenType.Null && !(postGeneration is JObject) ||
                     subObjects != null && subObjects.Type != JTokenType.Null && !(subObjects is JObject) ||
@@ -743,11 +825,57 @@ namespace SkylinesLink.Mod.Native
                 status["normalSettings"] is JObject || status["normalConnection"] is JObject ? 16384 : 4096;
             if (bytes.Length > maximum) throw new ProbeFailure("PROBE_STATUS_BUDGET");
             string target = Path.Combine(storage.DirectoryPath, "menu-probe-" + runId + ".status.json");
-            string temporary = target + ".tmp";
-            storage.ValidateFile(target, true);
-            using (var stream = storage.CreatePrivateFile(temporary)) { stream.Write(bytes, 0, bytes.Length); storage.FlushToDisk(stream); }
-            if (File.Exists(target)) File.Replace(temporary, target, null); else File.Move(temporary, target);
+            PublishStatus(storage, target, bytes);
         }
+
+        private static void PublishStatus(PrivateConnectionStorage storage, string target, byte[] bytes)
+        {
+            // One writer and one staging file per run. A failed cleanup cannot
+            // accumulate staging files while native work is still draining.
+            string temporary = target + ".tmp";
+            bool created = false;
+            string stage = "VALIDATE";
+            try
+            {
+                storage.ValidateFile(target, true);
+                stage = "WRITE";
+                using (var stream = storage.CreatePrivateFile(temporary))
+                {
+                    created = true;
+                    stream.Write(bytes, 0, bytes.Length);
+                    storage.FlushToDisk(stream);
+                }
+                stage = "PUBLISH";
+                for (int attempt = 0; ; attempt++)
+                {
+                    try
+                    {
+                        if (File.Exists(target)) File.Replace(temporary, target, null);
+                        else File.Move(temporary, target);
+                        created = false;
+                        return;
+                    }
+                    catch (IOException error) when (attempt < 3 && IsFileContention(error))
+                    {
+                        // Only the background writer waits. Never retry an unknown write or flush.
+                        Thread.Sleep(15 * (attempt + 1));
+                    }
+                }
+            }
+            catch (IOException error) { throw new ProbeFailure("PROBE_STATUS_" + stage + "_FAILED", error); }
+            finally
+            {
+                if (created)
+                {
+                    try { File.Delete(temporary); }
+                    catch (IOException error) { throw new ProbeFailure("PROBE_STATUS_TEMP_CLEANUP_FAILED", error); }
+                }
+            }
+        }
+
+        private static bool IsFileContention(IOException error) =>
+            error.HResult == unchecked((int)0x80070020) || error.HResult == unchecked((int)0x80070021);
+
         private WindowHandle[] DiscoverWindows()
         {
             var handles = new List<WindowHandle>(8); bool exceeded = false;
@@ -787,7 +915,10 @@ namespace SkylinesLink.Mod.Native
             internal bool DiscoverWindows { get; }
         }
         private sealed class ProbeFailure : Exception
-        { internal ProbeFailure(string code) : base(code) { Code = code; } internal string Code { get; } }
+        {
+            internal ProbeFailure(string code, Exception? cause = null) : base(code, cause) { Code = code; }
+            internal string Code { get; }
+        }
         private sealed class Configuration
         {
             internal string RunId = "", EnvironmentId = "", ProfileId = "", CoreHash = "";

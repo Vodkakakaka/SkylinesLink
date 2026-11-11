@@ -23,7 +23,8 @@ namespace SkylinesLink.Mod.Native
         private bool linkStarted, linkReturned, linkJoined, linkPassed, unlinkStarted, unlinkReturned, unlinkJoined, unlinkPassed;
         private bool joinFailed, graphRejected, rootPresent, nodePresent, rootPresenceObserved, nodePresenceObserved, rootBufferObserved;
         private int rootBufferLength = -1;
-        private Entity root, node;
+        private Entity root, node, originalRoot;
+        private Temp relocationRootTemp, relocationNodeTemp;
         private Entity[] latestEntries = Array.Empty<Entity>(), linkedEntries = Array.Empty<Entity>(), unlinkedEntries = Array.Empty<Entity>();
         private Entity[] queryMembers = Array.Empty<Entity>();
         private EntityQuery subNets;
@@ -104,14 +105,32 @@ namespace SkylinesLink.Mod.Native
             catch (Exception error) { RecordFailure(error); throw; }
         }
 
-        internal void Bind(Entity root, Entity node, Action scope)
+        internal void Bind(Entity root, Entity node, Action scope) => BindGraph(root, node, Entity.Null, scope);
+
+        internal void BindRelocation(Entity root, Entity newNode, Temp expectedRoot, Temp expectedNode, Action scope)
+        {
+            RequireMainThread();
+            Entity original = expectedRoot.m_Original;
+            Require(!bound && original.Index > 0 && original.Version > 0
+                && original != root && original != newNode && expectedRoot.m_Flags == (TempFlags.Modify | TempFlags.Essential)
+                && expectedNode.m_Original == Entity.Null && expectedNode.m_Flags == (TempFlags.Create | TempFlags.IsLast),
+                "SUBNET_RELOCATION_ORIGINAL_ID_UNQUALIFIED");
+            relocationRootTemp = expectedRoot;
+            relocationNodeTemp = expectedNode;
+            BindGraph(root, newNode, original, scope);
+        }
+
+        private void BindGraph(Entity root, Entity node, Entity originalRoot, Action scope)
         {
             RequireMainThread();
             if (scope == null) throw new ArgumentNullException(nameof(scope));
             Require(CreationReturned && emptyPassed && !bound && !DestructionStarted
                 && root != Entity.Null && node != Entity.Null && root != node && root.Index >= 0 && node.Index >= 0,
                 "SUBNET_REFERENCES_BIND_REJECTED");
-            Guard(scope); source = World; this.root = root; this.node = node; boundScope = scope; bound = true;
+            Guard(scope);
+            source = World; this.root = root; this.node = node; this.originalRoot = originalRoot;
+            boundScope = scope; bound = true;
+            if (originalRoot != Entity.Null) RequireLiveOriginal(scope);
             RequireEmptyGraph();
         }
 
@@ -207,7 +226,12 @@ namespace SkylinesLink.Mod.Native
         private void QualifyInputs(Action scope, bool unlink)
         {
             Guard(scope); ObserveBindings(scope);
-            if (unlink) RequireLinkedGraph(); else RequireEmptyGraph();
+            if (unlink) RequireLinkedGraph();
+            else
+            {
+                if (originalRoot != Entity.Null) RequireLiveOriginal(scope);
+                RequireEmptyGraph();
+            }
             EntityManager entities = EntityManager; Guard(scope);
             RequireLiveRoot(entities, scope); RequireLiveNode(entities, scope);
             Require(Has<Created>(entities, node, scope) == !unlink && Has<Deleted>(entities, node, scope) == unlink,
@@ -269,13 +293,13 @@ namespace SkylinesLink.Mod.Native
 
         private void RequireLiveRoot(EntityManager entities, Action scope)
         {
-            RequireScoped(entities, root, scope);
+            RequireScoped(entities, root, scope, isRoot: true);
             Require(!Has<Owner>(entities, root, scope) && !Has<Deleted>(entities, root, scope), "SUBNET_REFERENCES_ROOT_ROLE_CHANGED");
         }
 
         private void RequireLiveNode(EntityManager entities, Action scope, bool allowUnresolvedOwner = false)
         {
-            RequireScoped(entities, node, scope);
+            RequireScoped(entities, node, scope, isRoot: false);
             Require(Has<Node>(entities, node, scope) && !Has<Edge>(entities, node, scope)
                 && Has<Owner>(entities, node, scope), "SUBNET_REFERENCES_NODE_ROLE_CHANGED");
             Entity owner = Read<Owner>(entities, node, scope).m_Owner;
@@ -286,7 +310,7 @@ namespace SkylinesLink.Mod.Native
                 "SUBNET_REFERENCES_NODE_OWNER_CHANGED");
         }
 
-        private void RequireScoped(EntityManager entities, Entity entity, Action scope)
+        private void RequireScoped(EntityManager entities, Entity entity, Action scope, bool isRoot)
         {
             bool exists = entities.Exists(entity); Guard(scope);
             Require(exists, "SUBNET_REFERENCES_SOURCE_SCOPE_CHANGED");
@@ -296,7 +320,29 @@ namespace SkylinesLink.Mod.Native
             int actual = entities.GetSharedComponent<ObjectGenerationScope>(entity).Value; Guard(scope);
             Require(actual == actor, "SUBNET_REFERENCES_ACTOR_CHANGED");
             Temp temp = Read<Temp>(entities, entity, scope);
-            Require(temp.m_Original == Entity.Null && (temp.m_Flags & TempFlags.Create) != 0, "SUBNET_REFERENCES_NOT_NEW_TEMP");
+            if (originalRoot == Entity.Null)
+            {
+                Require(temp.m_Original == Entity.Null && (temp.m_Flags & TempFlags.Create) != 0, "SUBNET_REFERENCES_NOT_NEW_TEMP");
+                return;
+            }
+
+            if (!isRoot)
+            {
+                Require(temp.Equals(relocationNodeTemp), "SUBNET_RELOCATION_NEW_NODE_TEMP_CHANGED");
+                return;
+            }
+
+            Require(temp.Equals(relocationRootTemp), "SUBNET_RELOCATION_ROOT_TEMP_CHANGED");
+        }
+
+        private void RequireLiveOriginal(Action scope)
+        {
+            Guard(scope);
+            EntityManager entities = EntityManager;
+            bool originalExists = entities.Exists(originalRoot); Guard(scope);
+            Require(originalExists && !Has<Temp>(entities, originalRoot, scope)
+                && !Has<Deleted>(entities, originalRoot, scope) && !Has<Disabled>(entities, originalRoot, scope),
+                "SUBNET_RELOCATION_ORIGINAL_NOT_PERMANENT");
         }
 
         private void ReadQueryCounts(Action scope)
@@ -350,7 +396,9 @@ namespace SkylinesLink.Mod.Native
                 ["bufferObserved"] = rootBufferObserved, ["length"] = rootBufferLength, ["entries"] = Ids(latestEntries), ["rejected"] = graphRejected },
             ["nativeWorkMayReadSource"] = NativeWorkMayReadSource, ["joinFailed"] = joinFailed,
             ["checksPassed"] = ChecksPassed, ["failureCode"] = Text(failureCode), ["exceptionType"] = Text(exceptionType),
-            ["scope"] = "one-owned-node-native-subnet-link-and-noncreated-deleted-unlink-only"
+            ["scope"] = originalRoot == Entity.Null
+                ? "one-owned-node-native-subnet-link-and-noncreated-deleted-unlink-only"
+                : "one-owned-relocation-node-native-subnet-link-and-noncreated-deleted-unlink-only"
         };
 
         private void Guard(Action scope)

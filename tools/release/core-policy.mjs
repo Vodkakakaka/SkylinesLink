@@ -1,5 +1,16 @@
 import { isAbsolute } from 'node:path';
 
+export function meetsMinimumVersion(actual, minimum) {
+  const current = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(actual);
+  const baseline = /^>=(\d+)\.(\d+)\.(\d+)$/.exec(minimum);
+  if (!current || !baseline) return false;
+  for (let i = 1; i <= 3; i++) {
+    const difference = Number(current[i]) - Number(baseline[i]);
+    if (difference !== 0) return difference > 0;
+  }
+  return true;
+}
+
 export const managedNames = ['SkylinesLink.Contracts', 'SkylinesLink.Application', 'SkylinesLink.Infrastructure', 'SkylinesLink.Mod'];
 const brandingSources = new Set([
   'assets/branding/mark.svg', 'assets/branding/mark-monochrome.svg', 'assets/branding/app-icon.svg',
@@ -66,7 +77,7 @@ export function validateSourcePath(path, mode) {
   if (!['100644', '100755'].includes(mode) || isAbsolute(path) || path.includes('\\') || path.split('/').some(x => x === '..' || x === '')) throw new Error('CORE_SOURCE_PATH');
   if (/(^|\/)(?:\.local|\.git|node_modules|artifacts|bin|obj|game-libs|decompiled|research-inputs)(\/|$)/i.test(path)) throw new Error('CORE_PRIVATE_SOURCE');
   const name = path.split('/').at(-1);
-  const special = new Set(['LICENSE', '.editorconfig', '.gitattributes', '.gitignore', '.gitkeep', '.node-version', '.nvmrc']);
+  const special = new Set(['LICENSE', '.editorconfig', '.gitattributes', '.gitignore', '.gitkeep', '.node-version', '.nvmrc', '.npmrc']);
   if (!special.has(name) && !brandingSources.has(path) && !/\.(?:cs|csproj|json|md|mjs|ts|ps1|slnx|props|targets|template|yaml|yml|config)$/i.test(name)
     && !/^(?:src\/host|tools\/release)\/licenses\/[^/]+\.txt$/.test(path)) throw new Error('CORE_SOURCE_EXTENSION');
 }

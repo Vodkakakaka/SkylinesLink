@@ -5,7 +5,7 @@
   "type": "module",
   "license": "MPL-2.0",
   "packageManager": "pnpm@12.16.1",
-  "engines": { "node": "26.13.0", "pnpm": "12.16.1" },
+  "engines": { "node": ">=26.13.0", "pnpm": ">=12.16.1" },
   "scripts": {
     "generate": "node tools/contracts/generate.mjs",
     "check:generated": "node tools/contracts/generate.mjs --check",
@@ -16,6 +16,7 @@
     "build:aot": "pwsh -NoProfile -File tools/build/publish-desktop.ps1",
     "build:core": "node tools/release/core.mjs build",
     "test:core": "node --test tools/release/core.test.mjs",
+    "build:source-preview": "node tools/release/source-preview.mjs",
     "verify:fresh-source": "pwsh -NoProfile -File tools/verification/fresh-source.ps1",
     "build:probes": "dotnet build tests/integration/runtime/SkylinesLink.RuntimeProbe.csproj --nologo && dotnet build tests/integration/desktop/SkylinesLink.ProcessProbe.csproj --nologo",
     "build:mod": "pwsh -NoProfile -File tools/build/build-mod.ps1",

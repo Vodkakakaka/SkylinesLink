@@ -12,7 +12,7 @@ using Unity.Entities;
 
 namespace SkylinesLink.Mod.Native
 {
-    // Runs the real selection and creation jobs for one admitted Orphan. The
+    // Runs the real selection and creation jobs for an admitted Orphan cohort. The
     // retained ECB is observed and discarded; it never publishes a shared cache.
     [DisableAutoCreation]
     public sealed partial class CompositionSelectionProducer : CompositionSelectSystem
@@ -22,12 +22,15 @@ namespace SkylinesLink.Mod.Native
         private int cacheCount, pieceUpperBound, inspectedCommands, pendingObserved;
         private bool configured, bindingsVerified, registeredExactly, emptyArmed, armed, emptyPassed;
         private bool emptyStarted, emptyReturned, emptyJoined, nativeStarted, nativeReturned, nativeJoined;
-        private bool joinFailed, selectionRequested, observationPassed, inspected, afterObserved;
+        private bool joinFailed, selectionRequested, observationPassed, inspected, inspectionCompleted, afterObserved;
         private bool updatedIgnoredEmpty, allIgnoredEmpty, loadedObserved;
         private EntityQuery updated, all;
         private CityConfigurationSystem? configuration;
         private CompositionSelectionBarrier? output;
-        private CompositionSelectionPreflight? admitted;
+        private CompositionSelectionPreflight[]? admitted;
+        private CompositionSelectionReceipt? oldNodeReceipt, newNodeReceipt;
+        private Orphan oldNodeAfter, newNodeAfter;
+        private bool relocationValuesObserved;
         private Bindings? fields;
         private Action? currentScope;
         private Orphan before, after;
@@ -53,7 +56,17 @@ namespace SkylinesLink.Mod.Native
         internal bool SelectionApplied => ObservationPassed && receipt!.ObservedSelection;
         internal bool NeedsPublication => ObservationPassed && receipt!.NeedsPublication;
         internal CompositionSelectionReceipt? Receipt => receipt;
+        internal bool RelocationSelectionPassed => observationPassed && nativeReturned && nativeJoined
+            && oldNodeReceipt != null && newNodeReceipt != null && failureCode == null;
         internal CompositionCreationDefinition? CreationDefinition => creationDefinition;
+
+        internal CompositionInitializationExpectation CaptureInitializationExpectation(CompositionInitializationPreflight inputs)
+        {
+            var definition = creationDefinition ?? throw new InvalidOperationException("COMPOSITION_DEFINITION_UNAVAILABLE");
+            return CompositionInitializationExpectation.Capture(definition, inputs, GetComponentLookup<NetPieceData>(true),
+                GetComponentLookup<NetVertexMatchData>(true), GetComponentLookup<MeshData>(true),
+                GetComponentLookup<PlaceableNetPieceData>(true));
+        }
         private int PendingCount { get { pendingObserved = output?.PendingCount ?? 0; return pendingObserved; } }
 
         internal void Configure(int actor, CompositionSelectionBarrier barrier)
@@ -115,33 +128,65 @@ namespace SkylinesLink.Mod.Native
             catch (Exception error) { RecordFailure(error); throw; }
         }
 
-        internal void SelectOnce(CompositionSelectionPreflight inputs, Action scope)
+        internal void SelectOnce(CompositionSelectionPreflight input, Action scope)
+        {
+            if (input == null) throw new ArgumentNullException(nameof(input));
+            Require(!input.IsRelocation, "COMPOSITION_SELECTION_SINGLE_RELOCATION_REJECTED");
+            Select(new[] { input }, scope);
+        }
+
+        internal (CompositionSelectionReceipt Old, CompositionSelectionReceipt New) SelectRelocationOnce(
+            CompositionSelectionPreflight oldNode, CompositionSelectionPreflight newNode, Action scope)
+        {
+            Require(oldNode.IsOldNode && newNode.IsRelocation && !newNode.IsOldNode && oldNode.SharesRelocation(newNode)
+                && oldNode.Passed && newNode.Passed && oldNode.Prefab == newNode.Prefab,
+                "COMPOSITION_SELECTION_RELOCATION_PAIR_REJECTED");
+            Select(new[] { oldNode, newNode }, scope);
+            Require(RelocationSelectionPassed, "COMPOSITION_SELECTION_RELOCATION_RECEIPTS_UNCONFIRMED");
+            return (oldNodeReceipt!, newNodeReceipt!);
+        }
+
+        private void Select(CompositionSelectionPreflight[] inputs, Action scope)
         {
             RequireMainThread();
-            if (inputs == null) throw new ArgumentNullException(nameof(inputs));
             if (scope == null) throw new ArgumentNullException(nameof(scope));
             Require(CreationReturned && emptyPassed && !DestructionStarted && !selectionRequested && !NativeWorkMayReadSource,
                 "COMPOSITION_SELECTION_RUN_REJECTED");
             selectionRequested = true; admitted = inputs;
             try
             {
-                Require(inputs.Passed && ReferenceEquals(inputs.Source, World) && inputs.Actor == actor
-                    && inputs.BeforeOrphan.m_Composition == Entity.Null && inputs.CacheCount >= 0 && inputs.CacheCount <= 256
-                    && inputs.PieceUpperBound >= 0 && inputs.PieceUpperBound <= MaximumPieces,
-                    "COMPOSITION_SELECTION_PREFLIGHT_UNQUALIFIED");
-                before = inputs.BeforeOrphan; cacheCount = inputs.CacheCount; pieceUpperBound = inputs.PieceUpperBound;
+                foreach (CompositionSelectionPreflight input in inputs) RequireInput(input);
+                var first = inputs[0];
+                before = first.BeforeOrphan; cacheCount = first.CacheCount; pieceUpperBound = first.PieceUpperBound;
                 Qualify(inputs, scope);
                 currentScope = scope; armed = true; Enabled = true;
                 try { Update(); Require(nativeReturned, "COMPOSITION_SELECTION_NATIVE_NOT_RETURNED"); JoinOwnedDependencies(); }
                 finally { Enabled = false; armed = false; currentScope = null; }
-                Guard(scope); inputs.RequireUnchanged(); Guard(scope);
+
+                Guard(scope);
+                foreach (CompositionSelectionPreflight input in inputs) { input.RequireUnchanged(); Guard(scope); }
                 ObserveBindings(scope);
                 Require(nativeJoined && OnUpdateEntries == 2 && PendingCount == 1, "COMPOSITION_SELECTION_COMPLETION_UNCONFIRMED");
-                after = inputs.ReadCurrentOrphan(); Guard(scope); afterObserved = true;
-                Array observed = InspectOnce();
-                if (observed.Length == 0) ObserveHit(inputs, scope);
-                else ObserveMiss(observed, inputs, scope);
-                Require(receipt != null && !NativeWorkMayReadSource, "COMPOSITION_SELECTION_RECEIPT_UNCONFIRMED");
+                if (inputs.Length == 2)
+                {
+                    oldNodeAfter = first.ReadCurrentOrphan();
+                    newNodeAfter = inputs[1].ReadCurrentOrphan(); Guard(scope);
+                    relocationValuesObserved = true;
+                    // This rehearsal borrows published cache rows. Any miss
+                    // leaves private output and no shared publication.
+                    Require(InspectOnce().Length == 0, "COMPOSITION_SELECTION_RELOCATION_PRIVATE_OUTPUT");
+                    oldNodeReceipt = ReadHit(first, oldNodeAfter, scope, out _);
+                    newNodeReceipt = ReadHit(inputs[1], newNodeAfter, scope, out _);
+                }
+                else
+                {
+                    after = first.ReadCurrentOrphan(); Guard(scope); afterObserved = true;
+                    Array observed = InspectOnce();
+                    if (observed.Length == 0) ObserveHit(first, scope);
+                    else ObserveMiss(observed, first, scope);
+                    Require(receipt != null, "COMPOSITION_SELECTION_RECEIPT_UNCONFIRMED");
+                }
+                Require(!NativeWorkMayReadSource, "COMPOSITION_SELECTION_RECEIPT_UNCONFIRMED");
                 observationPassed = true;
             }
             catch (Exception error) { RecordFailure(error); throw; }
@@ -154,25 +199,45 @@ namespace SkylinesLink.Mod.Native
                 "COMPOSITION_SELECTION_NOT_EMPTY");
         }
 
-        private void Qualify(CompositionSelectionPreflight inputs, Action scope)
+        private void RequireInput(CompositionSelectionPreflight input)
+        {
+            Require(input.Passed && ReferenceEquals(input.Source, World) && input.Actor == actor
+                && input.BeforeOrphan.m_Composition == Entity.Null && input.CacheCount >= 0 && input.CacheCount <= 256
+                && input.PieceUpperBound >= 0 && input.PieceUpperBound <= MaximumPieces,
+                "COMPOSITION_SELECTION_PREFLIGHT_UNQUALIFIED");
+        }
+
+        private void Qualify(CompositionSelectionPreflight[] inputs, Action scope)
         {
             Guard(scope); ObserveBindings(scope);
-            inputs.RequireUnchanged(); Guard(scope);
-            Require(inputs.Passed && ReferenceEquals(inputs.Source, World) && inputs.Actor == actor
-                && inputs.BeforeOrphan.Equals(before) && inputs.PieceUpperBound == pieceUpperBound && inputs.CacheCount == cacheCount,
-                "COMPOSITION_SELECTION_INPUT_CHANGED");
+            foreach (CompositionSelectionPreflight input in inputs)
+            {
+                input.RequireUnchanged(); Guard(scope);
+                RequireInput(input);
+                Require(input.ReadCurrentOrphan().Equals(input.BeforeOrphan), "COMPOSITION_SELECTION_INITIAL_ORPHAN_CHANGED");
+            }
             ReadCounts(scope);
-            Require(updatedCount == 1 && allCount == 1 && !updatedIgnoredEmpty && !allIgnoredEmpty,
+            Require(updatedCount == inputs.Length && allCount == inputs.Length && !updatedIgnoredEmpty && !allIgnoredEmpty,
                 "COMPOSITION_SELECTION_QUERY_BUDGET");
-            RequireOnlyNode(updated, inputs.Node, scope); RequireOnlyNode(all, inputs.Node, scope);
+            RequireOnlyNodes(updated, inputs, scope); RequireOnlyNodes(all, inputs, scope);
             bool shouldRun = ShouldRunSystem(); Guard(scope);
             Require(shouldRun && PendingCount == 0, "COMPOSITION_SELECTION_NATIVE_GATE_CHANGED");
         }
 
-        private void RequireOnlyNode(EntityQuery query, Entity node, Action scope)
+        private void RequireOnlyNodes(EntityQuery query, CompositionSelectionPreflight[] inputs, Action scope)
         {
             arraysAttempted++; NativeArray<Entity> values = query.ToEntityArray(Allocator.Temp); arraysAcquired++;
-            try { Guard(scope); Require(values.Length == 1 && values[0] == node, "COMPOSITION_SELECTION_FOREIGN_QUERY_MEMBER"); }
+            try
+            {
+                Guard(scope); Require(values.Length == inputs.Length, "COMPOSITION_SELECTION_FOREIGN_QUERY_MEMBER");
+                foreach (CompositionSelectionPreflight input in inputs)
+                {
+                    int matches = 0;
+                    for (int index = 0; index < values.Length; index++)
+                        if (values[index] == input.Node) matches++;
+                    Require(matches == 1, "COMPOSITION_SELECTION_FOREIGN_QUERY_MEMBER");
+                }
+            }
             finally { values.Dispose(); arraysDisposed++; }
         }
 
@@ -198,30 +263,41 @@ namespace SkylinesLink.Mod.Native
 
         private Array InspectOnce()
         {
-            Require(!inspected && nativeReturned && nativeJoined && admitted != null && admitted.Passed && PendingCount == 1
-                && pieceUpperBound >= 0 && pieceUpperBound <= MaximumPieces, "COMPOSITION_SELECTION_INSPECTION_REJECTED");
+            Require(!inspected && nativeReturned && nativeJoined && admitted != null && PendingCount == 1,
+                "COMPOSITION_SELECTION_INSPECTION_REJECTED");
+            foreach (CompositionSelectionPreflight input in admitted!) RequireInput(input);
             inspected = true;
-            // The input DAG and the single-Orphan branch prove <=7 commands
-            // before this full getter. SetBuffer contents remain opaque.
+            // Each Orphan can enqueue at most one proposal with its bounded
+            // DAG and one SetOrphan. Native deduplication can reduce this bound.
             var abi = new ObjectDefinitionCommandProbe.Abi();
             object proxy = abi.Constructor.Invoke(new object[] { output!.Borrow() });
             var values = (Array)abi.Commands.GetValue(proxy)!;
-            Require(values.Length <= MaximumCommands, "COMPOSITION_SELECTION_COMMAND_BUDGET");
-            inspectedCommands = values.Length;
+            Require(values.Length <= MaximumCommands * admitted!.Length, "COMPOSITION_SELECTION_COMMAND_BUDGET");
+            inspectedCommands = values.Length; inspectionCompleted = true;
             return values;
         }
 
-        private void ObserveHit(CompositionSelectionPreflight inputs, Action scope)
+        private void ObserveHit(CompositionSelectionPreflight input, Action scope)
         {
-            Require(after.m_Composition != Entity.Null && after.m_Composition.Index >= 0 && !after.Equals(before),
+            receipt = ReadHit(input, after, scope, out NetCompositionData data);
+            selectedData = data;
+            commands = new JObject { ["commandsObserved"] = 0, ["opaquePieceBuffers"] = 0, ["sourcePlaybackCalled"] = false };
+        }
+
+        private CompositionSelectionReceipt ReadHit(CompositionSelectionPreflight inputs, Orphan selectedOrphan,
+            Action scope, out NetCompositionData data)
+        {
+            Require(selectedOrphan.m_Composition != Entity.Null && selectedOrphan.m_Composition.Index >= 0
+                && !selectedOrphan.Equals(inputs.BeforeOrphan),
                 "COMPOSITION_SELECTION_HIT_NOT_OBSERVED");
             Guard(scope); EntityManager entities = EntityManager;
-            bool exists = entities.Exists(after.m_Composition); Guard(scope);
-            Require(exists && entities.HasComponent<PrefabRef>(after.m_Composition)
-                && entities.HasComponent<NetCompositionData>(after.m_Composition) && entities.HasBuffer<NetCompositionPiece>(after.m_Composition)
-                && !entities.HasComponent<Deleted>(after.m_Composition), "COMPOSITION_SELECTION_CACHE_TARGET_UNAVAILABLE");
-            PrefabRef prefab = entities.GetComponentData<PrefabRef>(after.m_Composition); Guard(scope);
-            NetCompositionData data = entities.GetComponentData<NetCompositionData>(after.m_Composition); Guard(scope);
+            Entity composition = selectedOrphan.m_Composition;
+            bool exists = entities.Exists(composition); Guard(scope);
+            Require(exists && entities.HasComponent<PrefabRef>(composition)
+                && entities.HasComponent<NetCompositionData>(composition) && entities.HasBuffer<NetCompositionPiece>(composition)
+                && !entities.HasComponent<Deleted>(composition), "COMPOSITION_SELECTION_CACHE_TARGET_UNAVAILABLE");
+            PrefabRef prefab = entities.GetComponentData<PrefabRef>(composition); Guard(scope);
+            data = entities.GetComponentData<NetCompositionData>(composition); Guard(scope);
             Require(prefab.m_Prefab == inputs.Prefab, "COMPOSITION_SELECTION_CACHE_PREFAB_CHANGED");
             int selected = -1; NetGeometryComposition row = default;
             for (int index = 0; index < inputs.CacheCount; index++)
@@ -230,15 +306,12 @@ namespace SkylinesLink.Mod.Native
                 if (candidate.m_Mask != data.m_Flags) continue;
                 selected = index; row = candidate; break;
             }
-            Require(selected >= 0 && row.m_Composition == after.m_Composition && row.m_Mask == data.m_Flags,
+            Require(selected >= 0 && row.m_Composition == composition && row.m_Mask == data.m_Flags,
                 "COMPOSITION_SELECTION_FIRST_CACHE_ROW_MISMATCH");
             inputs.RequireUnchanged(); Guard(scope);
-            selectedData = data;
-            commands = new JObject { ["commandsObserved"] = 0, ["opaquePieceBuffers"] = 0, ["sourcePlaybackCalled"] = false };
-            // Keep the original root runtime guard. The receipt is used after
-            // linked children and this producer may already have been released.
-            receipt = new CompositionSelectionReceipt(inputs.Source, inputs.Node, inputs.Prefab, actor, before, after,
-                true, false, selected, row, true, true, scope);
+            Require(inputs.ReadCurrentOrphan().Equals(selectedOrphan), "COMPOSITION_SELECTION_HIT_CHANGED");
+            return new CompositionSelectionReceipt(inputs.Source, inputs.Node, inputs.Prefab, actor, inputs.BeforeOrphan,
+                selectedOrphan, true, false, selected, row, true, true, scope);
         }
 
         private void ObserveMiss(Array values, CompositionSelectionPreflight inputs, Action scope)
@@ -365,7 +438,14 @@ namespace SkylinesLink.Mod.Native
         private void JoinOwnedDependencies()
         {
             Require(!joinFailed && (!emptyStarted || emptyReturned) && (!nativeStarted || nativeReturned), "COMPOSITION_SELECTION_JOIN_UNRESOLVED");
-            try { Dependency.Complete(); if (emptyReturned) emptyJoined = true; if (nativeReturned) nativeJoined = true; }
+            try
+            {
+                if (nativeReturned && !nativeJoined && admitted?.Length == 2)
+                    Require(!Dependency.Equals(default(Unity.Jobs.JobHandle)), "COMPOSITION_SELECTION_RELOCATION_WRITER_UNAVAILABLE");
+                Dependency.Complete();
+                if (emptyReturned) emptyJoined = true;
+                if (nativeReturned) nativeJoined = true;
+            }
             catch { joinFailed = true; throw; }
         }
 
@@ -378,6 +458,21 @@ namespace SkylinesLink.Mod.Native
             // is not observed or disposed a second time by this adapter.
             DestructionReturned = true;
         }
+
+        internal JObject RelocationSnapshot() => new JObject {
+            ["passed"] = RelocationSelectionPassed, ["emptyPassed"] = emptyPassed,
+            ["updatedCount"] = updatedCount, ["allCount"] = allCount, ["registeredExactly"] = registeredExactly,
+            ["bindingsVerified"] = bindingsVerified, ["nativeEntered"] = nativeStarted, ["nativeReturned"] = nativeReturned,
+            ["nativeJoined"] = nativeJoined, ["onUpdateEntries"] = OnUpdateEntries,
+            ["commandsObserved"] = inspectionCompleted ? new JValue(inspectedCommands) : JValue.CreateNull(),
+            ["pendingEcbCount"] = pendingObserved, ["cacheCount"] = cacheCount,
+            ["oldNode"] = oldNodeReceipt?.Snapshot(), ["newNode"] = newNodeReceipt?.Snapshot(),
+            ["oldNodeAfter"] = relocationValuesObserved ? Id(oldNodeAfter.m_Composition) : JValue.CreateNull(),
+            ["newNodeAfter"] = relocationValuesObserved ? Id(newNodeAfter.m_Composition) : JValue.CreateNull(),
+            ["queryArrays"] = new JObject { ["attempted"] = arraysAttempted, ["acquired"] = arraysAcquired, ["disposed"] = arraysDisposed },
+            ["resourcesReleased"] = ResourcesReleased, ["nativeWorkMayReadSource"] = NativeWorkMayReadSource,
+            ["sourcePlaybackCalled"] = false, ["failureCode"] = Text(failureCode), ["exceptionType"] = Text(exceptionType)
+        };
 
         internal JObject Snapshot() => new JObject {
             ["creationStarted"] = CreationStarted, ["creationReturned"] = CreationReturned,

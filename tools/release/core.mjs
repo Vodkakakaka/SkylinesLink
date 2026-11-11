@@ -7,7 +7,7 @@ import { inflateRawSync } from 'node:zlib';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { verifyNodeRuntime } from './runtime-inputs.mjs';
-import { managedNames, managedComponentIndex, rejectPrivatePrefixes, requireInspectedBytes, validateManagedClosure, validateOutputInventory, validateSourcePath } from './core-policy.mjs';
+import { managedNames, managedComponentIndex, meetsMinimumVersion, rejectPrivatePrefixes, requireInspectedBytes, validateManagedClosure, validateOutputInventory, validateSourcePath } from './core-policy.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
 const maximumFile = 256 * 1024 * 1024;
@@ -142,7 +142,8 @@ export async function buildCore() {
   for (const name of ['host', 'nativeaot', 'dotnet', 'developer-core']) await absent(join(root, 'artifacts', name));
   await ordinary(root, true);
   const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
-  if (process.version !== `v${pkg.engines.node}` || run('pwsh', ['-NoProfile', '-NonInteractive', '-Command', 'pnpm --version']) !== pkg.engines.pnpm) throw new Error('CORE_TOOL_VERSION');
+  if (!meetsMinimumVersion(process.version, pkg.engines.node)
+    || !meetsMinimumVersion(run('pwsh', ['-NoProfile', '-NonInteractive', '-Command', 'pnpm --version']), pkg.engines.pnpm)) throw new Error('CORE_TOOL_VERSION');
   // nvm's stable command may be a managed junction. Resolve only this explicit input;
   // all ordinary source/Core paths keep their strict ancestor/reparse checks.
   const nodeExe = await realpath(process.execPath);

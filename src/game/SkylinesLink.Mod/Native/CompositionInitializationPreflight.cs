@@ -41,6 +41,24 @@ namespace SkylinesLink.Mod.Native
         // managed snapshots or the engine's composition outputs occupy no memory.
         internal bool ResourcesReleased => archetypes.ResourcesReleased;
 
+        internal NetGeometryData RequireEmptyOutputBranch(CompositionCreationDefinition candidate)
+        {
+            Guard();
+            State state = before ?? throw new Rejection("COMPOSITION_INITIALIZATION_SNAPSHOT_UNAVAILABLE");
+            Require(ReferenceEquals(definition, candidate) && passed && state.PrefabEnabled
+                && !state.Terrain && !state.Road.HasValue && !state.Track.HasValue && !state.Waterway.HasValue
+                && !state.Pathway.HasValue && !state.Taxiway.HasValue
+                && state.ObjectRows == 0 && state.AreaRows == 0 && state.CrosswalkBound == 0,
+                "COMPOSITION_INITIALIZATION_OUTPUT_BRANCH_UNQUALIFIED");
+            return state.Geometry;
+        }
+
+        internal bool HasOutput<T>() where T : unmanaged
+        {
+            State state = before ?? throw new Rejection("COMPOSITION_INITIALIZATION_SNAPSHOT_UNAVAILABLE");
+            return Contains<T>(state);
+        }
+
         internal void RunOnce()
         {
             Require(!attempted && !snapshotsReleased, "COMPOSITION_INITIALIZATION_ALREADY_USED");

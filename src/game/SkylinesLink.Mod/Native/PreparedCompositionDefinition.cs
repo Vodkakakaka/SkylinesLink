@@ -22,7 +22,7 @@ namespace SkylinesLink.Mod.Native
         private bool attempted, prepared, releaseCalled, valuesMatched, buffersMatched, scopeAttempted, scopeReturned;
         private int originalTypes, originalBuffers, copiedPieces;
         private string? originalTypeDigest, rejectedType, failureCode, exceptionType;
-        private bool simulateEnabled;
+        private bool simulateEnabled, publicationAttempted;
 
         internal PreparedCompositionDefinition(CompositionSelectionPreflight inputs,
             CompositionCreationDefinition definition, Action requireScope)
@@ -37,6 +37,19 @@ namespace SkylinesLink.Mod.Native
 
         internal bool ResourcesReleased => releaseCalled && batch.ResourcesReleased && archetypes.ResourcesReleased;
         internal bool ChecksPassed => prepared && valuesMatched && buffersMatched && ResourcesReleased && failureCode == null;
+        internal bool PublicationStorageReleased => publicationAttempted && batch.StorageReleased && archetypes.ResourcesReleased;
+
+        internal Entity RequirePublicationCandidate(CompositionSelectionPreflight expectedInputs, CompositionCreationDefinition expectedDefinition)
+        {
+            Require(ReferenceEquals(inputs, expectedInputs) && ReferenceEquals(definition, expectedDefinition)
+                && prepared && !publicationAttempted && !releaseCalled && failureCode == null,
+                "COMPOSITION_CANDIDATE_PUBLICATION_NOT_READY");
+            Verify();
+            return Entity;
+        }
+
+        internal void MarkPublicationEntered() => publicationAttempted = true;
+        internal void ReleasePublicationStorage() => batch.ReleaseSlots();
 
         internal void PrepareOnce()
         {
@@ -148,7 +161,7 @@ namespace SkylinesLink.Mod.Native
 
         internal void ReleaseUnpublished()
         {
-            if (releaseCalled) return; releaseCalled = true;
+            if (releaseCalled || publicationAttempted) return; releaseCalled = true;
             try
             {
                 // The native class has no LinkedEntityGroup or cleanup type;
@@ -183,7 +196,7 @@ namespace SkylinesLink.Mod.Native
             ["simulateEnabled"] = simulateEnabled, ["rejectedType"] = Text(rejectedType),
             ["entity"] = batch.ReceiptSummary(0), ["slots"] = batch.SlotsSummary(), ["typeArrays"] = archetypes.Snapshot(),
             ["storageReleased"] = batch.StorageReleased, ["entitiesDestroyed"] = batch.EntitiesDestroyed,
-            ["sourceCacheWritten"] = false, ["nodeWritten"] = false, ["publicationAttempted"] = false,
+            ["sourceCacheWritten"] = false, ["nodeWritten"] = false, ["publicationAttempted"] = publicationAttempted,
             ["nativeInitializationInvoked"] = false, ["cacheReadyQualified"] = false,
             ["failureCode"] = Text(failureCode), ["exceptionType"] = Text(exceptionType)
         };

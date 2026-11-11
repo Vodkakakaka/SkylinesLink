@@ -20,7 +20,7 @@ using PostFacility = Game.Buildings.PostFacility;
 
 namespace SkylinesLink.Mod.Native
 {
-    /// <summary>Runs native building initialization on one new scoped Temp.</summary>
+    /// <summary>Runs native building initialization on one scoped building Temp.</summary>
     [DisableAutoCreation]
     public sealed partial class BuildingInitializationProducer : NativeInitializeSystem
     {
@@ -31,6 +31,8 @@ namespace SkylinesLink.Mod.Native
         private bool rootBound, requested, armed, nativeStarted, nativeReturned, completed, joinFailed;
         private bool bindingsVerified, registeredExactly, outputQualified, scopeAfterPlayback;
         private Entity root;
+        private Entity relocationPrefab;
+        private Temp? relocationTemp;
         private EntityQuery coverage, buildings;
         private BuildingInitializationBarrier? output;
         private ElectricityRoadConnectionGraphSystem? electricity;
@@ -133,7 +135,22 @@ namespace SkylinesLink.Mod.Native
             finally { emptyArmed = false; Enabled = false; }
         }
 
-        internal void BindRoot(Entity value)
+        internal void BindRoot(Entity value) => BindRootCore(value);
+
+        internal void BindRelocationRoot(Entity value, Entity original, Entity prefab, Temp expectedTemp)
+        {
+            RequireMainThread();
+            Require(value.Index > 0 && original.Index > 0 && prefab.Index > 0
+                && value != original && value != prefab && original != prefab
+                && expectedTemp.m_Original == original
+                && expectedTemp.m_Flags == (TempFlags.Modify | TempFlags.Essential),
+                "BUILDING_INIT_RELOCATION_BIND_REJECTED");
+            BindRootCore(value);
+            relocationPrefab = prefab;
+            relocationTemp = expectedTemp;
+        }
+
+        private void BindRootCore(Entity value)
         {
             RequireMainThread();
             Require(CreationReturned && emptyPassed && !DestructionStarted && !rootBound && !requested
@@ -220,6 +237,7 @@ namespace SkylinesLink.Mod.Native
                 "BUILDING_INIT_QUERY_BUDGET");
             Require(CoverageCount == 0 || coverage.GetSingletonEntity() == root, "BUILDING_INIT_FOREIGN_COVERAGE");
             Require(BuildingCount == 0 || buildings.GetSingletonEntity() == root, "BUILDING_INIT_FOREIGN_BUILDING");
+            Require(!relocationTemp.HasValue || BuildingCount == 1, "BUILDING_INIT_RELOCATION_QUERY_MISMATCH");
             EntityManager entities = EntityManager;
             var witness = new InputWitness {
                 Prefab = entities.GetComponentData<PrefabRef>(root).m_Prefab,
@@ -292,7 +310,31 @@ namespace SkylinesLink.Mod.Native
                 && entities.HasComponent<Temp>(root) && entities.HasComponent<PrefabRef>(root)
                 && !entities.HasComponent<Deleted>(root), "BUILDING_INIT_ROOT_SCOPE_CHANGED");
             Temp temp = entities.GetComponentData<Temp>(root);
-            Require(temp.m_Original == Entity.Null && (temp.m_Flags & TempFlags.Create) != 0, "BUILDING_INIT_ROOT_NOT_NEW_TEMP");
+            if (!relocationTemp.HasValue)
+            {
+                Require(temp.m_Original == Entity.Null && (temp.m_Flags & TempFlags.Create) != 0,
+                    "BUILDING_INIT_ROOT_NOT_NEW_TEMP");
+                return;
+            }
+
+            Require(temp.Equals(relocationTemp.Value)
+                && entities.GetComponentData<PrefabRef>(root).m_Prefab == relocationPrefab,
+                "BUILDING_INIT_RELOCATION_TEMP_CHANGED");
+            // Keep the newborn building branch. A non-Created building can
+            // enqueue a real road edge into the stock graph systems.
+            Require(entities.HasComponent<Created>(root) && entities.HasComponent<Updated>(root)
+                && !entities.HasComponent<Destroyed>(root) && !entities.HasComponent<Abandoned>(root)
+                && entities.HasComponent<Building>(root)
+                && entities.GetComponentData<Building>(root).m_RoadEdge == Entity.Null,
+                "BUILDING_INIT_RELOCATION_BUILDING_CHANGED");
+            Entity original = relocationTemp.Value.m_Original;
+            Require(entities.Exists(original) && entities.HasComponent<Building>(original)
+                && entities.HasComponent<PrefabRef>(original)
+                && entities.GetComponentData<PrefabRef>(original).m_Prefab == relocationPrefab
+                && !entities.HasComponent<Temp>(original) && !entities.HasComponent<Deleted>(original)
+                && !entities.HasComponent<Unity.Entities.Disabled>(original)
+                && !entities.HasComponent<ObjectGenerationScope>(original),
+                "BUILDING_INIT_RELOCATION_ORIGINAL_CHANGED");
         }
 
         protected override void OnUpdate()
@@ -305,6 +347,8 @@ namespace SkylinesLink.Mod.Native
                 return;
             }
             Require(armed && !nativeStarted, "BUILDING_INIT_NOT_ARMED");
+            if (relocationTemp.HasValue)
+                Require(QualifyInputs().Equals(admitted), "BUILDING_INIT_RELOCATION_INPUT_CHANGED");
             nativeStarted = true; base.OnUpdate(); nativeReturned = true;
         }
 
@@ -351,7 +395,8 @@ namespace SkylinesLink.Mod.Native
             ["destructionStarted"] = DestructionStarted, ["destructionReturned"] = DestructionReturned,
             ["resourcesReleased"] = ResourcesReleased, ["emptyPassed"] = emptyPassed, ["emptyShouldRun"] = emptyShouldRun,
             ["emptyNativeReturned"] = emptyReturned, ["emptyJoined"] = emptyCompleted, ["onUpdateEntries"] = OnUpdateEntries,
-            ["rootBound"] = rootBound, ["root"] = new JObject { ["index"] = root.Index, ["version"] = root.Version },
+            ["rootBound"] = rootBound, ["relocationRootBound"] = relocationTemp.HasValue,
+            ["root"] = new JObject { ["index"] = root.Index, ["version"] = root.Version },
             ["bindingsVerified"] = bindingsVerified, ["registeredExactly"] = registeredExactly, ["registeredCount"] = registeredCount,
             ["coverageCount"] = CoverageCount, ["coverageChunks"] = CoverageChunkCount, ["coverageBuffer"] = CoverageBufferIndex,
             ["buildingCount"] = BuildingCount, ["buildingChunks"] = BuildingChunkCount, ["buildingBuffer"] = BuildingBufferIndex,

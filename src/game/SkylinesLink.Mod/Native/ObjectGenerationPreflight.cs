@@ -19,7 +19,7 @@ namespace SkylinesLink.Mod.Native
     // The source tree is borrowed, never copied, changed or disposed here.
     internal sealed class ObjectGenerationPreflight
     {
-        private const int NodeBudget = 512, ItemBudget = 2048;
+        private const string BoundsCode = "OBJECT_GENERATION_PREFLIGHT";
         private const string CollectionsMvid = "0e5688e687474130b7127b3c25780e8b";
         private const string MathematicsMvid = "26c1af9d8d9740058d0326fb5ad00f64";
         private World? admittedSource;
@@ -59,8 +59,7 @@ namespace SkylinesLink.Mod.Native
                 if (source == null || !source.IsCreated || payload == null || !ReferenceEquals(payload.Source, source)
                     || requireCurrentScope == null)
                     throw new Rejection("OBJECT_GENERATION_PREFLIGHT_SOURCE_UNAVAILABLE");
-                versionsQualified = typeof(NativeQuadTree<Entity, QuadTreeBoundsXZ>).Module.ModuleVersionId.ToString("N") == CollectionsMvid
-                    && typeof(MathUtils).Module.ModuleVersionId.ToString("N") == MathematicsMvid;
+                versionsQualified = SearchVersionsQualified;
                 Require(versionsQualified, "OBJECT_GENERATION_PREFLIGHT_NATIVE_BUILD_UNQUALIFIED");
                 requireCurrentScope();
                 QualifyManagedAbort();
@@ -80,31 +79,22 @@ namespace SkylinesLink.Mod.Native
                 Require(archetypeTypes > 0 && archetypeTypes <= 256 && threadIndexCount > 0 && threadIndexCount <= 256,
                     "OBJECT_GENERATION_PREFLIGHT_NATIVE_ALLOCATION_BUDGET");
 
-                Bounds3 bounds = SearchBounds(entities, payload);
+                Bounds3 bounds = CourseSearchBounds(entities, payload.CourseCreation.m_Prefab,
+                    payload.Course.m_StartPosition, out radius);
                 boundsMin = bounds.min; boundsMax = bounds.max; boundsObserved = true;
-                var search = source.GetExistingSystemManaged<Game.Net.SearchSystem>();
-                Require(search != null && ReferenceEquals(search.World, source), "OBJECT_GENERATION_PREFLIGHT_SEARCH_UNAVAILABLE");
-                var tree = search!.GetNetSearchTree(readOnly: true, out var dependencies);
-                dependencies.Complete(); writersCompleted = true;
-                Require(tree.IsCreated, "OBJECT_GENERATION_PREFLIGHT_SEARCH_UNAVAILABLE");
-
-                // This stays on the main thread and invokes no caller callback
-                // during the walk. There is no asynchronous reader to register.
-                // In the pinned SDK, Iterate has only a stack-local traversal
-                // stack and read callbacks: our exception exits the current
-                // node's item loop, rather than merely returning from a callback.
-                var visitor = new EmptyBoundsVisitor(bounds);
-                treeReadStarted = true;
-                try { tree.Iterate(ref visitor); treeReadCompleted = true; }
+                var search = new CourseSearch(bounds, BoundsCode, Entity.Null);
+                try { search.Walk(source); }
                 finally
                 {
-                    nodesVisited = visitor.Nodes; itemsVisited = visitor.Items; hitObserved = visitor.Hit;
-                    sourceTreeReadCompleted = true;
+                    nodesVisited = search.Nodes; itemsVisited = search.Items; hitObserved = search.Hit;
+                    writersCompleted = search.WritersCompleted; treeReadStarted = search.Started;
+                    treeReadCompleted = search.Completed; sourceTreeReadCompleted = search.Unwound;
                 }
 
                 requireCurrentScope(); scopeRechecked = true;
                 admittedSource = source; admittedPayload = payload; passed = true;
             }
+            catch (EmptyNetBoundsVisitor.Rejection error) { failureCode = error.Code; }
             catch (Rejection error) { failureCode = error.Code; }
             catch (Exception error)
             {
@@ -115,17 +105,20 @@ namespace SkylinesLink.Mod.Native
             finally { timer.Stop(); elapsedMilliseconds = timer.Elapsed.TotalMilliseconds; finished = true; }
         }
 
-        private Bounds3 SearchBounds(EntityManager entities, ObjectDefinitionPayload payload)
+        internal static bool SearchVersionsQualified =>
+            typeof(NativeQuadTree<Entity, QuadTreeBoundsXZ>).Module.ModuleVersionId.ToString("N") == CollectionsMvid
+            && typeof(MathUtils).Module.ModuleVersionId.ToString("N") == MathematicsMvid;
+
+        internal static Bounds3 CourseSearchBounds(EntityManager entities, Entity prefab, CoursePos start, out float radius)
         {
-            Entity prefab = payload.CourseCreation.m_Prefab;
             NetGeometryData geometry = entities.HasComponent<NetGeometryData>(prefab)
                 ? entities.GetComponentData<NetGeometryData>(prefab) : default;
             Require(Finite(geometry.m_DefaultWidth) && geometry.m_DefaultWidth >= 0f,
                 "OBJECT_GENERATION_PREFLIGHT_SEARCH_METADATA_INVALID");
             float halfWidth = geometry.m_DefaultWidth * 0.5f;
             float searchDistance = 0f;
-            float3 position = payload.Course.m_StartPosition.m_Position;
-            float roadHeight = position.y - math.cmin(payload.Course.m_StartPosition.m_Elevation);
+            float3 position = start.m_Position;
+            float roadHeight = position.y - math.cmin(start.m_Elevation);
             float minimumY = roadHeight - halfWidth, maximumY = roadHeight + halfWidth;
             if (entities.HasComponent<LocalConnectData>(prefab))
             {
@@ -147,6 +140,65 @@ namespace SkylinesLink.Mod.Native
             return new Bounds3(minimum, maximum);
         }
 
+        // Borrow the stock tree synchronously. In this SDK Iterate only uses
+        // stack-local traversal state, so a managed callback throw ends the walk.
+        internal struct CourseSearch : INativeQuadTreeIterator<Entity, QuadTreeBoundsXZ>
+        {
+            private readonly Bounds3 bounds;
+            private readonly string code;
+            private readonly Entity ignored;
+            private EmptyNetBoundsVisitor visitor;
+
+            internal CourseSearch(Bounds3 bounds, string code, Entity ignored)
+            {
+                this = default;
+                this.bounds = bounds;
+                this.code = code;
+                this.ignored = ignored;
+                visitor = new EmptyNetBoundsVisitor(bounds, code);
+            }
+
+            internal bool WritersCompleted { get; private set; }
+            internal bool Started { get; private set; }
+            internal bool Completed { get; private set; }
+            internal bool Unwound { get; private set; }
+            internal int IgnoredHits { get; private set; }
+            internal int Nodes => visitor.Nodes;
+            internal int Items => visitor.Items;
+            internal bool Hit => visitor.Hit;
+
+            internal void Walk(World source)
+            {
+                var search = source.GetExistingSystemManaged<Game.Net.SearchSystem>();
+                Require(search != null && ReferenceEquals(search.World, source), code + "_SEARCH_UNAVAILABLE");
+                var tree = search!.GetNetSearchTree(readOnly: true, out var dependencies);
+                dependencies.Complete();
+                WritersCompleted = true;
+                Require(tree.IsCreated, code + "_SEARCH_UNAVAILABLE");
+
+                Started = true;
+                try { tree.Iterate(ref this); Completed = true; }
+                finally { Unwound = true; }
+            }
+
+            public bool Intersect(QuadTreeBoundsXZ itemBounds) => visitor.Intersect(itemBounds);
+
+            public void Iterate(QuadTreeBoundsXZ itemBounds, Entity item)
+            {
+                if (ignored == Entity.Null || item != ignored)
+                {
+                    visitor.Iterate(itemBounds, item);
+                    return;
+                }
+
+                // The stock edge iterators skip this exact source entity.
+                // Keep it in the callback budget even when it does not overlap.
+                if (++visitor.Items > EmptyNetBoundsVisitor.ItemBudget)
+                    throw new EmptyNetBoundsVisitor.Rejection(code + "_ITEM_BUDGET");
+                if (MathUtils.Intersect(itemBounds.m_Bounds, bounds)) IgnoredHits++;
+            }
+        }
+
         private void QualifyManagedAbort()
         {
             var tree = default(NativeQuadTree<Entity, QuadTreeBoundsXZ>);
@@ -164,15 +216,15 @@ namespace SkylinesLink.Mod.Native
                         "OBJECT_GENERATION_PREFLIGHT_FIXTURE_ADD_FAILED");
                     fixtureItemsAdded++;
                 }
-                var itemVisitor = new EmptyBoundsVisitor(box, rejectHits: false, itemLimit: 2);
+                var itemVisitor = new EmptyNetBoundsVisitor(box, BoundsCode, rejectHits: false, itemLimit: 2);
                 try { tree.Iterate(ref itemVisitor); }
-                catch (Rejection error) when (error.Code == "OBJECT_GENERATION_PREFLIGHT_ITEM_BUDGET") { fixtureItemAbort = true; }
+                catch (EmptyNetBoundsVisitor.Rejection error) when (error.Code == "OBJECT_GENERATION_PREFLIGHT_ITEM_BUDGET") { fixtureItemAbort = true; }
                 fixtureItemCallbacks = itemVisitor.Items;
                 Require(fixtureItemAbort && fixtureItemCallbacks == 3, "OBJECT_GENERATION_PREFLIGHT_ITEM_ABORT_UNQUALIFIED");
 
-                var nodeVisitor = new EmptyBoundsVisitor(box, rejectHits: false, nodeLimit: 0);
+                var nodeVisitor = new EmptyNetBoundsVisitor(box, BoundsCode, rejectHits: false, nodeLimit: 0);
                 try { tree.Iterate(ref nodeVisitor); }
-                catch (Rejection error) when (error.Code == "OBJECT_GENERATION_PREFLIGHT_NODE_BUDGET") { fixtureNodeAbort = true; }
+                catch (EmptyNetBoundsVisitor.Rejection error) when (error.Code == "OBJECT_GENERATION_PREFLIGHT_NODE_BUDGET") { fixtureNodeAbort = true; }
                 fixtureNodeCallbacks = nodeVisitor.Nodes;
                 Require(fixtureNodeAbort && fixtureNodeCallbacks == 1 && nodeVisitor.Items == 0,
                     "OBJECT_GENERATION_PREFLIGHT_NODE_ABORT_UNQUALIFIED");
@@ -201,12 +253,8 @@ namespace SkylinesLink.Mod.Native
                 && payload.CourseOwner.m_Prefab == payload.RootCreation.m_Prefab
                 && payload.CourseOwner.m_Position.Equals(payload.RootObject.m_Position)
                 && payload.CourseOwner.m_Rotation.Equals(payload.RootObject.m_Rotation)
-                && payload.Course.m_Length == 0f && Finite(payload.Course.m_Elevation)
-                && Finite(payload.Course.m_Curve.a) && Finite(payload.Course.m_Curve.b)
-                && Finite(payload.Course.m_Curve.c) && Finite(payload.Course.m_Curve.d)
-                && Finite(payload.Course.m_StartPosition) && Finite(payload.Course.m_EndPosition)
-                && payload.Course.m_StartPosition.m_Entity == Entity.Null && payload.Course.m_EndPosition.m_Entity == Entity.Null
-                && payload.Course.m_StartPosition.m_Position.Equals(payload.Course.m_EndPosition.m_Position),
+                && payload.IsSinglePointCourse && Finite(payload.Course.m_Elevation)
+                && Finite(payload.Course.m_StartPosition) && Finite(payload.Course.m_EndPosition),
                 "OBJECT_GENERATION_PREFLIGHT_PAYLOAD_OUTSIDE_PROBE");
         }
 
@@ -224,32 +272,7 @@ namespace SkylinesLink.Mod.Native
         private static bool Finite(float4 value) => math.all(math.isfinite(value));
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
 
-        private struct EmptyBoundsVisitor : INativeQuadTreeIterator<Entity, QuadTreeBoundsXZ>
-        {
-            private readonly Bounds3 search;
-            private readonly int nodeLimit, itemLimit;
-            private readonly bool rejectHits;
-            internal int Nodes, Items;
-            internal bool Hit;
-            internal EmptyBoundsVisitor(Bounds3 search, bool rejectHits = true, int nodeLimit = NodeBudget, int itemLimit = ItemBudget)
-            { this.search = search; this.rejectHits = rejectHits; this.nodeLimit = nodeLimit; this.itemLimit = itemLimit; Nodes = 0; Items = 0; Hit = false; }
-            public bool Intersect(QuadTreeBoundsXZ bounds)
-            {
-                if (++Nodes > nodeLimit) throw new Rejection("OBJECT_GENERATION_PREFLIGHT_NODE_BUDGET");
-                return MathUtils.Intersect(bounds.m_Bounds, search);
-            }
-            public void Iterate(QuadTreeBoundsXZ bounds, Entity item)
-            {
-                if (++Items > itemLimit) throw new Rejection("OBJECT_GENERATION_PREFLIGHT_ITEM_BUDGET");
-                if (rejectHits && MathUtils.Intersect(bounds.m_Bounds, search))
-                {
-                    Hit = true;
-                    throw new Rejection("OBJECT_GENERATION_PREFLIGHT_SOURCE_SPATIAL_HIT");
-                }
-            }
-        }
-
-        private sealed class Rejection : Exception
+        internal sealed class Rejection : Exception
         {
             internal readonly string Code;
             internal Rejection(string code) : base(code) { Code = code; }
@@ -268,7 +291,7 @@ namespace SkylinesLink.Mod.Native
             ["nativeVersionsQualified"] = versionsQualified, ["shapeQualified"] = shapeQualified,
             ["archetypeTypesCount"] = archetypeTypes, ["threadIndexCount"] = threadIndexCount,
             ["outputCommandUpperBound"] = OutputCommandUpperBound,
-            ["nodeBudget"] = NodeBudget, ["itemBudget"] = ItemBudget,
+            ["nodeBudget"] = EmptyNetBoundsVisitor.NodeBudget, ["itemBudget"] = EmptyNetBoundsVisitor.ItemBudget,
             ["nodesVisited"] = nodesVisited, ["itemsVisited"] = itemsVisited,
             ["sourceWritersCompleted"] = writersCompleted, ["sourceTreeReadStarted"] = treeReadStarted,
             ["sourceTreeWalkCompleted"] = treeReadCompleted, ["sourceTreeReadCompleted"] = sourceTreeReadCompleted,
@@ -279,7 +302,7 @@ namespace SkylinesLink.Mod.Native
             ["failureCode"] = failureCode == null ? JValue.CreateNull() : new JValue(failureCode),
             ["exceptionType"] = exceptionType == null ? JValue.CreateNull() : new JValue(exceptionType),
             ["elapsedMilliseconds"] = elapsedMilliseconds, ["privatePointerRead"] = false, ["sourceTreeModified"] = false,
-            ["scope"] = "Managed zero-length root1/course1 admission only; no placement, node generation, fees or Source playback."
+            ["scope"] = "Managed single-point root1/course1 admission only; no placement, node generation, fees or Source playback."
         };
     }
 }

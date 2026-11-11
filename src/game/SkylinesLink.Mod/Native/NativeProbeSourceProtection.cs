@@ -13,7 +13,7 @@ namespace SkylinesLink.Mod.Native
     internal sealed class NativeProbeSourceProtection
     {
         private const int MaxSourceSystems = 4096;
-        private const int MaxAppendedSystems = 15;
+        private const int MaxAppendedSystems = 16;
         private readonly World source;
         private readonly World? defaultWorld;
         private readonly World[] worlds;

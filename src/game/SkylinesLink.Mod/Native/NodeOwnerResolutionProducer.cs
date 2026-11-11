@@ -21,10 +21,12 @@ namespace SkylinesLink.Mod.Native
         private int arrayAttempts, arraysAcquired, arraysDisposed;
         private bool configured, emptyPassed, boundInputs, requested, armed, nativeStarted, nativeReturned, completed, joinFailed;
         private bool bindingsVerified, registeredExactly, ownerLinkObserved, factsAvailable, ownerDefinitionPresent, ownerDefinitionAbsent;
-        private bool metadataQualified, scopeAfterPlayback;
+        private bool metadataQualified, scopeAfterPlayback, relocation;
         private int registeredCount, metadataCount, metadataBytes, metadataSortKey;
         private Entity root, node, observedOwner;
+        private Temp relocationRootTemp, relocationNodeTemp;
         private OwnerDefinition expectedDefinition;
+        private Action? relocationScope;
         private EntityQuery owners, subs;
         private NodeOwnerResolutionBarrier? output;
         private Bindings? fields;
@@ -40,17 +42,25 @@ namespace SkylinesLink.Mod.Native
             || output != null && output.PlaybackStarted && !output.PlaybackCallEnded;
         internal bool StorageReleased => arrayAttempts == arraysAcquired && arraysAcquired == arraysDisposed;
         internal bool ResourcesReleased => DestructionReturned && StorageReleased;
+        internal bool OwnerWriteMayHaveOccurred => nativeStarted;
+        internal bool OwnerDefinitionRemovalMayHaveApplied => output?.PlaybackStarted == true;
         internal bool OwnerLinkObserved => ownerLinkObserved;
         internal bool OwnerDefinitionAbsentObserved => ownerDefinitionAbsent;
+        internal Entity? ObservedOwner => factsAvailable ? observedOwner : (Entity?)null;
+        internal bool? ObservedOwnerDefinitionPresent => factsAvailable ? ownerDefinitionPresent : (bool?)null;
         internal bool ResolutionPassed => completed && factsAvailable && observedOwner == root && ownerLinkObserved && ownerDefinitionAbsent && metadataQualified
             && output?.PlaybackReturned == true && scopeAfterPlayback && failureCode == null;
 
-        internal void Configure(int actor, NodeOwnerResolutionBarrier barrier)
+        internal void Configure(int actor, NodeOwnerResolutionBarrier barrier) => Configure(actor, barrier, relocation: false);
+
+        internal void ConfigureRelocation(int actor, NodeOwnerResolutionBarrier barrier) => Configure(actor, barrier, relocation: true);
+
+        private void Configure(int actor, NodeOwnerResolutionBarrier barrier, bool relocation)
         {
             RequireMainThread();
             Require(!configured && !CreationStarted && World == null && actor > 0 && barrier != null,
                 "NODE_OWNER_CONFIGURATION_REJECTED");
-            fields = new Bindings(); this.actor = actor; output = barrier; configured = true;
+            fields = new Bindings(); this.actor = actor; output = barrier; this.relocation = relocation; configured = true;
         }
 
         protected override void OnCreate()
@@ -62,9 +72,17 @@ namespace SkylinesLink.Mod.Native
             Require(configured && barrier.CreationReturned && ReferenceEquals(barrier.World, World), "NODE_OWNER_CONFIGURATION_MISSING");
             // Preserve the native owners' Updated/role/!Deleted conditions. The
             // extra scope/Disabled/Temp constraints exclude every player entity.
+            var ownerTypes = new[] { ComponentType.ReadOnly<Updated>(), ComponentType.ReadOnly<Temp>(),
+                ComponentType.ReadOnly<ObjectGenerationScope>(), ComponentType.ReadOnly<Unity.Entities.Disabled>() };
+            if (relocation)
+            {
+                // Both relocation nodes have Updated and SubObject. Only the
+                // temporary building can be the owner of the new node here.
+                Array.Resize(ref ownerTypes, ownerTypes.Length + 1);
+                ownerTypes[ownerTypes.Length - 1] = ComponentType.ReadOnly<Game.Buildings.Building>();
+            }
             owners = GetEntityQuery(new EntityQueryDesc {
-                All = new[] { ComponentType.ReadOnly<Updated>(), ComponentType.ReadOnly<Temp>(),
-                    ComponentType.ReadOnly<ObjectGenerationScope>(), ComponentType.ReadOnly<Unity.Entities.Disabled>() },
+                All = ownerTypes,
                 Any = new[] { ComponentType.ReadOnly<Game.Net.SubNet>(), ComponentType.ReadOnly<Game.Areas.SubArea>(),
                     ComponentType.ReadOnly<Game.Objects.SubObject>() },
                 None = new[] { ComponentType.ReadOnly<Deleted>() }, Options = EntityQueryOptions.IncludeDisabledEntities });
@@ -103,6 +121,25 @@ namespace SkylinesLink.Mod.Native
 
         internal void BindInputs(Entity root, Entity node)
         {
+            Require(!relocation, "NODE_OWNER_NEW_INPUT_MODE_CHANGED");
+            Bind(root, node);
+        }
+
+        internal void BindRelocationInputs(Entity root, Entity newNode, Temp expectedRoot, Temp expectedNewNode)
+        {
+            RequireMainThread();
+            Require(relocation && expectedRoot.m_Original.Index > 0
+                && expectedRoot.m_Original != root && expectedRoot.m_Original != newNode
+                && expectedRoot.m_Flags == (TempFlags.Modify | TempFlags.Essential)
+                && expectedNewNode.m_Original == Entity.Null && expectedNewNode.m_Flags == (TempFlags.Create | TempFlags.IsLast),
+                "NODE_OWNER_RELOCATION_INPUT_REJECTED");
+            Bind(root, newNode);
+            relocationRootTemp = expectedRoot;
+            relocationNodeTemp = expectedNewNode;
+        }
+
+        private void Bind(Entity root, Entity node)
+        {
             RequireMainThread();
             Require(CreationReturned && emptyPassed && !DestructionStarted && !boundInputs && !requested
                 && root != Entity.Null && node != Entity.Null && root.Index >= 0 && node.Index >= 0 && root != node,
@@ -122,9 +159,10 @@ namespace SkylinesLink.Mod.Native
                 requireCurrentScope();
                 QualifyInputs();
                 requireCurrentScope();
-                // Recheck after the last caller callback; no yield or provider
-                // callback separates this witness from the native writer.
-                QualifyInputs();
+                // The relocation branch rechecks from OnUpdate after the
+                // inherited handle refresh. Keep the new-build witness here.
+                if (!relocation) QualifyInputs();
+                relocationScope = relocation ? requireCurrentScope : null;
                 armed = true; Enabled = true;
                 try
                 {
@@ -132,17 +170,17 @@ namespace SkylinesLink.Mod.Native
                     Require(nativeReturned, "NODE_OWNER_NATIVE_NOT_RETURNED");
                     JoinOwnedDependencies();
                 }
-                finally { armed = false; Enabled = false; }
+                finally { armed = false; Enabled = false; relocationScope = null; }
 
                 // The native job has already written Owner in place. This fact
                 // must survive a later metadata, callback or Playback failure.
-                ObserveNodeFacts();
+                ObserveNodeFacts(requireCurrentScope);
                 Require(factsAvailable && observedOwner == root && ownerLinkObserved && ownerDefinitionPresent, "NODE_OWNER_NATIVE_LINK_NOT_OBSERVED");
                 ObserveRemovalMetadata();
                 requireCurrentScope();
                 RequireRemovalReady();
                 barrier.PlaybackSingleOnce();
-                ObserveNodeFacts();
+                ObserveNodeFacts(requireCurrentScope);
                 Require(factsAvailable && observedOwner == root && ownerLinkObserved && ownerDefinitionAbsent, "NODE_OWNER_REMOVAL_NOT_OBSERVED");
                 requireCurrentScope(); scopeAfterPlayback = true;
             }
@@ -152,7 +190,7 @@ namespace SkylinesLink.Mod.Native
                 exceptionType ??= error.GetType().Name;
                 // Playback has no asynchronous consumer. Once its call has
                 // unwound, inspect this exact node instead of replaying it.
-                if (completed) TryObserveNodeFacts();
+                if (completed) TryObserveNodeFacts(requireCurrentScope);
                 throw;
             }
         }
@@ -176,8 +214,9 @@ namespace SkylinesLink.Mod.Native
             ownerCount = owners.CalculateEntityCount(); ownerChunkCount = owners.CalculateChunkCount();
             subCount = subs.CalculateEntityCount(); subChunkCount = subs.CalculateChunkCount();
             threadCount = JobsUtility.ThreadIndexCount;
-            Require(ownerCount >= 1 && ownerCount <= 2 && ownerChunkCount >= 1 && ownerChunkCount <= 2
-                && subCount == 1 && subChunkCount == 1 && subs.GetSingletonEntity() == node
+            bool ownersBounded = relocation ? ownerCount == 1 && ownerChunkCount == 1
+                : ownerCount >= 1 && ownerCount <= 2 && ownerChunkCount >= 1 && ownerChunkCount <= 2;
+            Require(ownersBounded && subCount == 1 && subChunkCount == 1 && subs.GetSingletonEntity() == node
                 && threadCount > 0 && threadCount <= 256, "NODE_OWNER_QUERY_BUDGET");
             arrayAttempts++;
             NativeArray<Entity> candidates = owners.ToEntityArray(Allocator.Temp); arraysAcquired++;
@@ -188,7 +227,7 @@ namespace SkylinesLink.Mod.Native
                 for (int index = 0; index < candidates.Length; index++)
                 {
                     Entity candidate = candidates[index];
-                    Require(candidate == root || candidate == node, "NODE_OWNER_FOREIGN_CANDIDATE");
+                    Require(candidate == root || !relocation && candidate == node, "NODE_OWNER_FOREIGN_CANDIDATE");
                     RequireScoped(entities, candidate);
                     rootSeen |= candidate == root;
                     if (!entities.HasComponent<PrefabRef>(candidate)
@@ -214,13 +253,23 @@ namespace SkylinesLink.Mod.Native
                 && entities.GetSharedComponent<ObjectGenerationScope>(entity).Value == actor
                 && entities.HasComponent<Temp>(entity) && !entities.HasComponent<Deleted>(entity), "NODE_OWNER_SCOPE_CHANGED");
             Temp temp = entities.GetComponentData<Temp>(entity);
-            Require(temp.m_Original == Entity.Null && (temp.m_Flags & TempFlags.Create) != 0, "NODE_OWNER_NOT_NEW_TEMP");
+            if (relocation)
+            {
+                Require(entity == root || entity == node, "NODE_OWNER_RELOCATION_ROLE_CHANGED");
+                Require(temp.Equals(entity == root ? relocationRootTemp : relocationNodeTemp), "NODE_OWNER_RELOCATION_TEMP_CHANGED");
+            }
+            else Require(temp.m_Original == Entity.Null && (temp.m_Flags & TempFlags.Create) != 0, "NODE_OWNER_NOT_NEW_TEMP");
         }
 
         protected override void OnUpdate()
         {
             OnUpdateEntries++;
             Require(armed && !nativeStarted, "NODE_OWNER_NOT_ARMED");
+            if (relocation)
+            {
+                (relocationScope ?? throw Failure("NODE_OWNER_RELOCATION_SCOPE_MISSING"))();
+                QualifyInputs();
+            }
             nativeStarted = true;
             base.OnUpdate();
             nativeReturned = true;
@@ -233,19 +282,26 @@ namespace SkylinesLink.Mod.Native
             catch { joinFailed = true; throw; }
         }
 
-        private void ObserveNodeFacts()
+        private void ObserveNodeFacts(Action requireCurrentScope)
         {
+            factsAvailable = false;
+            requireCurrentScope();
             Require(World != null && World.IsCreated, "NODE_OWNER_READ_SOURCE_UNAVAILABLE");
             EntityManager entities = EntityManager;
+            if (relocation) RequireScoped(entities, root);
             RequireScoped(entities, node);
             Require(entities.HasComponent<Owner>(node), "NODE_OWNER_COMPONENT_MISSING");
-            observedOwner = entities.GetComponentData<Owner>(node).m_Owner;
-            factsAvailable = true; ownerLinkObserved |= observedOwner == root;
-            ownerDefinitionPresent = entities.HasComponent<OwnerDefinition>(node);
-            ownerDefinitionAbsent = !ownerDefinitionPresent;
+            Entity owner = entities.GetComponentData<Owner>(node).m_Owner;
+            bool definitionPresent = entities.HasComponent<OwnerDefinition>(node);
+            requireCurrentScope();
+            observedOwner = owner;
+            factsAvailable = true; ownerLinkObserved |= owner == root;
+            ownerDefinitionPresent = definitionPresent;
+            ownerDefinitionAbsent = !definitionPresent;
         }
-        private void TryObserveNodeFacts()
-        { try { ObserveNodeFacts(); } catch { factsAvailable = false; } }
+
+        private void TryObserveNodeFacts(Action requireCurrentScope)
+        { try { ObserveNodeFacts(requireCurrentScope); } catch { factsAvailable = false; } }
 
         private void RequireRemovalReady()
         {

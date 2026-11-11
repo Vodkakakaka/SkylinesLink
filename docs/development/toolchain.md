@@ -6,22 +6,24 @@
 
 These are contributor build instructions for Windows. They do not install the mod into a game profile or describe a player release. VS Code is suitable for editing C# and TypeScript; a full Visual Studio IDE is not required.
 
-### Pinned baseline
+### Minimum tool versions
 
-The repository pins the following baseline for reproducibility, without claiming these versions are the newest available.
+Development tools may use these minimum versions or newer stable versions. Dependency lockfiles remain fixed; each release records the tools actually used.
 
-| Tool | Pinned version | Source of truth |
+| Tool | Minimum / dependency version | Source of truth |
 | --- | --- | --- |
-| Node.js | 26.13.0 | [package.json](../../package.json), [.node-version](../../.node-version), [.nvmrc](../../.nvmrc) |
-| pnpm | 12.16.1 | [package.json](../../package.json) |
-| .NET SDK | 10.0.403 | [global.json](../../global.json): SDK roll-forward disabled, prereleases excluded |
+| Node.js | >=26.13.0 | [package.json](../../package.json), [.node-version](../../.node-version), [.nvmrc](../../.nvmrc) |
+| pnpm | >=12.16.1 | [package.json](../../package.json) |
+| .NET SDK | >=10.0.403 | [global.json](../../global.json): newest installed stable SDK at or above the minimum |
 | TypeScript | 7.0.2 | Project devDependency in [package.json](../../package.json) |
 
 Use PowerShell 7 (`pwsh`) for the PowerShell scripts. TypeScript is installed with the project; no global TypeScript installation is needed. Use pnpm with [pnpm-lock.yaml](../../pnpm-lock.yaml), not a second npm lockfile. Exact MCP SDK and other JavaScript dependency versions are in [the Host package](../../src/host/package.json) and the lockfile.
 
+`packageManager`, `.node-version` and `.nvmrc` identify reference versions. [.npmrc](../../.npmrc) allows a newer pnpm without automatically downloading a different package-manager version. [Directory.Build.targets](../../Directory.Build.targets) keeps the net10.0 ILLink/ILCompiler package versions aligned with the reviewed lockfiles independently of SDK patch upgrades. This preserves compatibility analysis without turning an SDK patch into a dependency update. Bundled player runtimes remain separate, byte-verified distribution inputs.
+
 ### Ordinary build and checks
 
-From the repository root, with the pinned tools available:
+From the repository root, with compatible tools available:
 
 ```powershell
 pnpm install --frozen-lockfile
@@ -66,22 +68,24 @@ When updating the baseline, update the version files, relevant lockfiles and gen
 
 本文面向 Windows 贡献者构建，不会将模组安装到游戏配置中，也不是玩家发行版的安装说明。可以使用 VS Code 编辑 C# 和 TypeScript，无需安装完整 Visual Studio IDE。
 
-### 固定版本基线
+### 最低工具版本
 
-仓库固定以下版本以保证可复现，不表示它们是目前最新版本。
+开发工具可使用以下最低版本或更高稳定版本。依赖锁文件仍固定，发行记录本次实际使用的工具版本。
 
-| 工具 | 固定版本 | 权威配置 |
+| 工具 | 最低版本 / 依赖版本 | 权威配置 |
 | --- | --- | --- |
-| Node.js | 26.13.0 | [package.json](../../package.json)、[.node-version](../../.node-version)、[.nvmrc](../../.nvmrc) |
-| pnpm | 12.16.1 | [package.json](../../package.json) |
-| .NET SDK | 10.0.403 | [global.json](../../global.json)：禁止 SDK 向前滚动及预发行版 |
+| Node.js | >=26.13.0 | [package.json](../../package.json)、[.node-version](../../.node-version)、[.nvmrc](../../.nvmrc) |
+| pnpm | >=12.16.1 | [package.json](../../package.json) |
+| .NET SDK | >=10.0.403 | [global.json](../../global.json)：采用达到最低版本的最新已装稳定 SDK |
 | TypeScript | 7.0.2 | [package.json](../../package.json) 中的项目开发依赖 |
 
 PowerShell 脚本使用 PowerShell 7（`pwsh`）。TypeScript 随项目依赖安装，无需全局安装。使用 pnpm 及唯一的 [pnpm-lock.yaml](../../pnpm-lock.yaml)，不另建 npm 锁文件。MCP SDK 和其他 JavaScript 依赖的精确版本见 [Host 配置](../../src/host/package.json)及锁文件。
 
+`packageManager`、`.node-version` 和 `.nvmrc` 标识参考版本。[.npmrc](../../.npmrc) 允许更高版本 pnpm，不会因此自动下载切换包管理器。[Directory.Build.targets](../../Directory.Build.targets) 让 net10.0 的 ILLink/ILCompiler 包版本独立于 SDK 补丁，与已审锁文件一致，保留兼容分析，避免 SDK 补丁隐式变成依赖升级。玩家随包运行时仍按实际字节单独核验。
+
 ### 日常构建与检查
 
-在仓库根目录执行，事先准备好固定版本的工具：
+在仓库根目录执行，事先准备好兼容版本的工具：
 
 ```powershell
 pnpm install --frozen-lockfile

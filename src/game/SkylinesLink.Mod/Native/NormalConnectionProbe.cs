@@ -9,11 +9,8 @@ using Game.Common;
 using Game.Modding;
 using Game.Prefabs;
 using Game.SceneFlow;
-using Game.Tools;
 using Newtonsoft.Json.Linq;
 using Unity.Entities;
-using Unity.Mathematics;
-using AgeMask = Game.Tools.AgeMask;
 
 namespace SkylinesLink.Mod.Native
 {
@@ -33,8 +30,7 @@ namespace SkylinesLink.Mod.Native
         private JObject? before, active, afterStop;
         private JObject? configuredMenu, returnedMenu;
         private JObject? objectInputSurvey;
-        private ObjectDefinitionExecutionProbe? objectDefinition;
-        private ObjectGenerationExecutionProbe? objectGeneration;
+        private CompositionRoundTrip? compositionRoundTrip;
         private Action? definitionScopeGuard;
         private bool startAttempted, applyAttempted, applyObservedBusy, servingCompleted, stopping, resourcesReleased;
         private bool staleGuardRejected;
@@ -57,21 +53,16 @@ namespace SkylinesLink.Mod.Native
             this.cityOverview = cityOverview;
         }
 
-        internal bool ResourcesReleased { get { lock (sync) return resourcesReleased && (objectDefinition?.ResourcesReleased ?? true)
-            && (objectGeneration?.ResourcesReleased ?? true); } }
-        internal bool Finished { get { lock (sync) return resourcesReleased && (objectDefinition?.Finished ?? true)
-            && (objectGeneration?.Finished ?? true); } }
-        internal bool SuppressAutomaticReturn { get { lock (sync) return (objectDefinition?.NativeWorkMayReadSource ?? false)
-            || (objectGeneration?.NativeWorkMayReadSource ?? false); } }
+        internal bool ResourcesReleased { get { lock (sync) return resourcesReleased && (compositionRoundTrip?.ResourcesReleased ?? true); } }
+        internal bool Finished { get { lock (sync) return resourcesReleased && (compositionRoundTrip?.WorkersFinished ?? true); } }
+        internal bool SuppressAutomaticReturn { get { lock (sync) return compositionRoundTrip?.NativeStateUncertain == true; } }
         internal bool ChecksPassed { get { lock (sync) return Passed; } }
         internal string? FailureCode { get { lock (sync) return failureCode; } }
         internal string? ExceptionType { get { lock (sync) return exceptionType; } }
         private bool Passed => resourcesReleased && before != null && active != null && afterStop != null
             && applyObservedBusy && servingCompleted && failureCode == null
             && (!cityOverview || configuredMenu != null && returnedMenu != null && city?.ChecksPassed == true
-                && staleGuardRejected
-                && objectDefinition?.ChecksPassed == true && objectDefinition.ResourcesReleased
-                && objectGeneration?.ChecksPassed == true && objectGeneration.ResourcesReleased);
+                && staleGuardRejected && compositionRoundTrip?.Passed == true && compositionRoundTrip.ResourcesReleased);
 
         internal bool ReadyToLoadCity
         { get { lock (sync) return cityOverview && configuredMenu != null && city == null && !stopping && failureCode == null; } }
@@ -138,6 +129,9 @@ namespace SkylinesLink.Mod.Native
                     }
                 }
                 catch (CheckFailure error) { RecordFailure(error.Code, error.GetType().Name); stopping = true; }
+                catch (CompositionRoundTrip.Rejection error) { RecordFailure(error.Code, error.GetType().Name); stopping = true; }
+                catch (CompositionInitializationExpectation.Rejection error) { RecordFailure(error.Code, error.GetType().Name); stopping = true; }
+                catch (PreviewCommitExecution.Rejection error) { RecordFailure(error.Code, error.GetType().Name); stopping = true; }
                 catch (Exception error) { RecordFailure("NORMAL_CONNECTION_OBSERVATION_FAILED", error.GetType().Name); stopping = true; }
                 if (stopping) AdvanceStop();
             }
@@ -205,9 +199,14 @@ namespace SkylinesLink.Mod.Native
                 if (Text(sample, "contextState") != "ready") return;
                 CheckActiveScope(sample, "ready", configuredMenu!);
                 Check(Generation(sample) > Generation(configuredMenu!), "NORMAL_CITY_LOADING_GENERATION_MISSING");
-                objectInputSurvey = CaptureObjectInputSurvey(sample);
-                Check(city.CanHoldReadWindow(ServingSeconds + 10), "NORMAL_CITY_READ_WINDOW_INSUFFICIENT_AFTER_SURVEY");
-                RunObjectDefinition(sample);
+                if (compositionRoundTrip == null)
+                {
+                    objectInputSurvey = CaptureObjectInputSurvey(sample);
+                    Check(city.CanHoldReadWindow(ServingSeconds + 10), "NORMAL_CITY_READ_WINDOW_INSUFFICIENT_AFTER_SURVEY");
+                    compositionRoundTrip = BindCompositionRoundTrip(sample);
+                }
+                compositionRoundTrip.Advance();
+                if (!compositionRoundTrip.Passed) return;
                 Check(city.CanHoldReadWindow(ServingSeconds + 10), "NORMAL_CITY_READ_WINDOW_INSUFFICIENT_AFTER_DEFINITION");
                 active = sample;
                 servingStarted = Stopwatch.GetTimestamp();
@@ -329,7 +328,7 @@ namespace SkylinesLink.Mod.Native
 
         private static JToken Value(object? value) => value == null ? JValue.CreateNull() : new JValue(value);
 
-        private void RunObjectDefinition(JObject scope)
+        private CompositionRoundTrip BindCompositionRoundTrip(JObject scope)
         {
             var source = updateSystem.World;
             var manager = GameManager.instance;
@@ -337,41 +336,10 @@ namespace SkylinesLink.Mod.Native
                 && manager.gameMode == GameMode.Game && !manager.isGameLoading, "OBJECT_EXECUTION_SCOPE_UNAVAILABLE");
             Guid session = Game.PSI.Telemetry.GetCurrentSession();
             Check(session != Guid.Empty, "OBJECT_EXECUTION_SESSION_UNAVAILABLE");
-            var prefabs = source!.GetExistingSystemManaged<PrefabSystem>();
-            var configuration = source.GetExistingSystemManaged<CityConfigurationSystem>();
-            Check(prefabs != null && configuration != null, "OBJECT_EXECUTION_DEPENDENCY_UNAVAILABLE");
-            var input = ObjectDefinitionInputProbe.Select(source, prefabs!, configuration!, ObjectDefinitionInputProbe.Purpose.WindPower);
-            Check(input.Complete && input.Root != Entity.Null && ReferenceEquals(input.Source, source), "OBJECT_EXECUTION_INPUT_UNAVAILABLE");
             Check(definitionScopeGuard == null, "OBJECT_EXECUTION_SCOPE_GUARD_ALREADY_BOUND");
-            var requireScope = BindDefinitionScopeGuard(scope, source, manager!, session);
+            var requireScope = BindDefinitionScopeGuard(scope, source!, manager!, session);
             definitionScopeGuard = requireScope;
-            requireScope();
-            Check(objectDefinition == null, "OBJECT_EXECUTION_ALREADY_ATTEMPTED");
-            objectDefinition = new ObjectDefinitionExecutionProbe();
-            // A finite synthetic transform exercises command generation only.
-            // It does not claim sampled terrain, snapping or legal placement.
-            var point = new ControlPoint { m_OriginalEntity = Entity.Null, m_Position = new float3(0f),
-                m_HitPosition = new float3(0f), m_Rotation = quaternion.identity, m_ElementIndex = new int2(-1), m_Elevation = 0f };
-            try { objectDefinition.RunOnce(input, configuration!.defaultTheme, configuration.leftHandTraffic, point, default,
-                AgeMask.Sapling, requireScope); }
-            finally
-            {
-                if (objectDefinition.NativeWorkMayReadSource) city!.SuspendAutomaticReturnForNativeUnknown();
-            }
-            Check(objectDefinition.Finished && objectDefinition.ChecksPassed && objectDefinition.ResourcesReleased,
-                "OBJECT_EXECUTION_NOT_QUALIFIED");
-            requireScope();
-            Check(objectGeneration == null, "OBJECT_GENERATION_ALREADY_ATTEMPTED");
-            var payload = objectDefinition.RequirePayload(source);
-            objectGeneration = new ObjectGenerationExecutionProbe();
-            try { objectGeneration.RunOnce(source, payload, requireScope); }
-            finally
-            {
-                if (objectGeneration.NativeWorkMayReadSource) city!.SuspendAutomaticReturnForNativeUnknown();
-            }
-            Check(objectGeneration.Finished && objectGeneration.ChecksPassed && objectGeneration.ResourcesReleased,
-                "OBJECT_GENERATION_LIFECYCLE_NOT_QUALIFIED");
-            requireScope();
+            return new CompositionRoundTrip(source!, requireScope);
         }
 
         private Action BindDefinitionScopeGuard(JObject scope, World source, GameManager manager, Guid session)
@@ -423,6 +391,8 @@ namespace SkylinesLink.Mod.Native
 
         private void AdvanceStop()
         {
+            compositionRoundTrip?.ReleaseInputSnapshot();
+            if (SuppressAutomaticReturn) city?.SuspendAutomaticReturnForNativeUnknown();
             // Stop intent does not revoke the city's actual load/return owner.
             // Keep the ordinary connection alive until that owner truly releases.
             if (city != null && !city.ResourcesReleased && !SuppressAutomaticReturn)
@@ -490,8 +460,9 @@ namespace SkylinesLink.Mod.Native
                     ["configuredMenu"] = ProjectSample(configuredMenu),
                     ["returnedMenu"] = ProjectSample(returnedMenu),
                     ["objectInputSurvey"] = objectInputSurvey == null ? JValue.CreateNull() : objectInputSurvey.DeepClone(),
-                    ["objectDefinition"] = objectDefinition == null ? JValue.CreateNull() : objectDefinition.Snapshot(),
-                    ["objectGeneration"] = objectGeneration == null ? JValue.CreateNull() : objectGeneration.Snapshot(),
+                    ["objectDefinition"] = (JToken?)compositionRoundTrip?.DefinitionSnapshot() ?? JValue.CreateNull(),
+                    ["objectGeneration"] = (JToken?)compositionRoundTrip?.GenerationSnapshot() ?? JValue.CreateNull(),
+                    ["compositionRoundTrip"] = compositionRoundTrip == null ? JValue.CreateNull() : compositionRoundTrip.Snapshot(),
                     ["afterStop"] = ProjectSample(afterStop),
                     ["failureCode"] = failureCode == null ? JValue.CreateNull() : new JValue(failureCode),
                     ["exceptionType"] = exceptionType == null ? JValue.CreateNull() : new JValue(exceptionType)

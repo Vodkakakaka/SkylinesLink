@@ -7,7 +7,9 @@ using Game.Prefabs;
 using Game.Tools;
 using Newtonsoft.Json.Linq;
 using Unity.Entities;
+using Unity.Mathematics;
 using AgeMask = Game.Tools.AgeMask;
+using PlacementFlags = Game.Objects.PlacementFlags;
 
 namespace SkylinesLink.Mod.Native
 {
@@ -24,6 +26,7 @@ namespace SkylinesLink.Mod.Native
         private DefinitionProducerPatchProbe patch = new DefinitionProducerPatchProbe();
         private JObject? commands;
         private ObjectDefinitionPayload? payload;
+        private RelocationDefinitionPayload? relocationPayload;
         private bool ran, finished, nativeBuildQualified, patchRechecked, commandInspectionPassed, inputRevalidated;
         private bool barrierAddAttempted, barrierAddReturned, producerAddAttempted, producerAddReturned;
         private bool barrierDestroyAttempted, barrierDestroyReturned, producerDestroyAttempted, producerDestroyReturned;
@@ -35,17 +38,23 @@ namespace SkylinesLink.Mod.Native
         private int inputNets, inputAreas, inputCommands, inputAreaNodes;
         private string? inputPurpose, failureCode, exceptionType, producerReleaseFailure, barrierReleaseFailure;
         private double elapsedMilliseconds;
+        private float placementOffsetY;
+        private bool groundPoseVerified, relocationSourceUnchanged;
 
         internal bool Finished => finished;
+        internal string? FailureCode => failureCode;
+        internal float3 PlacementPosition { get; private set; }
+        internal float PlacementOffsetY => placementOffsetY;
         internal bool ChecksPassed => finished && commandInspectionPassed && failureCode == null && ResourcesReleased
             && ProtectionPassed;
+        internal bool RelocationPassed => ChecksPassed && relocationSourceUnchanged && relocationPayload != null;
         internal bool ResourcesReleased => resourcesReleased && !UnknownNativeResponsibility;
         internal bool UnknownNativeResponsibility => unknown || NativeWorkMayReadSource || parameterAllocationUnconfirmed;
         internal bool NativeWorkMayReadSource => nativeCallStarted && !completionObserved;
         private bool ProtectionPassed => protection?.Passed == true;
 
         internal void RunOnce(ObjectDefinitionInputProbe.Result input, Entity theme, bool leftHandTraffic,
-            ControlPoint point, RandomSeed seed, AgeMask ages, Action requireCurrentScope)
+            GroundPreviewSite site, RandomSeed seed, AgeMask ages, Action requireCurrentScope, RelocationDefinitionSource? relocation = null)
         {
             if (ran) { Fail("OBJECT_EXECUTION_ALREADY_RAN"); return; }
             ran = true;
@@ -99,14 +108,36 @@ namespace SkylinesLink.Mod.Native
                 // replacing World or old prefab entities. The single caller's
                 // synchronous Ready/instance/generation assertion closes that gap.
                 requireCurrentScope();
-                producer.CaptureOnce(barrier, input.Root, theme, leftHandTraffic, point, seed, ages);
+                ControlPoint point = site.RequireCurrent(source, input.Root, requireCurrentScope, out placementOffsetY);
+                if (relocation != null)
+                {
+                    relocation.RequireUnchanged(source, input.Root, requireCurrentScope);
+                    Check(relocation.AcceptsSite(point.m_Position.xz) && point.m_Rotation.Equals(relocation.RootTransform.m_Rotation),
+                        "RELOCATION_DEFINITION_SITE_CHANGED");
+                }
+                producer.CaptureOnce(barrier, input.Root, theme, leftHandTraffic, point, seed, ages, relocation);
                 ObserveProducer();
                 Check(nativeCallStarted && nativeCallReturned && completionObserved, "OBJECT_PRODUCER_COMPLETION_UNCONFIRMED");
                 RequireProtectionWithOwnedSystems(expectBarrier: true, expectProducer: true);
-                commands = ObjectDefinitionCommandProbe.Capture(producer, input, out payload);
+                if (relocation == null)
+                {
+                    commands = ObjectDefinitionCommandProbe.Capture(producer, input, out payload);
+                    requireCurrentScope();
+                    VerifyGroundDefinition(point);
+                }
+                else
+                {
+                    relocation.RequireUnchanged(source, input.Root, requireCurrentScope);
+                    commands = ObjectDefinitionCommandProbe.CaptureRelocation(producer, relocation, point, out relocationPayload);
+                    PlacementPosition = point.m_Position;
+                    groundPoseVerified = true;
+                }
                 commandInspectionPassed = true;
             }
             catch (CheckFailure failure) { Fail(failure.Code); }
+            catch (GroundPreviewSite.Rejection failure) { Fail(failure.Code); }
+            catch (RelocationDefinitionSource.Rejection failure) { Fail(failure.Code); }
+            catch (PreviewCommitExecution.Rejection failure) { Fail(failure.Code); }
             catch (Exception error) { Fail("OBJECT_DEFINITION_EXECUTION_FAILED"); exceptionType = ShortType(error); }
             finally
             {
@@ -132,6 +163,17 @@ namespace SkylinesLink.Mod.Native
                     Fail("OBJECT_DEFINITION_CLEANUP_OBSERVATION_FAILED"); exceptionType ??= ShortType(error);
                 }
                 finally { timer.Stop(); elapsedMilliseconds = timer.Elapsed.TotalMilliseconds; finished = true; }
+            }
+            if (relocation != null && completionObserved && ResourcesReleased)
+            {
+                try
+                {
+                    relocation.RequireUnchanged(source!, input.Root, requireCurrentScope!);
+                    relocationSourceUnchanged = true;
+                }
+                catch (RelocationDefinitionSource.Rejection failure) { Fail(failure.Code); }
+                catch (PreviewCommitExecution.Rejection failure) { Fail(failure.Code); }
+                catch (Exception error) { Fail("RELOCATION_DEFINITION_POST_RELEASE_CHECK_FAILED"); exceptionType ??= ShortType(error); }
             }
         }
 
@@ -177,6 +219,22 @@ namespace SkylinesLink.Mod.Native
                 && placeable.m_ConstructionCost <= int.MaxValue && selected.WindNominalProductionRaw == wind.m_Production
                 && selected.WindMaximumWindRaw == wind.m_MaximumWind && wind.m_Production > 0 && wind.m_MaximumWind > 0,
                 "OBJECT_EXECUTION_ROOT_FACTS_CHANGED");
+        }
+
+        private void VerifyGroundDefinition(ControlPoint point)
+        {
+            Check(payload != null, "GROUND_PREVIEW_PAYLOAD_UNAVAILABLE");
+            var actual = payload!.RootObject;
+            Check(actual.m_Position.Equals(point.m_Position) && actual.m_Rotation.Equals(point.m_Rotation)
+                && actual.m_Elevation == point.m_Elevation, "GROUND_PREVIEW_NATIVE_POSE_CHANGED");
+            var manager = source!.EntityManager;
+            var network = payload.CourseCreation.m_Prefab;
+            Check(manager.Exists(network) && manager.HasComponent<NetGeometryData>(network)
+                && !manager.HasComponent<OutsideConnectionData>(network)
+                && (manager.GetComponentData<NetGeometryData>(network).m_Flags & Game.Net.GeometryFlags.OnWater) == 0,
+                "GROUND_PREVIEW_SPECIAL_SUBNET");
+            PlacementPosition = actual.m_Position;
+            groundPoseVerified = true;
         }
 
         private void RequireProtectionWithOwnedSystems(bool expectBarrier, bool expectProducer)
@@ -258,6 +316,19 @@ namespace SkylinesLink.Mod.Native
             return payload!;
         }
 
+        internal RelocationDefinitionPayload RequireRelocationPayload(World expectedSource)
+        {
+            Check(MainThreadDispatcher.isMainThread && RelocationPassed && source != null && source.IsCreated
+                && ReferenceEquals(source, expectedSource), "RELOCATION_DEFINITION_PAYLOAD_UNAVAILABLE");
+            return relocationPayload!;
+        }
+
+        internal JObject RelocationSnapshot() => new JObject {
+            ["passed"] = RelocationPassed, ["resourcesReleased"] = ResourcesReleased,
+            ["nativeWorkMayReadSource"] = NativeWorkMayReadSource, ["nativeCompleted"] = completionObserved,
+            ["sourceUnchanged"] = relocationSourceUnchanged, ["observed"] = commands?.DeepClone(), ["failureCode"] = Value(failureCode)
+        };
+
         // Snapshot reads captured ordinary facts only, including after the
         // source has gone away. No activePrefab/GetPrefab/World getter is used.
         internal JObject Snapshot() => new JObject {
@@ -284,9 +355,10 @@ namespace SkylinesLink.Mod.Native
             ["protection"] = protection == null ? new JObject { ["observed"] = false } : protection.Snapshot(),
             ["commandInspectionPassed"] = commandInspectionPassed, ["commands"] = commands == null ? JValue.CreateNull() : commands.DeepClone(),
             ["materializationInputSupported"] = payload != null,
+            ["groundPoseVerified"] = groundPoseVerified, ["placementOffsetY"] = placementOffsetY,
             ["elapsedMilliseconds"] = elapsedMilliseconds, ["failureCode"] = Value(failureCode), ["exceptionType"] = Value(exceptionType),
             ["playbackCalled"] = false,
-            ["scope"] = "One native definition job and read-only command diagnostics; buffers remain opaque. No placement, fees, complete attachments or construction acceptance."
+            ["scope"] = "One native definition job with an observed ground pose. Placement legality, fees and construction remain unqualified."
         };
 
         private void Fail(string code) { failureCode ??= code; }

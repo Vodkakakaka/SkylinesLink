@@ -8,7 +8,7 @@ SkylinesLink is an independent Model Context Protocol (MCP) project for **Cities
 
 The goal is a framework linking useful game information, normal gameplay actions, planning, and verifiable results. Public, task-specific AI guidance will ship with the product; player preferences belong to the current task rather than its default rules. These are product commitments, not implemented-capability claims.
 
-**Downloads: [GitHub Releases](https://github.com/Vodkakakaka/SkylinesLink/releases). There is no game-validated player release yet.** Future player releases will provide complete installation assets, a version, English and Simplified Chinese release notes, and checksums. GitHub's automatically generated **Source code** archives are source snapshots, not player installation packages.
+**Developer preview: [GitHub Releases](https://github.com/Vodkakakaka/SkylinesLink/releases).** Source downloads include a commit-bound manifest, checksums and validation summary. See the [preview guide](docs/development/preview.md) for the source layout, build commands and known limitations. There is no game-validated player installation release yet. Source archives are contributor downloads, not player installation packages.
 
 ![SkylinesLink original city-connection concept illustration; not a game screenshot](assets/branding/city-link-concept.png)
 
@@ -47,7 +47,7 @@ The intended player experience is:
 
 ## Development
 
-Use Windows and the pinned Node.js, pnpm, and .NET SDK versions in the [toolchain guide](docs/development/toolchain.md). TypeScript is a project dependency and does not need a global installation. pnpm is the primary package manager; npm is a fallback. Tool versions favor current LTS/stable releases and are pinned for reproducibility.
+Use Windows and stable Node.js, pnpm, and .NET SDK versions meeting the minimums in the [toolchain guide](docs/development/toolchain.md). Newer stable development tools are accepted; dependencies remain locked. TypeScript is a project dependency and does not need a global installation. pnpm is the primary package manager; npm is a fallback.
 
 ```powershell
 pnpm install --frozen-lockfile
@@ -60,7 +60,8 @@ These commands build and check the game-independent foundation. `pnpm build:mod`
 ## Documentation
 
 - [Architecture and component responsibilities](docs/architecture.md)
-- [Development toolchain and pinned versions](docs/development/toolchain.md)
+- [Development toolchain and minimum versions](docs/development/toolchain.md)
+- [Developer preview, source layout and known limitations](docs/development/preview.md)
 - [Licensing and brand boundaries](docs/governance/licensing.md)
 - [Publication privacy](docs/governance/publication-privacy.md)
 - [Original identity assets and concept artwork](assets/branding/README.md)

@@ -44,7 +44,7 @@ namespace SkylinesLink.Mod.Native
             this.source = source ?? throw new ArgumentNullException(nameof(source));
             this.payload = payload ?? throw new ArgumentNullException(nameof(payload));
             if (!ReferenceEquals(source, payload.Source) || actor <= 0 || actor != payload.Actor
-                || payload.TargetCount < 1 || payload.TargetCount > 5 || payload.CommandCount < 1 || payload.CommandCount > 47)
+                || payload.TargetCount < 1 || payload.CommandCount < 1)
                 throw new InvalidOperationException("GENERATED_SUBOBJECT_SOURCE_REJECTED");
             this.actor = actor;
             batch = new NativeEntityBatch(source, payload.TargetCount);
@@ -54,7 +54,7 @@ namespace SkylinesLink.Mod.Native
             {
                 GeneratedSubObjectTarget target = payload.TargetAt(index);
                 Require(identities.Add(target.DeferredEntity) && target.DeferredEntity.Index < 0
-                    && (target.Owner == payload.Root || target.Owner == payload.Node), "GENERATED_SUBOBJECT_TARGET_REJECTED");
+                    && payload.IsParent(target.Owner), "GENERATED_SUBOBJECT_TARGET_REJECTED");
                 targets[index] = new TargetState(target);
                 BindStep(assigned, target.CreateOrdinal, index, -1);
                 for (int write = 0; write < target.WriteCount; write++) BindStep(assigned, target.WriteAt(write).Ordinal, index, write);
@@ -63,9 +63,12 @@ namespace SkylinesLink.Mod.Native
         }
 
         internal int TargetCount => targets.Length;
+        internal bool Owns(GeneratedSubObjectsPayload values) => ReferenceEquals(payload, values);
+        internal Temp CapturedTempAt(int index) => Value<Temp>(FindWrite(targets[index], GeneratedSubObjectWriteKind.Temp));
         internal Entity EntityAt(int index) => batch.EntityAt(index);
         internal bool CreateReturned => createReturned;
         internal bool DiscardReady => discardReady;
+        private bool nativeCancellation;
         internal bool UnknownCreation => batch.UnknownCreation;
         internal bool ResourcesReleased => batch.ResourcesReleased && archetypes.ResourcesReleased;
         internal bool AbsenceConfirmed
@@ -201,7 +204,14 @@ namespace SkylinesLink.Mod.Native
             source.EntityManager.AddComponent<T>(entity); state.AddReturned++;
             // AddComponentData internally performs Add -> structural callbacks ->
             // Set without our scope check. Split this fixed typed operation here.
-            GuardParents(); RequireChild(index, state, false); Set(index, state, value);
+            GuardParents(); RequireChild(index, state, false);
+            if (payload.IsRelocation)
+            {
+                RequireParentsEmpty();
+                if (value is Temp temp && temp.m_Original != Entity.Null)
+                    payload.RequireRelocationWitness(requireScope!);
+            }
+            Set(index, state, value);
         }
 
         private void Set<T>(int index, TargetState state, T value) where T : unmanaged, IComponentData
@@ -262,9 +272,11 @@ namespace SkylinesLink.Mod.Native
                     NativeTransform transform = Value<NativeTransform>(write);
                     Require(Finite(transform.m_Position) && Finite(transform.m_Rotation.value), "GENERATED_SUBOBJECT_TRANSFORM_INVALID"); break;
                 case GeneratedSubObjectWriteKind.Temp:
-                    Temp temp = Value<Temp>(write);
-                    Require(temp.m_Original == Entity.Null && temp.m_Flags == TempFlags.Create && temp.m_CurvePosition == 0f
-                        && temp.m_Cost == 0 && temp.m_Value == 0, "GENERATED_SUBOBJECT_TEMP_INVALID"); break;
+                    int? aligned = state.Target.Has(GeneratedSubObjectWriteKind.Aligned)
+                        ? Value<Game.Objects.Aligned>(FindWrite(state, GeneratedSubObjectWriteKind.Aligned)).m_SubObjectIndex
+                        : (int?)null;
+                    Require(payload.ChildTempMatches(state.Target.Owner, state.Target.Prefab, aligned, Value<Temp>(write)),
+                        "GENERATED_SUBOBJECT_TEMP_INVALID"); break;
                 case GeneratedSubObjectWriteKind.Animation:
                     Require(Value<NativeAnimation>(write).Equals(default(NativeAnimation)), "GENERATED_SUBOBJECT_ANIMATION_INVALID"); break;
                 case GeneratedSubObjectWriteKind.Interpolated:
@@ -274,7 +286,8 @@ namespace SkylinesLink.Mod.Native
                     ObjectElevation elevation = Value<ObjectElevation>(write);
                     Require(math.isfinite(elevation.m_Elevation) && elevation.m_Flags == 0, "GENERATED_SUBOBJECT_ELEVATION_INVALID"); break;
                 case GeneratedSubObjectWriteKind.Aligned:
-                    Require(state.Target.Owner == payload.Node, "GENERATED_SUBOBJECT_ALIGNMENT_OWNER_INVALID");
+                    Require(state.Target.Owner == payload.Node || payload.IsRelocation && state.Target.Owner == payload.OldNode,
+                        "GENERATED_SUBOBJECT_ALIGNMENT_OWNER_INVALID");
                     int row = Value<Game.Objects.Aligned>(write).m_SubObjectIndex; bool found = false;
                     for (int index = 0; index < state.Target.CandidateRowCount; index++) found |= state.Target.CandidateRowAt(index) == row;
                     Require(found, "GENERATED_SUBOBJECT_ALIGNMENT_ROW_INVALID"); break;
@@ -372,23 +385,30 @@ namespace SkylinesLink.Mod.Native
 
         private void GuardParents()
         {
-            GuardCore(); CheckParent(payload.Root); CheckParent(payload.Node);
+            CheckParents();
             if (parentGraphGuard == null) RequireParentsEmpty();
             else
             {
                 parentGraphGuard();
-                GuardCore(); CheckParent(payload.Root); CheckParent(payload.Node);
+                CheckParents();
             }
+        }
+
+        private void CheckParents()
+        {
+            GuardCore(); CheckParent(payload.Root); CheckParent(payload.Node);
+            if (payload.IsRelocation) CheckParent(payload.OldNode);
         }
 
         private void CheckParent(Entity entity)
         {
             EntityManager entities = source.EntityManager;
             Require(entities.Exists(entity) && entities.HasComponent<Disabled>(entity) && entities.HasComponent<ObjectGenerationScope>(entity)
-                && entities.HasComponent<Temp>(entity) && !entities.HasComponent<Deleted>(entity), "GENERATED_SUBOBJECT_PARENT_CHANGED");
+                && entities.HasComponent<Temp>(entity) && entities.HasComponent<Deleted>(entity) == nativeCancellation,
+                "GENERATED_SUBOBJECT_PARENT_CHANGED");
             int actual = entities.GetSharedComponent<ObjectGenerationScope>(entity).Value; GuardCore();
             Temp temp = entities.GetComponentData<Temp>(entity); GuardCore();
-            Require(actual == actor && temp.m_Original == Entity.Null, "GENERATED_SUBOBJECT_PARENT_SCOPE_CHANGED");
+            Require(actual == actor && payload.ParentTempMatches(entity, temp), "GENERATED_SUBOBJECT_PARENT_SCOPE_CHANGED");
             Require(entities.HasBuffer<Game.Objects.SubObject>(entity), "GENERATED_SUBOBJECT_PARENT_BUFFER_MISSING");
             if (entity == payload.Node)
             {
@@ -402,6 +422,7 @@ namespace SkylinesLink.Mod.Native
         private void RequireParentsEmpty()
         {
             RequireParentEmpty(payload.Root); RequireParentEmpty(payload.Node);
+            if (payload.IsRelocation) RequireParentEmpty(payload.OldNode);
         }
 
         private void RequireParentEmpty(Entity entity)
@@ -415,7 +436,7 @@ namespace SkylinesLink.Mod.Native
         private Entity RequireChild(int index, TargetState state, bool allowInitialScope)
         {
             GuardCore(); Entity entity = batch.EntityAt(index); EntityManager entities = source.EntityManager;
-            Require(entity != Entity.Null && entity != payload.Root && entity != payload.Node && entities.Exists(entity)
+            Require(entity != Entity.Null && !payload.IsParent(entity) && entities.Exists(entity)
                 && entities.HasComponent<Disabled>(entity) && entities.HasComponent<ObjectGenerationScope>(entity),
                 "GENERATED_SUBOBJECT_CHILD_IDENTITY_CHANGED");
             for (int other = 0; other < targets.Length; other++)
@@ -435,7 +456,8 @@ namespace SkylinesLink.Mod.Native
         {
             RequireMainThread();
             if (requireLinkedGraph == null) throw new ArgumentNullException(nameof(requireLinkedGraph));
-            Require(createReturned && parentGraphGuard != null && !releaseCalled && !discardRequested && targets.Length == 5,
+            Require(createReturned && parentGraphGuard != null && !releaseCalled && !discardRequested
+                && targets.Length == (payload.IsRelocation ? 6 : 5),
                 "GENERATED_SUBOBJECT_DISCARD_NOT_READY");
             discardRequested = true;
             try
@@ -527,8 +549,59 @@ namespace SkylinesLink.Mod.Native
             throw new Rejection("GENERATED_SUBOBJECT_WRITE_MISSING");
         }
 
-        // Parent joins/discards the producer before this call. No Source reader
-        // is joined here and no normal tool cancellation is claimed.
+        internal void RequireNativeCancellationShape()
+        {
+            RequireMainThread();
+            Require(payload.IsRelocation && createReturned && !discardRequested && !releaseCalled && !UnknownCreation,
+                "GENERATED_SUBOBJECT_NATIVE_CANCELLATION_UNAVAILABLE");
+            nativeCancellation = true;
+            GuardParents();
+            var entities = source.EntityManager;
+            for (int index = 0; index < targets.Length; index++)
+            {
+                var state = targets[index];
+                Entity child = RequireChild(index, state, false);
+                var expected = new Dictionary<TypeIndex, ComponentType>(state.ExpectedTypes!);
+                expected.Remove(TypeManager.GetTypeIndex<Applied>());
+                expected.Remove(TypeManager.GetTypeIndex<Created>());
+                expected.Remove(TypeManager.GetTypeIndex<Updated>());
+                NativeEntityArchetypes.AddExpected<Deleted>(expected);
+                var actual = ReadTypes(index, state);
+                NativeEntityArchetypes.RequireSame(actual, expected);
+                ValidateMetadata(actual, true, true);
+                state.LatestBuffers = ReadEmptyBuffers(index, state, actual);
+                Require(entities.GetComponentData<Owner>(child).m_Owner == state.Target.Owner
+                    && entities.GetComponentData<PrefabRef>(child).m_Prefab == state.Target.Prefab
+                    && entities.GetComponentData<Temp>(child).Equals(CapturedTempAt(index)),
+                    "GENERATED_SUBOBJECT_NATIVE_CANCELLATION_VALUE_CHANGED");
+                state.DiscardTypesMatched = true;
+                state.DiscardReturned = true;
+                state.ReleaseClosureChecked = true;
+                state.DeletedObserved = true;
+                state.DeletedObservationReturned = true;
+            }
+            GuardCore();
+        }
+
+        internal void ConfirmGroupRemoval(Action requireScope)
+        {
+            batch.ConfirmGroupRemoval(requireScope);
+            releaseCalled = true;
+        }
+
+        internal void ConfirmWorldTransfer(Action requireScope)
+        {
+            batch.ConfirmWorldTransfer(requireScope);
+            releaseCalled = true;
+        }
+
+        internal void ConfirmMixedTransfer(Entity survivor, Action requireScope)
+        {
+            batch.ConfirmMixedTransfer(survivor, requireScope);
+            releaseCalled = true;
+        }
+
+        // Parent joins/discards the producer before fallback retirement.
         internal void Release()
         {
             RequireMainThread(); if (releaseCalled) return; releaseCalled = true;
@@ -576,11 +649,47 @@ namespace SkylinesLink.Mod.Native
                 if (entities.HasComponent<Temp>(entity))
                 {
                     GuardChild(index, state); Temp temp = entities.GetComponentData<Temp>(entity); GuardChild(index, state);
-                    Require(temp.m_Original == Entity.Null, "GENERATED_SUBOBJECT_RELEASE_ORIGINAL_CHANGED");
+                    bool expected = payload.IsRelocation
+                        ? temp.Equals(Value<Temp>(FindWrite(state, GeneratedSubObjectWriteKind.Temp)))
+                            || !Returned(state, GeneratedSubObjectWriteKind.Temp) && temp.Equals(default(Temp))
+                        : temp.m_Original == Entity.Null;
+                    Require(expected, "GENERATED_SUBOBJECT_RELEASE_ORIGINAL_CHANGED");
                 }
                 state.ReleaseClosureChecked = true;
             }
             GuardParents(); RequireParentsEmpty();
+        }
+
+        // Captured command details are already in the adjacent producer receipt.
+        internal JObject RelocationSnapshot()
+        {
+            Require(payload.IsRelocation, "GENERATED_SUBOBJECT_RELOCATION_REQUIRED");
+            var values = new JArray();
+            for (int index = 0; index < targets.Length; index++)
+            {
+                TargetState state = targets[index];
+                Temp temp = Value<Temp>(FindWrite(state, GeneratedSubObjectWriteKind.Temp));
+                values.Add(new JObject {
+                    ["deferred"] = Id(state.Target.DeferredEntity), ["entity"] = Id(batch.EntityAt(index)),
+                    ["owner"] = Id(state.Target.Owner), ["prefab"] = Id(state.Target.Prefab),
+                    ["original"] = Id(temp.m_Original), ["flags"] = (uint)temp.m_Flags,
+                    ["createAttempted"] = batch.CreationAttempted(index), ["createReturned"] = batch.CreationReturned(index), ["scopeAssigned"] = state.ScopeReturned,
+                    ["typesMatched"] = state.BirthTypesMatched && state.FinalTypesMatched,
+                    ["enableablesMatched"] = state.BirthEnableablesMatched && state.FinalEnableablesMatched,
+                    ["valuesMatched"] = state.ValuesMatched, ["buffersEmpty"] = state.FinalEnableablesMatched,
+                    ["discardReturned"] = state.DiscardReturned, ["deletedObserved"] = state.DeletedObserved,
+                    ["discardTypesMatched"] = state.DiscardTypesMatched,
+                    ["releaseClosureChecked"] = state.ReleaseClosureChecked,
+                    ["destroyReturned"] = batch.DestructionReturned(index) || nativeCancellation && releaseCalled && batch.AbsenceConfirmed(index),
+                    ["absenceConfirmed"] = batch.AbsenceConfirmed(index)
+                });
+            }
+            return new JObject {
+                ["targets"] = values, ["commandsExecuted"] = executedCommands, ["matchedWriteCount"] = copiedValuesMatched,
+                ["createReturned"] = CreateReturned, ["absenceConfirmed"] = AbsenceConfirmed, ["resourcesReleased"] = ResourcesReleased,
+                ["unknownCreation"] = UnknownCreation, ["stage"] = stage, ["failureCode"] = Text(failureCode),
+                ["exceptionType"] = Text(exceptionType), ["releaseFailure"] = Text(releaseFailure)
+            };
         }
 
         internal JObject Snapshot()

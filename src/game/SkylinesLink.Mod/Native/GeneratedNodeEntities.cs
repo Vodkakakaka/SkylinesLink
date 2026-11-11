@@ -114,7 +114,7 @@ namespace SkylinesLink.Mod.Native
                 requireCurrentScope();
                 NativeEntityArchetypes.RequireSame(archetypes.Read(entities.GetChunk(Entity).Archetype, 258), types);
                 birthTypesVerified = true;
-                birthBuffers = ReadEmptyBuffers(entities, types);
+                birthBuffers = ReadNodeBuffers(entities, types);
                 foreach (ComponentType type in types.Values)
                     if (type.TypeIndex.IsEnableable)
                     { Require(entities.IsComponentEnabled(Entity, type), "GENERATED_NODE_BIRTH_ENABLE_STATE_CHANGED"); enableableCount++; }
@@ -140,7 +140,7 @@ namespace SkylinesLink.Mod.Native
                 valuesVerified = true; ownerDefStillPresent = true;
                 var actualTypes = archetypes.Read(entities.GetChunk(Entity).Archetype, 272);
                 NativeEntityArchetypes.RequireSame(actualTypes, types);
-                latestBuffers = ReadEmptyBuffers(entities, actualTypes);
+                latestBuffers = ReadNodeBuffers(entities, actualTypes);
                 expectedTypes = types; finalTypeCount = actualTypes.Count + 1;
                 finalTypeDigest = NativeEntityArchetypes.TypeDigest(actualTypes); finalTypesVerified = true;
                 RecordCurrentTypes(actualTypes);
@@ -312,7 +312,7 @@ namespace SkylinesLink.Mod.Native
                 expectedTypes = expected;
                 var actual = archetypes.Read(entities.GetChunk(Entity).Archetype, 272);
                 NativeEntityArchetypes.RequireSame(actual, expected);
-                latestBuffers = ReadEmptyBuffers(entities, actual);
+                latestBuffers = ReadNodeBuffers(entities, actual);
                 ReadAndVerify(entities, root, allowRemovedOwnerDefinition: true);
                 RecordCurrentTypes(actual);
                 postLinkValuesVerified = true;
@@ -331,13 +331,19 @@ namespace SkylinesLink.Mod.Native
                     throw new Rejection("GENERATED_NODE_BUFFER_UNSUPPORTED");
                 }
         }
-        private JObject ReadEmptyBuffers(EntityManager entities, Dictionary<TypeIndex, ComponentType> types)
+        private JObject ReadNodeBuffers(EntityManager entities, Dictionary<TypeIndex, ComponentType> types,
+            SubObjectReferencesProducer? liveChildren = null)
         {
             RequireKnownBuffers(types);
             var result = new JObject();
             CheckBuffer<Game.Net.ConnectedEdge>(entities, types, result);
             CheckBuffer<Game.Net.SubLane>(entities, types, result);
-            CheckBuffer<SubObject>(entities, types, result);
+            if (liveChildren == null) CheckBuffer<SubObject>(entities, types, result);
+            else
+            {
+                Require(types.ContainsKey(TypeManager.GetTypeIndex<SubObject>()), "GENERATED_NODE_SUBOBJECT_BUFFER_MISSING");
+                result[typeof(SubObject).FullName!] = liveChildren.ReadLinkedNodeChildren(source, linkedRoot, Entity);
+            }
             CheckBuffer<MeshBatch>(entities, types, result);
             CheckBuffer<LinkedEntityGroup>(entities, types, result);
             return result;
@@ -355,9 +361,9 @@ namespace SkylinesLink.Mod.Native
             && entities.HasComponent<ObjectGenerationScope>(Entity)
             && entities.GetSharedComponent<ObjectGenerationScope>(Entity).Value == actor, "GENERATED_NODE_SCOPE_CHANGED");
 
-        // Called after the linked children are physically gone. Only this
-        // qualified native delta may replace the node's concrete expected Orphan.
-        internal void ConfirmNativeComposition(CompositionSelectionReceipt receipt)
+        // The live child graph proves its own edges. After retirement the
+        // recovery path instead requires every node buffer to be empty.
+        internal void ConfirmNativeComposition(CompositionSelectionReceipt receipt, SubObjectReferencesProducer? liveChildren)
         {
             RequireMainThread();
             if (receipt == null) throw new ArgumentNullException(nameof(receipt));
@@ -383,7 +389,7 @@ namespace SkylinesLink.Mod.Native
                 Require(compositionObserved, "GENERATED_NODE_COMPOSITION_RESULT_CHANGED");
                 // The native job has already changed Orphan on a cache hit.
                 // Audit against this one candidate value before committing it.
-                VerifyCompletedNode(receipt.After);
+                VerifyCompletedNode(receipt.After, liveChildren);
                 receipt.RequireCurrentScope(); requireScope!();
                 currentExpectedOrphan = receipt.After; compositionConfirmed = true; stage = "composition-reference-confirmed";
             }
@@ -496,7 +502,7 @@ namespace SkylinesLink.Mod.Native
             | (entities.HasComponent<EffectsUpdated>(entity) ? 8 : 0) | (entities.HasComponent<BatchesUpdated>(entity) ? 16 : 0)
             | (entities.HasComponent<PathfindUpdated>(entity) ? 32 : 0);
 
-        private void VerifyCompletedNode(Game.Net.Orphan? expectedOrphan = null)
+        private void VerifyCompletedNode(Game.Net.Orphan? expectedOrphan = null, SubObjectReferencesProducer? liveChildren = null)
         {
             requireScope!(); Require(source.IsCreated, "GENERATED_NODE_SOURCE_UNAVAILABLE");
             EntityManager entities = source.EntityManager; RequireLiveNode(entities);
@@ -506,7 +512,7 @@ namespace SkylinesLink.Mod.Native
             Require(keyPresent == ownerDefStillPresent, "GENERATED_NODE_OWNER_DEFINITION_STATE_CHANGED");
             ReadAndVerify(entities, rootLinkConfirmed ? linkedRoot : EcsEntity.Null,
                 allowRemovedOwnerDefinition: !ownerDefStillPresent, expectedOrphan: expectedOrphan);
-            latestBuffers = ReadEmptyBuffers(entities, actual);
+            latestBuffers = ReadNodeBuffers(entities, actual, liveChildren);
             foreach (ComponentType type in actual.Values)
                 if (type.TypeIndex.IsEnableable)
                     Require(entities.IsComponentEnabled(Entity, type), "GENERATED_NODE_ENABLE_STATE_CHANGED");
@@ -535,7 +541,7 @@ namespace SkylinesLink.Mod.Native
             }
             else
             {
-                latestBuffers = ReadEmptyBuffers(entities, archetypes.Read(entities.GetChunk(Entity).Archetype, 272));
+                latestBuffers = ReadNodeBuffers(entities, archetypes.Read(entities.GetChunk(Entity).Archetype, 272));
                 if (entities.HasComponent<Owner>(Entity))
                 {
                     EcsEntity owner = entities.GetComponentData<Owner>(Entity).m_Owner;
@@ -546,6 +552,18 @@ namespace SkylinesLink.Mod.Native
                     Require(entities.GetComponentData<OwnerDefinition>(Entity).Equals(ownerKey), "GENERATED_NODE_RELEASE_KEY_CHANGED");
             }
             parentReleaseGuard?.Invoke(); requireScope?.Invoke();
+        }
+
+        internal void ConfirmGroupRemoval(Action requireScope)
+        {
+            batch.ConfirmGroupRemoval(requireScope);
+            releaseCalled = true;
+        }
+
+        internal void ConfirmWorldTransfer(Action requireScope)
+        {
+            batch.ConfirmWorldTransfer(requireScope);
+            releaseCalled = true;
         }
 
         internal void Release()

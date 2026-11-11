@@ -204,8 +204,19 @@ namespace SkylinesLink.Mod.Native
         private bool LinkedGroupIsEmpty(EntityManager entities) => !entities.HasComponent<LinkedEntityGroup>(Entity)
             || entities.GetBuffer<LinkedEntityGroup>(Entity, isReadOnly: true).Length == 0;
 
-        // The caller must first join every native reader. This is precise ECS
-        // ownership release of an uninitialized root, not a ToolClear operation.
+        internal void ConfirmGroupRemoval(Action requireScope)
+        {
+            batch.ConfirmGroupRemoval(requireScope);
+            releaseCalled = true;
+        }
+
+        internal void ConfirmWorldTransfer(Action requireScope)
+        {
+            batch.ConfirmWorldTransfer(requireScope);
+            releaseCalled = true;
+        }
+
+        // Fallback for fixtures whose normal cancel has not started.
         internal void Release()
         {
             RequireMainThread();

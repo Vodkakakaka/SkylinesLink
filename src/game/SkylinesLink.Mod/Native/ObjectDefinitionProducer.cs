@@ -23,7 +23,7 @@ namespace SkylinesLink.Mod.Native
     {
         private NativeList<ControlPoint> points;
         private ObjectDefinitionBarrier? output;
-        private Entity prefab, theme;
+        private Entity prefab, theme, original;
         private RandomSeed seed;
         private AgeMask ages;
         private bool leftHandTraffic, armed, attempted, returned, completed;
@@ -42,6 +42,7 @@ namespace SkylinesLink.Mod.Native
         internal bool NativeCallReturned => returned;
         internal bool CompletionObserved => completed;
         internal Entity CapturedPrefab => prefab;
+        internal Entity CapturedOriginal => original;
         internal bool ParametersCreated => points.IsCreated;
         internal bool ParameterAllocationUnconfirmed => parameterAllocationAttempted && !parameterAllocationReturned;
         internal bool ParametersCanBeReleased => !ParameterAllocationUnconfirmed && (!attempted || completed);
@@ -72,18 +73,21 @@ namespace SkylinesLink.Mod.Native
         protected override void OnStopRunning() { }
 
         internal void CaptureOnce(ObjectDefinitionBarrier barrier, Entity objectPrefab, Entity cityTheme,
-            bool cityLeftHandTraffic, ControlPoint point, RandomSeed randomSeed, AgeMask ageMask)
+            bool cityLeftHandTraffic, ControlPoint point, RandomSeed randomSeed, AgeMask ageMask,
+            RelocationDefinitionSource? relocation = null)
         {
             RequireMainThread();
             if (attempted || points.IsCreated || armed || barrier == null || !ReferenceEquals(barrier.World, World) ||
                 barrier.PendingCount != 0 || objectPrefab == Entity.Null || !EntityManager.Exists(objectPrefab) ||
                 point.m_OriginalEntity != Entity.Null || !math.all(math.isfinite(point.m_Position)) ||
                 !math.all(math.isfinite(point.m_Rotation.value)) || !math.isfinite(point.m_Elevation) ||
-                math.abs(math.lengthsq(point.m_Rotation.value) - 1f) > 0.0001f)
+                math.abs(math.lengthsq(point.m_Rotation.value) - 1f) > 0.0001f ||
+                relocation != null && (relocation.Prefab != objectPrefab || !EntityManager.Exists(relocation.Root)))
                 throw new InvalidOperationException("OBJECT_PRODUCER_INPUT_REJECTED");
             output = barrier;
             m_ToolOutputBarrier = barrier;
             prefab = objectPrefab; theme = cityTheme; leftHandTraffic = cityLeftHandTraffic;
+            original = relocation?.Root ?? Entity.Null;
             seed = randomSeed; ages = ageMask;
             parameterAllocationAttempted = true;
             points = new NativeList<ControlPoint>(1, Allocator.Persistent);
@@ -116,9 +120,9 @@ namespace SkylinesLink.Mod.Native
             if (!armed || attempted || output == null || !ReferenceEquals(m_ToolOutputBarrier, output))
                 throw new InvalidOperationException("OBJECT_PRODUCER_NOT_ARMED");
             attempted = true;
-            JobHandle job = CreateDefinitions(prefab, Entity.Null, Entity.Null, Entity.Null, Entity.Null,
+            JobHandle job = CreateDefinitions(prefab, Entity.Null, Entity.Null, Entity.Null, original,
                 Entity.Null, theme, points, default, false, leftHandTraffic, false, false,
-                1f, 0f, 1f, 0f, 0f, seed, Snap.None, ages, false, default, inputDeps);
+                1f, 0f, 1f, 0f, 0f, seed, Snap.Upright, ages, false, default, inputDeps);
             returned = true;
             return job;
         }

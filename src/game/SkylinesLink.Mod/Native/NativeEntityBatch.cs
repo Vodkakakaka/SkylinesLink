@@ -7,13 +7,13 @@ using Unity.Entities;
 
 namespace SkylinesLink.Mod.Native
 {
-    /// <summary>Physical ownership of at most five exact entities and their output slots.</summary>
+    /// <summary>Physical ownership of at most six exact entities and their output slots.</summary>
     internal sealed class NativeEntityBatch
     {
         private readonly World source;
         private readonly Receipt[] receipts;
         private NativeArray<Entity> slots;
-        private bool allocationAttempted, allocationReturned, releaseCalled;
+        private bool allocationAttempted, allocationReturned, releaseCalled, worldOwnershipTransferred;
         private bool outputsReadBeforeRelease, slotsReleaseAttempted, slotsReleaseReturned;
         private string? failureCode, exceptionType;
 
@@ -22,7 +22,7 @@ namespace SkylinesLink.Mod.Native
         internal NativeEntityBatch(World source, int capacity)
         {
             this.source = source ?? throw new ArgumentNullException(nameof(source));
-            if (capacity < 1 || capacity > 5) throw new ArgumentOutOfRangeException(nameof(capacity));
+            if (capacity < 1 || capacity > 6) throw new ArgumentOutOfRangeException(nameof(capacity));
             receipts = new Receipt[capacity];
             for (int index = 0; index < capacity; index++) receipts[index] = new Receipt();
         }
@@ -30,7 +30,9 @@ namespace SkylinesLink.Mod.Native
         internal string? FailureCode => failureCode;
         internal string? ExceptionType => exceptionType;
         internal Entity EntityAt(int slot) => At(slot).Handle;
+        internal bool CreationAttempted(int slot) => At(slot).CreateAttempted;
         internal bool CreationReturned(int slot) => At(slot).CreateReturned;
+        internal bool DestructionReturned(int slot) => At(slot).DestroyReturned;
         // Physical absence is narrower than successful release: a structural
         // tail may throw after the entity is already proven gone. Never infer
         // absence from a missing Source or an unobserved create output.
@@ -61,7 +63,7 @@ namespace SkylinesLink.Mod.Native
         {
             get
             {
-                return StorageReleased && EntitiesDestroyed;
+                return StorageReleased && (worldOwnershipTransferred || EntitiesDestroyed);
             }
         }
 
@@ -129,14 +131,94 @@ namespace SkylinesLink.Mod.Native
 
         // The caller must first join any consumer of these entities. This
         // owner has no job, query, component, playback or scope authority.
-        internal void Release(Action? beforeSourceAccess = null)
+        internal void Release(Action? beforeSourceAccess = null) =>
+            ReleaseBySlot(beforeSourceAccess == null ? null : _ => beforeSourceAccess());
+
+        internal void ReleaseBySlot(Action<int>? beforeSlotAccess)
         {
             RequireMainThread();
             if (releaseCalled) return;
             releaseCalled = true;
             RefreshOutputs();
-            for (int index = receipts.Length - 1; index >= 0; index--) ReleaseEntity(receipts[index], beforeSourceAccess);
+            for (int index = receipts.Length - 1; index >= 0; index--)
+            {
+                int slot = index;
+                ReleaseEntity(receipts[slot], beforeSlotAccess == null ? null : () => beforeSlotAccess(slot));
+            }
             ReleaseSlots();
+        }
+
+        // The enclosing cancellation already destroyed its complete group.
+        // Retire only these exact slots after independently observing absence.
+        internal void ConfirmGroupRemoval(Action requireScope)
+        {
+            RequireMainThread();
+            Require(!releaseCalled && RefreshOutputs() && !UnknownCreation, "NATIVE_ENTITY_BATCH_GROUP_RELEASE_UNAVAILABLE");
+            releaseCalled = true;
+            requireScope();
+            Require(source.IsCreated, "NATIVE_ENTITY_BATCH_RELEASE_SOURCE_UNAVAILABLE");
+            EntityManager entities = source.EntityManager;
+            foreach (Receipt receipt in receipts)
+            {
+                Require(receipt.CreateReturned && receipt.HandleObserved && !entities.Exists(receipt.Handle),
+                    "NATIVE_ENTITY_BATCH_GROUP_ABSENCE_UNCONFIRMED");
+                requireScope();
+                receipt.ReleaseSourceChecked = receipt.ReleaseSourceAvailable = receipt.AbsentObserved = true;
+            }
+            ReleaseSlots();
+            Require(ResourcesReleased, "NATIVE_ENTITY_BATCH_GROUP_RELEASE_UNCONFIRMED");
+        }
+
+        internal void ConfirmWorldTransfer(Action requireScope)
+        {
+            RequireMainThread();
+            Require(!releaseCalled && RefreshOutputs() && !UnknownCreation, "NATIVE_ENTITY_BATCH_TRANSFER_UNAVAILABLE");
+            releaseCalled = true;
+            requireScope();
+            Require(source.IsCreated, "NATIVE_ENTITY_BATCH_TRANSFER_SOURCE_UNAVAILABLE");
+            var entities = source.EntityManager;
+            foreach (Receipt receipt in receipts)
+            {
+                Require(receipt.CreateReturned && receipt.HandleObserved && entities.Exists(receipt.Handle)
+                    && !entities.HasComponent<Game.Tools.Temp>(receipt.Handle) && !entities.HasComponent<Disabled>(receipt.Handle)
+                    && !entities.HasComponent<ObjectGenerationScope>(receipt.Handle), "NATIVE_ENTITY_BATCH_TRANSFER_UNCONFIRMED");
+                requireScope();
+            }
+            worldOwnershipTransferred = true;
+            ReleaseSlots();
+            Require(ResourcesReleased, "NATIVE_ENTITY_BATCH_TRANSFER_STORAGE_UNCONFIRMED");
+        }
+
+        internal void ConfirmMixedTransfer(Entity survivor, Action requireScope)
+        {
+            RequireMainThread();
+            Require(!releaseCalled && RefreshOutputs() && !UnknownCreation, "NATIVE_ENTITY_BATCH_TRANSFER_UNAVAILABLE");
+            releaseCalled = true;
+            requireScope();
+            Require(source.IsCreated && survivor != Entity.Null, "NATIVE_ENTITY_BATCH_TRANSFER_SOURCE_UNAVAILABLE");
+            var entities = source.EntityManager;
+            bool transferred = false;
+            foreach (Receipt receipt in receipts)
+            {
+                Require(receipt.CreateReturned && receipt.HandleObserved, "NATIVE_ENTITY_BATCH_TRANSFER_UNCONFIRMED");
+                if (receipt.Handle == survivor)
+                {
+                    Require(!transferred && entities.Exists(survivor) && !entities.HasComponent<Game.Tools.Temp>(survivor)
+                        && !entities.HasComponent<Disabled>(survivor) && !entities.HasComponent<ObjectGenerationScope>(survivor)
+                        && !entities.HasComponent<Game.Common.Deleted>(survivor), "NATIVE_ENTITY_BATCH_TRANSFER_UNCONFIRMED");
+                    transferred = true;
+                }
+                else
+                {
+                    Require(!entities.Exists(receipt.Handle), "NATIVE_ENTITY_BATCH_GROUP_ABSENCE_UNCONFIRMED");
+                    receipt.ReleaseSourceChecked = receipt.ReleaseSourceAvailable = receipt.AbsentObserved = true;
+                }
+                requireScope();
+            }
+            Require(transferred, "NATIVE_ENTITY_BATCH_TRANSFER_UNCONFIRMED");
+            worldOwnershipTransferred = true;
+            ReleaseSlots();
+            Require(ResourcesReleased, "NATIVE_ENTITY_BATCH_TRANSFER_STORAGE_UNCONFIRMED");
         }
 
         // Domain owners may inspect recovered handles before authorizing a

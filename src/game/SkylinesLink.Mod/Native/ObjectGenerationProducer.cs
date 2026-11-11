@@ -43,6 +43,10 @@ namespace SkylinesLink.Mod.Native
         private JObject? inspection;
         private JObject? emptyInspection;
         private ObjectDefinitionPayload? admittedPayload;
+        private RelocationDefinitionPayload? admittedRelocation;
+        private RelocationDefinitionEntities? admittedRelocationInput;
+        private Action? requireRelocationAtEntry;
+        private bool relocationConfirmed;
         private EntityArchetype admittedArchetype;
         private int admittedCommandUpperBound;
 
@@ -52,6 +56,7 @@ namespace SkylinesLink.Mod.Native
         internal bool DestructionReturned { get; private set; }
         internal int OnUpdateEntries { get; private set; }
         internal bool NativeWorkMayReadSource => nativeStarted && !completed;
+        internal bool GlobalRandomSeedAdvanceMayHaveOccurred => nativeStarted;
         internal int OutputCommandUpperBound => admittedCommandUpperBound;
         internal bool CompletedFor(ObjectDefinitionPayload payload) => nativeReturned && completed &&
             ReferenceEquals(admittedPayload, payload) && admittedCommandUpperBound == 64 && !DestructionStarted;
@@ -199,6 +204,95 @@ namespace SkylinesLink.Mod.Native
             Require(admission.OutputCommandUpperBound == 64, "OBJECT_GENERATION_OUTPUT_BOUND_UNQUALIFIED");
             admittedPayload = payload; admittedArchetype = admission.Archetype;
             admittedCommandUpperBound = admission.OutputCommandUpperBound;
+            RunNativeGeneration();
+        }
+
+        internal void GenerateRelocationOnce(RelocationDefinitionPayload payload, RelocationDefinitionEntities input,
+            RelocationGenerationAdmission admission)
+        {
+            RequireMainThread();
+            Require(CreationReturned && !DestructionStarted && emptyUpdateReturned && !generationRequested
+                && output != null && output.PendingCount == 0, "OBJECT_RELOCATION_GENERATION_NOT_READY");
+            RequireRelocationInputs(payload, input, admission);
+            admittedRelocation = payload;
+            admittedRelocationInput = input;
+            admittedArchetype = admission.ObjectArchetype;
+            admittedCommandUpperBound = admission.ObjectCommandUpperBound;
+
+            RunNativeGeneration(() => RequireRelocationInputs(payload, input, admission));
+            RequireRelocationInputs(payload, input, admission);
+            relocationConfirmed = true;
+        }
+
+        private void RequireRelocationInputs(RelocationDefinitionPayload payload, RelocationDefinitionEntities input,
+            RelocationGenerationAdmission admission)
+        {
+            input.RequireCurrent(payload, actor);
+            Require(ReferenceEquals(payload.Source, World) && admission.Matches(World, payload)
+                && input.CreateReturned && admission.ObjectCommandUpperBound == 64 && admission.ObjectArchetype.Valid,
+                "OBJECT_RELOCATION_ADMISSION_CHANGED");
+            var bound = fields!;
+            Require(tools != null && tools.actionMode == GameMode.Game
+                && ReferenceEquals(World.GetExistingSystemManaged<ToolSystem>(), tools)
+                && ReferenceEquals(bound.Tool.GetValue(this), tools)
+                && bound.Simulation.GetValue(this) is SimulationSystem simulation
+                && ReferenceEquals(World.GetExistingSystemManaged<SimulationSystem>(), simulation)
+                && bound.Search.GetValue(this) is Game.Net.SearchSystem search
+                && ReferenceEquals(World.GetExistingSystemManaged<Game.Net.SearchSystem>(), search)
+                && output != null && ReferenceEquals(output.World, World)
+                && ReferenceEquals(World.GetExistingSystemManaged<ObjectGenerationBarrier>(), output)
+                && ReferenceEquals(bound.Barrier.GetValue(this), output)
+                && bound.QueriesMatch(this, definitions, deleted, economy)
+                && definitions.HasFilter() && deleted.HasFilter() && HasRelocationMembers(definitions, input)
+                && deleted.IsEmptyIgnoreFilter && deleted.CalculateEntityCount() == 0 && economy.CalculateEntityCount() == 1,
+                "OBJECT_RELOCATION_BINDINGS_OR_QUERY_CHANGED");
+
+            Entity prefab = payload.Original.Prefab;
+            Require(EntityManager.HasComponent<ObjectData>(prefab)
+                && EntityManager.GetComponentData<ObjectData>(prefab).m_Archetype.Equals(admission.ObjectArchetype),
+                "OBJECT_RELOCATION_ARCHETYPE_CHANGED");
+            RequireEmptyRelocationMap();
+        }
+
+        internal static bool HasRelocationMembers(EntityQuery query, RelocationDefinitionEntities input)
+        {
+            if (query.CalculateEntityCount() != 3) return false;
+            using var values = query.ToEntityArray(Allocator.Temp);
+            if (values.Length != 3) return false;
+            int seen = 0;
+            foreach (Entity entity in values)
+            {
+                if (entity == input.Root) seen |= 1;
+                else if (entity == input.OldNode) seen |= 2;
+                else if (entity == input.NewNode) seen |= 4;
+                else return false;
+            }
+            return seen == 7;
+        }
+
+        internal void RequireRelocationOwnerMapEmpty(RelocationDefinitionPayload payload, RelocationDefinitionEntities input)
+        {
+            RequireMainThread();
+            Require(CompletedRelocationFor(payload) && ReferenceEquals(admittedRelocationInput, input),
+                "OBJECT_RELOCATION_OWNER_MAP_BATCH_MISMATCH");
+            RequireEmptyRelocationMap();
+        }
+
+        private void RequireEmptyRelocationMap()
+        {
+            var nativeMap = GetReusedOwnerMap(out JobHandle writer);
+            writer.Complete();
+            Require(OwnerMapCreated && nativeMap.IsCreated && nativeMap.Equals(ownerMap) && nativeMap.Count == 0,
+                "OBJECT_RELOCATION_OWNER_MAP_NOT_EMPTY_OR_CHANGED");
+        }
+
+        private bool CompletedRelocationFor(RelocationDefinitionPayload payload) => relocationConfirmed && nativeReturned
+            && completed && !DestructionStarted && ReferenceEquals(admittedRelocation, payload);
+
+        private void RunNativeGeneration(Action? requireAtEntry = null)
+        {
+            var pendingOutput = output ?? throw Failure("OBJECT_GENERATION_NOT_CREATED");
+            requireRelocationAtEntry = requireAtEntry;
             generationRequested = true; armed = true; Enabled = true;
             try
             {
@@ -208,7 +302,7 @@ namespace SkylinesLink.Mod.Native
                 Require(pendingOutput.PendingCount == 1, "OBJECT_GENERATION_BUFFER_NOT_CONFIRMED");
                 CaptureInspection();
             }
-            finally { armed = false; Enabled = false; }
+            finally { armed = false; Enabled = false; requireRelocationAtEntry = null; }
         }
 
         private void RequirePrepared(Entity entity, CreationDefinition expected)
@@ -223,6 +317,7 @@ namespace SkylinesLink.Mod.Native
         {
             OnUpdateEntries++;
             Require(armed && !nativeStarted && tools!.actionMode == GameMode.Game, "OBJECT_GENERATION_NOT_ARMED");
+            requireRelocationAtEntry?.Invoke();
             nativeStarted = true;
             base.OnUpdate();
             nativeReturned = true;
@@ -235,6 +330,13 @@ namespace SkylinesLink.Mod.Native
             Require(CompletedFor(payload) && pendingOutput.PendingCount == 1,
                 "OBJECT_GENERATION_INSPECTION_NOT_READY");
             return pendingOutput.BorrowSingle();
+        }
+
+        internal EntityCommandBuffer BorrowRelocationCommands(RelocationDefinitionPayload payload)
+        {
+            RequireMainThread();
+            Require(CompletedRelocationFor(payload), "OBJECT_RELOCATION_INSPECTION_NOT_READY");
+            return output!.BorrowSingle();
         }
 
         private void RequireEmpty()
@@ -325,9 +427,11 @@ namespace SkylinesLink.Mod.Native
             ["outputCommandUpperBound"] = admittedCommandUpperBound,
             ["nativeTransientAllocationMayHaveStarted"] = nativeStarted,
             ["nativeTransientCleanupScheduled"] = nativeReturned, ["nativeTransientReclamationObserved"] = false,
-            ["globalRandomSeedAdvanceMayHaveOccurred"] = nativeStarted,
+            ["globalRandomSeedAdvanceMayHaveOccurred"] = GlobalRandomSeedAdvanceMayHaveOccurred,
             ["playbackCalled"] = false,
-            ["scope"] = "Owned query/map and qualified new-input native generation without Playback. Internal scheduled deallocator execution is not directly observed; no placement, fees or construction acceptance."
+            ["scope"] = admittedRelocation == null
+                ? "Owned query/map and qualified new-input native generation without Playback. Internal scheduled deallocator execution is not directly observed; no placement, fees or construction acceptance."
+                : "Owned relocation definition generation; native commands are unplayed and the original object is not moved."
         };
 
         private static bool Contains(EntityQuery[] queries, EntityQuery expected)

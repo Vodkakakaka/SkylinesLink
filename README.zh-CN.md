@@ -8,7 +8,7 @@ SkylinesLink 是面向**《城市：天际线 II》**的独立 Model Context Pro
 
 核心是把有用的游戏信息、正常游玩操作、规划与可核结果链接成统一框架。公共AI指引将随产品按任务提供，玩家偏好来自当前任务，不写进默认规则。这些是产品交付目标，不代表相应能力已经实现。
 
-**下载入口：[GitHub Releases](https://github.com/Vodkakakaka/SkylinesLink/releases)。目前尚无经过游戏验收的玩家发行版。** 后续玩家发行将提供完整安装资产、版本号、英文和简体中文发行说明，以及校验值。GitHub 自动生成的 **Source code** 归档是源码快照，不是玩家安装包。
+**开发者预览版：[GitHub Releases](https://github.com/Vodkakakaka/SkylinesLink/releases)。** 源码下载附准确提交清单、校验值及验证摘要。源码结构、构建命令和已知限制见[预览版说明](docs/development/preview.md)。目前尚无经过游戏验收的玩家安装发行版，源码归档是贡献者下载内容，不是玩家安装包。
 
 ![SkylinesLink 原创城市互联概念插画，非游戏截图](assets/branding/city-link-concept.png)
 
@@ -47,7 +47,7 @@ Task停止请求使用Control权限；完整决定读取使用Read权限，显�
 
 ## 开发入口
 
-使用 Windows 及[工具链说明](docs/development/toolchain.md)中固定版本的 Node.js、pnpm 和 .NET SDK。TypeScript 是项目依赖，不需全局安装。包管理以 pnpm 为主、npm 备用；工具优先采用最新 LTS/稳定版，并固定版本保证可复现。
+使用 Windows 及达到[工具链说明](docs/development/toolchain.md)最低版本的稳定 Node.js、pnpm 和 .NET SDK。允许更高稳定版本的开发工具，源码依赖仍锁定。TypeScript 是项目依赖，不需全局安装。包管理以 pnpm 为主、npm 备用。
 
 ```powershell
 pnpm install --frozen-lockfile

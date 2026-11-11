@@ -31,6 +31,9 @@ namespace SkylinesLink.Mod.Native
         private ObjectGenerationProducer? objects;
         private Bindings? fields;
         private ObjectDefinitionPayload? admittedPayload;
+        private RelocationDefinitionPayload? admittedRelocation;
+        private Action? requireRelocationAtEntry;
+        private bool relocationConfirmed;
         private EntityArchetype admittedArchetype;
         private int commandUpperBound;
 
@@ -160,6 +163,62 @@ namespace SkylinesLink.Mod.Native
             // source. No yield, provider callback, or tree writer is invoked.
             admittedPayload = payload; admittedArchetype = archetype;
             commandUpperBound = 14 + (payload.CourseCreation.m_SubPrefab != Entity.Null ? 1 : 0);
+            RunNativeGeneration();
+        }
+
+        internal void GenerateRelocationOnce(RelocationDefinitionPayload payload, RelocationDefinitionEntities input,
+            RelocationGenerationAdmission admission)
+        {
+            RequireMainThread();
+            Require(CreationReturned && !DestructionStarted && emptyUpdateReturned && !requested
+                && output != null && output.PendingCount == 0, "NODE_RELOCATION_GENERATION_NOT_READY");
+            RequireRelocationInputs(payload, input, admission);
+            admittedRelocation = payload;
+            admittedArchetype = admission.NodeArchetype;
+            commandUpperBound = admission.NodeCommandUpperBound;
+
+            RunNativeGeneration(() => RequireRelocationInputs(payload, input, admission));
+            RequireRelocationInputs(payload, input, admission);
+            relocationConfirmed = true;
+        }
+
+        private void RequireRelocationInputs(RelocationDefinitionPayload payload, RelocationDefinitionEntities input,
+            RelocationGenerationAdmission admission)
+        {
+            input.RequireCurrent(payload, actor);
+            Require(ReferenceEquals(payload.Source, World) && admission.Matches(World, payload)
+                && input.CreateReturned && admission.NodeCommandUpperBound == 48 && admission.NodeArchetype.Valid,
+                "NODE_RELOCATION_ADMISSION_CHANGED");
+            ObserveBindings();
+            Require(tools != null && tools.actionMode == GameMode.Game
+                && ReferenceEquals(World.GetExistingSystemManaged<ToolSystem>(), tools)
+                && search != null && ReferenceEquals(World.GetExistingSystemManaged<Game.Net.SearchSystem>(), search)
+                && terrain != null && ReferenceEquals(World.GetExistingSystemManaged<TerrainSystem>(), terrain)
+                && output != null && ReferenceEquals(output.World, World)
+                && ReferenceEquals(World.GetExistingSystemManaged<NodeGenerationBarrier>(), output)
+                && objects != null && ReferenceEquals(objects.World, World)
+                && ReferenceEquals(World.GetExistingSystemManaged<ObjectGenerationProducer>(), objects)
+                && ObjectGenerationProducer.HasRelocationMembers(definitions, input)
+                && deleted.IsEmptyIgnoreFilter && deletedCount == 0, "NODE_RELOCATION_BINDINGS_OR_QUERY_CHANGED");
+
+            Entity prefab = payload.Original.NodePrefab;
+            Require(EntityManager.HasComponent<NetData>(prefab)
+                && EntityManager.GetComponentData<NetData>(prefab).m_NodeArchetype.Equals(admission.NodeArchetype),
+                "NODE_RELOCATION_ARCHETYPE_CHANGED");
+            nodeTypeCount = admission.NodeArchetype.TypesCount;
+            Require(nodeTypeCount > 0 && nodeTypeCount <= 256, "NODE_RELOCATION_NODE_ARCHETYPE_BUDGET");
+
+            // The original object producer remains the map owner. Only the
+            // joined, exact same payload and its three definitions qualify.
+            objects!.RequireRelocationOwnerMapEmpty(payload, input);
+            mapCount = 0;
+            ownerKeyAbsent = true;
+        }
+
+        private void RunNativeGeneration(Action? requireAtEntry = null)
+        {
+            var barrier = output ?? throw Failure("NODE_GENERATION_NOT_CREATED");
+            requireRelocationAtEntry = requireAtEntry;
             requested = true; armed = true; Enabled = true;
             try
             {
@@ -169,7 +228,7 @@ namespace SkylinesLink.Mod.Native
                 Require(barrier.PendingCount == 1, "NODE_GENERATION_BUFFER_NOT_CONFIRMED");
                 ObserveBindings();
             }
-            finally { armed = false; Enabled = false; }
+            finally { armed = false; Enabled = false; requireRelocationAtEntry = null; }
         }
 
         private void RequirePrepared(Entity entity, CreationDefinition expected)
@@ -192,6 +251,7 @@ namespace SkylinesLink.Mod.Native
         {
             OnUpdateEntries++;
             Require(armed && !nativeStarted && tools!.actionMode == GameMode.Game, "NODE_GENERATION_NOT_ARMED");
+            requireRelocationAtEntry?.Invoke();
             nativeStarted = true;
             base.OnUpdate();
             nativeReturned = true;
@@ -210,6 +270,14 @@ namespace SkylinesLink.Mod.Native
             var barrier = output ?? throw Failure("NODE_GENERATION_INSPECTION_NOT_READY");
             Require(CompletedFor(payload) && barrier.PendingCount == 1, "NODE_GENERATION_INSPECTION_NOT_READY");
             return barrier.BorrowSingle();
+        }
+
+        internal EntityCommandBuffer BorrowRelocationCommands(RelocationDefinitionPayload payload)
+        {
+            RequireMainThread();
+            Require(relocationConfirmed && nativeReturned && completed && !DestructionStarted
+                && ReferenceEquals(admittedRelocation, payload), "NODE_RELOCATION_INSPECTION_NOT_READY");
+            return output!.BorrowSingle();
         }
 
         protected override void OnDestroy()
@@ -253,7 +321,9 @@ namespace SkylinesLink.Mod.Native
             ["nativeWorkMayReadSource"] = NativeWorkMayReadSource, ["joinFailed"] = joinFailed,
             ["outputCommandUpperBound"] = commandUpperBound, ["nativeTransientCleanupScheduled"] = nativeReturned,
             ["nativeTransientReclamationObserved"] = false, ["playbackCalled"] = false,
-            ["scope"] = "Unplayed single-point node commands; external object map remains owned by its producer."
+            ["scope"] = admittedRelocation == null
+                ? "Unplayed single-point node commands; external object map remains owned by its producer."
+                : "Unplayed old and new node commands; the original node is unchanged and the paired object producer owns the map."
         };
 
         private static bool Contains(EntityQuery[] values, EntityQuery expected)

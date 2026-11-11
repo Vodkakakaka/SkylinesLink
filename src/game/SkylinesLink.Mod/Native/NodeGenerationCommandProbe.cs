@@ -30,9 +30,7 @@ namespace SkylinesLink.Mod.Native
                 || !expectedArchetype.Valid || expectedArchetype.TypesCount < 1 || expectedArchetype.TypesCount > 256
                 || !Detached(payload.CourseCreation) || !Detached(payload.RootCreation)
                 || payload.RootCreation.m_SubPrefab != Entity.Null
-                || payload.Course.m_StartPosition.m_Entity != Entity.Null || payload.Course.m_EndPosition.m_Entity != Entity.Null
-                || !payload.Course.m_StartPosition.m_Position.Equals(payload.Course.m_EndPosition.m_Position)
-                || payload.Course.m_Length != 0f || !Finite(payload.Course.m_EndPosition.m_Position)
+                || !payload.IsSinglePointCourse
                 || !Finite(payload.Course.m_EndPosition.m_Rotation.value) || !Finite(payload.Course.m_EndPosition.m_Elevation)
                 || payload.CourseOwner.m_Prefab != payload.RootCreation.m_Prefab
                 || !payload.CourseOwner.m_Position.Equals(payload.RootObject.m_Position)

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using Colossal.Core;
 using Newtonsoft.Json.Linq;
 using Unity.Entities;
+using Owner = Game.Common.Owner;
 
 namespace SkylinesLink.Mod.Native
 {
@@ -33,6 +34,18 @@ namespace SkylinesLink.Mod.Native
         private CompositionSelectionReceipt? compositionReceipt;
         private PreparedCompositionDefinition? compositionCandidate;
         private CompositionInitializationPreflight? compositionInitializationInputs;
+        private CompositionPublication? compositionPublication;
+        private CompositionInitializationExpectation? compositionExpectation;
+        private NodeGeometryProducer? nodeGeometryProducer;
+        private NodeCostProducer? nodeCostProducer;
+        private PreviewLaneExecution? previewLane;
+        private PreviewRoadExecution? previewRoad;
+        private PreviewValidationExecution? previewValidation;
+        private PreviewCancellationExecution? previewCancellation;
+        private PreviewCommitExecution? previewCommitRehearsal, previewCommit;
+        private bool WorldOwnershipTransferred => previewCommit?.WorldOwnershipConfirmed == true;
+        internal PreviewCommitExecution? Commit => previewCommit;
+        private JObject? previewFollowups;
         private NativeSystemRegistration<ObjectGenerationBarrier>? barrierRegistration;
         private NativeSystemRegistration<ObjectGenerationProducer>? producerRegistration;
         private NativeSystemRegistration<NodeGenerationBarrier>? nodeBarrierRegistration;
@@ -48,7 +61,9 @@ namespace SkylinesLink.Mod.Native
         private NativeSystemRegistration<SubNetReferencesProducer>? subNetReferencesRegistration;
         private NativeSystemRegistration<CompositionSelectionProducer>? compositionProducerRegistration;
         private NativeSystemRegistration<CompositionSelectionBarrier>? compositionBarrierRegistration;
-        private readonly List<ComponentSystemBase> appended = new List<ComponentSystemBase>(15);
+        private NativeSystemRegistration<NodeGeometryProducer>? nodeGeometryRegistration;
+        private NativeSystemRegistration<NodeCostProducer>? nodeCostRegistration;
+        private readonly List<ComponentSystemBase> appended = new List<ComponentSystemBase>(16);
         private DefinitionProducerPatchProbe patch = new DefinitionProducerPatchProbe();
         private JObject? producerFacts;
         private JObject? commands;
@@ -85,10 +100,14 @@ namespace SkylinesLink.Mod.Native
         private bool nodeOwnerConfirmationAttempted, subNetParentReleaseHeld;
         private string? subNetReferencesReleaseFailure;
         private bool compositionProducerReleased = true, compositionBarrierReleased = true;
+        private bool compositionProducerReleaseCalled, compositionBarrierReleaseCalled;
+        private bool nodeGeometryReleased = true, nodeGeometryReleaseCalled;
+        private bool nodeCostReleased = true;
         private bool compositionEmptyPassed, compositionObserved, compositionConfirmationAttempted;
         private bool subObjectDiscardAttempted, subObjectUnlinkAttempted;
         private bool nodeMarkerExpiryAttempted, nodeDiscardAttempted, subNetUnlinkAttempted;
         private string? graphRetirementFailure;
+        internal int LivePreviewGraphChecks { get; private set; }
         private string? compositionProducerReleaseFailure, compositionBarrierReleaseFailure;
         private string? subObjectReferencesReleaseFailure;
         private string? subObjectProducerReleaseFailure, subObjectBarrierReleaseFailure;
@@ -99,19 +118,31 @@ namespace SkylinesLink.Mod.Native
         private enum Phase { RegisterSystems, RootGeneration, NodeGeneration, RootNodeMaterialization,
             BuildingInitialization, NodeOwnerResolution, NodeReferences, SubObjectSurvey,
             SubObjectGeneration, SubObjectMaterialization, SubObjectReferences,
-            PostGenerationApplicability, CompositionSelectionPreflight, CompositionSelection, CompositionInitializationPreflight, CompositionDefinitionPreparation,
-            SubNetLink, NodeModificationCleanup, SubNetUnlink, Release }
+            PostGenerationApplicability, CompositionSelectionPreflight, CompositionSelection, CompositionInitializationPreflight,
+            CompositionDefinitionPreparation, CompositionPublication,
+            SubNetLink, NodeGeometry, PreviewFollowups, NodeModificationCleanup, SubNetUnlink, Release }
         private readonly long[] phaseTicks = new long[(int)Phase.Release + 1];
         private uint enteredPhases;
         private Phase? currentPhase;
         private long phaseStarted;
 
         internal bool Finished => finished;
+        internal string? FailureCode => failureCode;
+        internal bool StructuralStateUnknown => compositionPublication?.EnteredPlayback == true && !compositionPublication.PlaybackReturned
+            || previewCancellation?.StructuralStateUnknown == true || previewCommit?.StructuralStateUnknown == true;
+        internal Entity PublishedComposition => compositionPublication?.PublishedEntity ?? Entity.Null;
+        internal CompositionSelectionReceipt? SelectionReceipt => compositionReceipt;
+        internal CompositionInitializationExpectation? InitializationExpectation => compositionExpectation;
+        internal CompositionInitializationPreflight? InitializationInputs => compositionInitializationInputs;
         internal bool NativeWorkMayReadSource => (producer?.NativeWorkMayReadSource ?? false)
             || (nodeProducer?.NativeWorkMayReadSource ?? false) || (resolver?.NativeWorkMayReadSource ?? false)
             || (initializer?.NativeWorkMayReadSource ?? false) || (nodeReferences?.NativeWorkMayReadSource ?? false)
             || (subObjectProducer?.NativeWorkMayReadSource ?? false) || (subObjectReferences?.NativeWorkMayReadSource ?? false)
-            || (subNetReferences?.NativeWorkMayReadSource ?? false) || (compositionProducer?.NativeWorkMayReadSource ?? false);
+            || (subNetReferences?.NativeWorkMayReadSource ?? false) || (compositionProducer?.NativeWorkMayReadSource ?? false)
+            || (nodeGeometryProducer?.NativeWorkMayReadSource ?? false) || (nodeCostProducer?.NativeWorkMayReadSource ?? false)
+            || (previewLane?.NativeWorkMayReadSource ?? false) || (previewRoad?.NativeWorkMayReadSource ?? false)
+            || (previewValidation?.NativeWorkMayReadSource ?? false) || (previewCancellation?.NativeWorkMayReadSource ?? false)
+            || (previewCommit?.NativeWorkMayReadSource ?? false) || (previewCommitRehearsal?.NativeWorkMayReadSource ?? false);
         internal bool ResourcesReleased => producerReleased && barrierReleased && !NativeWorkMayReadSource
             && (definitions?.ResourcesReleased ?? true) && (admission?.ResourcesReleased ?? true)
             && (generatedEntity?.ResourcesReleased ?? true) && nodeProducerReleased && nodeBarrierReleased
@@ -122,21 +153,33 @@ namespace SkylinesLink.Mod.Native
             && !subObjectParentReleaseHeld && subObjectReferencesReleased && subNetReferencesReleased
             && !subNetParentReleaseHeld && (postApplicability?.ResourcesReleased ?? true)
             && compositionProducerReleased && compositionBarrierReleased && (compositionInputs?.ResourcesReleased ?? true)
-            && (compositionCandidate?.ResourcesReleased ?? true) && (compositionInitializationInputs?.ResourcesReleased ?? true);
+            && (compositionPublication?.EnteredPlayback == true
+                ? compositionPublication.LocalOwnershipReleased : compositionCandidate?.ResourcesReleased ?? true)
+            && (compositionPublication?.CommandStorageReleased ?? true)
+            && (compositionInitializationInputs?.ResourcesReleased ?? true) && nodeGeometryReleased && nodeCostReleased
+            && (previewLane?.ResourcesReleased ?? true) && (previewRoad?.ResourcesReleased ?? true)
+            && (previewValidation?.ResourcesReleased ?? true) && (previewCancellation?.ResourcesReleased ?? true)
+            && (previewCommit?.ResourcesReleased ?? true) && (previewCommitRehearsal?.ResourcesReleased ?? true);
         internal bool ChecksPassed => finished && emptyUpdatePassed && generationPassed && patchRechecked && patch.Qualified
             && nodeGenerationPassed && nodeEmptyPassed && nodePatch.Qualified && resolverEmptyPassed && resolutionPassed && resolutionPatch.Qualified
             && initializerEmptyPassed && initializationPassed && initializationPatch.Qualified
             && nodeReferencesEmptyPassed && nodeReferencesPassed && nodeReferencesPatch.Qualified
             && subObjectEmptyPassed && subObjectGenerationPassed && subObjectPatch.Qualified && subObjectMaterializationPassed
-            && subObjectReferencesEmptyPassed && subObjectReferencesPassed && subObjectReferencesPatch.Qualified
-            && subNetEmptyPassed && subNetPassed && subNetReferencesPatch.Qualified
-            && postApplicability?.ChecksPassed == true && generatedNode?.MarkerExpiryPassed == true
+            && subObjectReferencesEmptyPassed && (subObjectReferencesPassed || WorldOwnershipTransferred && subObjectReferences?.LinkPassed == true)
+            && subObjectReferencesPatch.Qualified
+            && subNetEmptyPassed && subNetReferencesPatch.Qualified
+            && postApplicability?.ChecksPassed == true
             && compositionEmptyPassed && compositionObserved && compositionPatch.Qualified && generatedNode?.CompositionConfirmed == true
-            && (compositionCandidate == null || compositionCandidate.ChecksPassed)
+            && (compositionCandidate == null || compositionPublication?.LocalOwnershipReleased == true)
             && (compositionInitializationInputs == null || compositionInitializationInputs.Passed)
+            && (nodeGeometryProducer == null ? subNetPassed && generatedNode?.MarkerExpiryPassed == true : (nodeGeometryProducer.GeometryPassed
+                && previewLane?.Passed == true && previewRoad?.Passed == true
+                && nodeCostProducer?.CostPassed == true && previewFollowups?["costs"] is JObject
+                && previewValidation?.Passed == true && (previewCommit != null ? previewCommit.HandoffPassed
+                    : previewCancellation?.Passed == true && previewCommitRehearsal?.RehearsalPassed == true)))
             && ResourcesReleased && protection?.Passed == true && failureCode == null;
 
-        internal void RunOnce(World source, ObjectDefinitionPayload payload, Action requireCurrentScope)
+        internal void RunOnce(World source, ObjectDefinitionPayload payload, Action requireCurrentScope, Entity expectedComposition, bool submit = false)
         {
             if (ran) throw new InvalidOperationException("OBJECT_GENERATION_ALREADY_ATTEMPTED");
             ran = true;
@@ -295,6 +338,20 @@ namespace SkylinesLink.Mod.Native
                 requireCurrentScope(); Check(compositionProducer.CreationReturned, "COMPOSITION_PRODUCER_CREATE_UNCONFIRMED");
                 compositionProducer.ProbeEmptyUpdate(requireCurrentScope); compositionEmptyPassed = true;
                 ObserveProtection();
+                if (expectedComposition != Entity.Null)
+                {
+                    Check(!protection.Contains<NodeGeometryProducer>(), "NODE_GEOMETRY_OWNER_ALREADY_PRESENT");
+                    nodeGeometryProducer = new NodeGeometryProducer();
+                    nodeGeometryReleased = false;
+                    nodeGeometryRegistration = new NativeSystemRegistration<NodeGeometryProducer>(source, nodeGeometryProducer);
+                    nodeGeometryProducer.Configure(1);
+                    nodeGeometryRegistration.Add();
+                    appended.Add(nodeGeometryProducer);
+                    requireCurrentScope();
+                    Check(nodeGeometryProducer.CreationReturned, "NODE_GEOMETRY_CREATE_UNCONFIRMED");
+                    nodeGeometryProducer.ProbeEmptyUpdate(requireCurrentScope);
+                    ObserveProtection();
+                }
 
                 BeginPhase(Phase.RootGeneration);
                 definitions = new ObjectDefinitionEntities(source, payload, 1);
@@ -411,6 +468,11 @@ namespace SkylinesLink.Mod.Native
                 Check(compositionProducer.ObservationPassed && !NativeWorkMayReadSource, "COMPOSITION_OBSERVATION_UNQUALIFIED");
                 compositionReceipt = compositionProducer.Receipt;
                 Check(compositionReceipt != null, "COMPOSITION_RECEIPT_UNAVAILABLE"); compositionObserved = true;
+                if (expectedComposition == Entity.Null)
+                    Check(compositionProducer.NeedsPublication, "COMPOSITION_INITIAL_CACHE_MISS_REQUIRED");
+                else
+                    Check(compositionReceipt!.ObservedSelection && compositionReceipt.After.m_Composition == expectedComposition,
+                        "COMPOSITION_REUSE_ENTITY_MISMATCH");
                 if (compositionProducer.NeedsPublication)
                 {
                     Check(compositionProducer.CreationDefinition != null, "COMPOSITION_DEFINITION_UNAVAILABLE");
@@ -419,43 +481,76 @@ namespace SkylinesLink.Mod.Native
                         compositionProducer.CreationDefinition!, requireCurrentScope);
                     compositionInitializationInputs.RunOnce();
                     Check(compositionInitializationInputs.Passed, "COMPOSITION_INITIALIZATION_INPUTS_UNQUALIFIED");
+                    compositionExpectation = compositionProducer.CaptureInitializationExpectation(compositionInitializationInputs);
                     BeginPhase(Phase.CompositionDefinitionPreparation);
                     compositionCandidate = new PreparedCompositionDefinition(compositionInputs,
                         compositionProducer.CreationDefinition!, requireCurrentScope);
                     compositionCandidate.PrepareOnce();
                     compositionInitializationInputs.RequireUnchanged();
-                    compositionCandidate.ReleaseUnpublished();
-                    Check(compositionCandidate.ChecksPassed, "COMPOSITION_DEFINITION_PREPARATION_UNQUALIFIED");
-                    compositionInitializationInputs.ReleaseSnapshots();
+                    BeginPhase(Phase.CompositionPublication);
+                    compositionPublication = new CompositionPublication(compositionInputs,
+                        compositionProducer.CreationDefinition!, requireCurrentScope);
+                    compositionPublication.PublishOnce(compositionCandidate);
+                    Check(compositionPublication.LocalOwnershipReleased && PublishedComposition != Entity.Null,
+                        "COMPOSITION_PUBLICATION_UNQUALIFIED");
                 }
-                RetireOwnedGraph(requireCurrentScope);
-                Check(generatedSubObjects.AbsenceConfirmed && generatedSubObjects.ResourcesReleased,
-                    "SUBNET_CHILD_ABSENCE_UNCONFIRMED");
                 BeginPhase(Phase.CompositionSelection);
                 compositionConfirmationAttempted = true;
-                generatedNode.ConfirmNativeComposition(compositionReceipt!);
+                generatedNode.ConfirmNativeComposition(compositionReceipt!, subObjectReferences);
                 Check(generatedNode.CompositionConfirmed, "COMPOSITION_NODE_CONFIRMATION_UNQUALIFIED");
                 BeginPhase(Phase.SubNetLink);
                 subNetReferencesPatch = SubNetReferencesPatchProbe.Observe();
                 Check(subNetReferencesPatch.Qualified, subNetReferencesPatch.Reason);
                 subNetReferences.LinkOnce(requireCurrentScope);
                 Check(subNetReferences.LinkPassed && !NativeWorkMayReadSource, "SUBNET_REFERENCES_LINK_UNCONFIRMED");
-                RetireOwnedGraph(requireCurrentScope);
-                Check(subNetPassed, "SUBNET_REFERENCES_UNLINK_UNCONFIRMED");
+                RequireLivePreviewGraph(requireCurrentScope);
+                if (nodeGeometryProducer != null)
+                {
+                    BeginPhase(Phase.NodeGeometry);
+                    nodeGeometryProducer.GenerateOnce(compositionReceipt!, generatedEntity.Entity, requireCurrentScope);
+                    Check(nodeGeometryProducer.GeometryPassed && !NativeWorkMayReadSource, "NODE_GEOMETRY_OUTPUT_UNQUALIFIED");
+                    RequireLivePreviewGraph(requireCurrentScope);
+                    BeginPhase(Phase.PreviewFollowups);
+                    ObservePreviewFollowups(source, requireCurrentScope, submit);
+                }
+                else
+                {
+                    RetireOwnedGraph(requireCurrentScope);
+                    Check(subNetPassed, "SUBNET_REFERENCES_UNLINK_UNCONFIRMED");
+                }
                 generationPassed = true;
                 requireCurrentScope();
                 ObserveProtection();
             }
-            catch (Exception error) { Fail(error is CheckFailure check ? check.Code : "OBJECT_GENERATION_LIFECYCLE_FAILED"); exceptionType = ShortType(error); }
+            catch (Exception error)
+            {
+                Fail(error switch {
+                    CheckFailure check => check.Code,
+                    PreviewLaneExecution.Rejection lane => lane.Code,
+                    PreviewRoadExecution.Rejection road => road.Code,
+                    PreviewValidationExecution.Rejection validation => validation.Code,
+                    PreviewCancellationExecution.Rejection cancellation => cancellation.Code,
+                    PreviewCommitExecution.Rejection commit => commit.Code,
+                    CompositionPublication.Rejection publication => publication.Code,
+                    CompositionInitializationExpectation.Rejection initialization => initialization.Code,
+                    _ => "OBJECT_GENERATION_LIFECYCLE_FAILED"
+                });
+                exceptionType = ShortType(error);
+            }
             finally
             {
                 BeginPhase(Phase.Release);
                 Observe();
-                if (!NativeWorkMayReadSource)
-                {
-                    compositionCandidate?.ReleaseUnpublished();
+                if (compositionPublication?.LocalOwnershipReleased != true)
                     compositionInitializationInputs?.ReleaseSnapshots();
-                    try { RetireOwnedGraph(requireCurrentScope); }
+                if (!NativeWorkMayReadSource && !StructuralStateUnknown)
+                {
+                    if (compositionPublication?.EnteredPlayback != true) compositionCandidate?.ReleaseUnpublished();
+                    try
+                    {
+                        if (previewCancellation?.GroupAbsent != true && !WorldOwnershipTransferred)
+                            RetireOwnedGraph(requireCurrentScope);
+                    }
                     catch (Exception error)
                     {
                         graphRetirementFailure = error is CheckFailure check ? check.Code : "OBJECT_GENERATION_GRAPH_RETIREMENT_FAILED";
@@ -467,21 +562,21 @@ namespace SkylinesLink.Mod.Native
                 // must not skip the barrier when no native reader was started.
                 // Retirement may itself have started an unjoined native job;
                 // read the live flags again before freeing any of its inputs.
-                if (!NativeWorkMayReadSource)
+                if (!NativeWorkMayReadSource && !StructuralStateUnknown)
                 {
-                    ReleaseCompositionProducer(); ReleaseCompositionBarrier();
+                    ReleaseNodeCost(); ReleaseNodeGeometry(); ReleaseCompositionProducer(); ReleaseCompositionBarrier();
                     ReleaseSubObjectProducer(); ReleaseSubObjectBarrier(); ReleaseNodeReferences(); ReleaseResolver(); ReleaseResolutionBarrier();
                     ReleaseInitializer(); ReleaseInitializationBarrier(); ReleaseGeneratedSubObjects();
                     ReleaseSubObjectReferences();
-                    subObjectParentReleaseHeld = generatedSubObjects != null && !generatedSubObjects.AbsenceConfirmed;
+                    subObjectParentReleaseHeld = !WorldOwnershipTransferred && generatedSubObjects != null && !generatedSubObjects.AbsenceConfirmed;
                     if (!subObjectParentReleaseHeld) ReleaseGeneratedNode();
                     // Preserve the fixture's parent while any exact node
                     // output remains unknown, including failures before bind
                     // or native owner confirmation has completed.
-                    rootReleaseHeld = subObjectParentReleaseHeld || generatedNode != null && !generatedNode.AbsenceConfirmed;
+                    rootReleaseHeld = !WorldOwnershipTransferred && (subObjectParentReleaseHeld || generatedNode != null && !generatedNode.AbsenceConfirmed);
                     if (!rootReleaseHeld) ReleaseGeneratedEntity();
-                    subNetParentReleaseHeld = generatedNode != null && !generatedNode.AbsenceConfirmed
-                        || generatedEntity != null && !generatedEntity.AbsenceConfirmed;
+                    subNetParentReleaseHeld = !WorldOwnershipTransferred && (generatedNode != null && !generatedNode.AbsenceConfirmed
+                        || generatedEntity != null && !generatedEntity.AbsenceConfirmed);
                     if (!subNetParentReleaseHeld) ReleaseSubNetReferences();
                     ReleaseNodeProducer(); ReleaseNodeBarrier(); ReleaseDefinitions(); ReleaseProducer(); ReleaseBarrier();
                 }
@@ -493,7 +588,7 @@ namespace SkylinesLink.Mod.Native
                     subNetParentReleaseHeld = generatedNode != null && !generatedNode.AbsenceConfirmed
                         || generatedEntity != null && !generatedEntity.AbsenceConfirmed;
                 }
-                try { protection?.Observe(); }
+                try { if (!StructuralStateUnknown) protection?.Observe(); }
                 catch (Exception error) { Fail("OBJECT_GENERATION_PROTECTION_UNAVAILABLE"); exceptionType ??= ShortType(error); }
                 if (!ResourcesReleased) Fail("OBJECT_GENERATION_RELEASE_UNCONFIRMED");
                 if (protection != null && !protection.Passed) Fail("OBJECT_GENERATION_PROTECTION_CHANGED");
@@ -514,6 +609,179 @@ namespace SkylinesLink.Mod.Native
         {
             protection!.Observe(appended.ToArray());
             Check(protection.Passed, "OBJECT_GENERATION_PROTECTION_CHANGED");
+        }
+
+        private void RequireLivePreviewGraph(Action requireCurrentScope)
+        {
+            GuardLivePreviewGraph(requireCurrentScope);
+            LivePreviewGraphChecks++;
+        }
+
+        private void GuardLivePreviewGraph(Action requireCurrentScope)
+        {
+            requireCurrentScope();
+            Check(!NativeWorkMayReadSource && subNetReferences != null && subObjectReferences != null,
+                "LIVE_PREVIEW_GRAPH_UNAVAILABLE");
+            subNetReferences!.RequireLinkedGraph();
+            subObjectReferences!.RequireLiveLinkedGraph();
+            requireCurrentScope();
+        }
+
+        private void ObservePreviewFollowups(World source, Action requireScope, bool submit)
+        {
+            ReplacePreviewRegistrations();
+            // The initialized components have already been read back. Close
+            // these owners before overlapping the commit and validation owners.
+            ReleaseInitializer();
+            Check(initializerReleased && appended.Remove(initializer!), "BUILDING_INITIALIZATION_RELEASE_UNCONFIRMED");
+            ReleaseInitializationBarrier();
+            Check(initializationBarrierReleased && appended.Remove(initializationBarrier!), "BUILDING_INITIALIZATION_BARRIER_RELEASE_UNCONFIRMED");
+            ObserveProtection();
+            GuardLivePreviewGraph(requireScope);
+
+            var children = generatedSubObjects!;
+            Check(children.TargetCount == 5, "PREVIEW_FOLLOWUP_GRAPH_COUNT_CHANGED");
+            var graph = new Entity[children.TargetCount + 2];
+            graph[0] = generatedEntity!.Entity;
+            graph[1] = generatedNode!.Entity;
+            // Follow-up consumers bind fixed role slots. Native child creation
+            // order has no ownership meaning across chunks.
+            var entities = source.EntityManager;
+            int nextBuildingSlot = 2, nodeChildSlot = graph.Length - 1, nativeNodeChildIndex = -1;
+            for (int i = 0; i < children.TargetCount; i++)
+            {
+                Entity child = children.EntityAt(i);
+                Check(child != Entity.Null && Array.IndexOf(graph, child) < 0 && entities.HasComponent<Owner>(child),
+                    "PREVIEW_FOLLOWUP_CHILD_IDENTITY_CHANGED");
+                Entity owner = entities.GetComponentData<Owner>(child).m_Owner;
+                if (owner == graph[0])
+                {
+                    Check(nextBuildingSlot < nodeChildSlot, "PREVIEW_FOLLOWUP_BUILDING_CHILD_COUNT_CHANGED");
+                    graph[nextBuildingSlot++] = child;
+                }
+                else
+                {
+                    Check(owner == graph[1] && nativeNodeChildIndex < 0, "PREVIEW_FOLLOWUP_NODE_CHILD_CHANGED");
+                    graph[nodeChildSlot] = child;
+                    nativeNodeChildIndex = i;
+                }
+            }
+            Check(nextBuildingSlot == nodeChildSlot && nativeNodeChildIndex >= 0, "PREVIEW_FOLLOWUP_CHILD_COHORT_CHANGED");
+
+            previewFollowups = new JObject { ["nativeNodeChildIndex"] = nativeNodeChildIndex };
+            var laneInputs = PreviewLaneInputs.Read(source.EntityManager, graph);
+            previewFollowups["lanes"] = laneInputs;
+            Check(!protection!.Contains<PreviewLaneBarrier>() && !protection.Contains<PreviewLaneSkipSink>()
+                && !protection.Contains<PreviewLaneProducer>(), "PREVIEW_LANE_OWNER_ALREADY_PRESENT");
+            previewLane = new PreviewLaneExecution();
+            previewLane.RunOnce(source, graph[0], graph[1], appended, requireScope,
+                () => GuardLivePreviewGraph(requireScope), ObserveProtection);
+            GuardLivePreviewGraph(requireScope);
+            Check(JToken.DeepEquals(laneInputs, PreviewLaneInputs.Read(source.EntityManager, graph)),
+                "PREVIEW_LANE_INPUTS_CHANGED_WITHOUT_PLAYBACK");
+            previewFollowups["laneInputsUnchanged"] = true;
+
+            Check(previewLane.NoLaneEntitiesRequired, "PREVIEW_ROAD_REQUIRES_LANE_MATERIALIZATION");
+            previewFollowups["roads"] = PreviewRoadInputs.Read(source, graph);
+            Check(!protection!.Contains<PreviewRoadBarrier>() && !protection.Contains<PreviewRoadProducer>(),
+                "PREVIEW_ROAD_OWNER_ALREADY_PRESENT");
+            previewRoad = new PreviewRoadExecution();
+            previewRoad.RunOnce(source, graph, appended, requireScope,
+                () => GuardLivePreviewGraph(requireScope), ObserveProtection);
+            GuardLivePreviewGraph(requireScope);
+
+            Check(!protection!.Contains<NodeCostProducer>(), "PREVIEW_COST_OWNER_ALREADY_PRESENT");
+            nodeCostProducer = new NodeCostProducer();
+            nodeCostProducer.Configure(1);
+            nodeCostRegistration = new NativeSystemRegistration<NodeCostProducer>(source, nodeCostProducer);
+            nodeCostReleased = false;
+            nodeCostRegistration.Add();
+            appended.Add(nodeCostProducer);
+            requireScope();
+            Check(nodeCostProducer.CreationReturned, "PREVIEW_COST_CREATE_UNCONFIRMED");
+            ObserveProtection();
+            GuardLivePreviewGraph(requireScope);
+
+            var costs = new PreviewCostObservation(source, graph);
+            nodeCostProducer.CalculateOnce(graph[1], requireScope);
+            GuardLivePreviewGraph(requireScope);
+            previewFollowups["costs"] = costs.Complete(source, graph);
+            GuardLivePreviewGraph(requireScope);
+
+            ReleaseNodeCost();
+            Check(nodeCostReleased && appended.Remove(nodeCostProducer), "PREVIEW_COST_RELEASE_UNCONFIRMED");
+            ObserveProtection();
+
+            Check(!protection!.Contains<PreviewValidationBarrier>() && !protection.Contains<PreviewValidationProducer>(),
+                "PREVIEW_VALIDATION_OWNER_ALREADY_PRESENT");
+            previewValidation = new PreviewValidationExecution();
+            if (submit)
+            {
+                previewCommit = new PreviewCommitExecution();
+                previewCommit.RunOnce(source, graph, appended, requireScope,
+                    () => GuardLivePreviewGraph(requireScope), ObserveProtection, () => ConfirmWorldTransfer(requireScope), previewValidation);
+                return;
+            }
+
+            previewValidation.RunOnce(source, graph, appended, requireScope,
+                () => GuardLivePreviewGraph(requireScope), ObserveProtection);
+            GuardLivePreviewGraph(requireScope);
+            previewCommitRehearsal = new PreviewCommitExecution();
+            previewCommitRehearsal.RunOnce(source, graph, appended, requireScope,
+                () => GuardLivePreviewGraph(requireScope), ObserveProtection, confirmWorldOwnership: null);
+
+            previewCancellation = new PreviewCancellationExecution();
+            previewCancellation.RunOnce(source, graph, appended, requireScope,
+                () => GuardLivePreviewGraph(requireScope),
+                () => UnlinkCancelledSubObjects(requireScope), ObserveProtection,
+                () => ConfirmCancelledGroupRemoval(requireScope));
+        }
+
+        private void UnlinkCancelledSubObjects(Action requireScope)
+        {
+            Check(subObjectReferences != null && !subObjectUnlinkAttempted, "PREVIEW_CANCEL_REFERENCES_UNAVAILABLE");
+            subObjectReferencesPatch = SubObjectReferencesPatchProbe.Observe();
+            Check(subObjectReferencesPatch.Qualified, subObjectReferencesPatch.Reason);
+            subObjectUnlinkAttempted = true;
+            subObjectReferences!.UnlinkOnce(requireScope, afterNativeCancellation: true);
+            subObjectReferencesPassed = subObjectReferences.ChecksPassed;
+            Check(subObjectReferencesPassed && !NativeWorkMayReadSource, "PREVIEW_CANCEL_REFERENCES_UNCONFIRMED");
+        }
+
+        private void ConfirmCancelledGroupRemoval(Action requireScope)
+        {
+            generatedSubObjects!.ConfirmGroupRemoval(requireScope);
+            generatedNode!.ConfirmGroupRemoval(requireScope);
+            generatedEntity!.ConfirmGroupRemoval(requireScope);
+            Check(generatedSubObjects.ResourcesReleased && generatedNode.ResourcesReleased && generatedEntity.ResourcesReleased,
+                "PREVIEW_CANCEL_GROUP_SLOTS_UNCONFIRMED");
+        }
+
+        private void ConfirmWorldTransfer(Action requireScope)
+        {
+            generatedSubObjects!.ConfirmWorldTransfer(requireScope);
+            generatedNode!.ConfirmWorldTransfer(requireScope);
+            generatedEntity!.ConfirmWorldTransfer(requireScope);
+            Check(generatedSubObjects.ResourcesReleased && generatedNode.ResourcesReleased && generatedEntity.ResourcesReleased,
+                "PREVIEW_COMMIT_GROUP_SLOTS_UNCONFIRMED");
+        }
+
+        private void ReplacePreviewRegistrations()
+        {
+            Check(appended.Count >= 3 && ReferenceEquals(appended[appended.Count - 1], nodeGeometryProducer)
+                && ReferenceEquals(appended[appended.Count - 2], compositionProducer)
+                && ReferenceEquals(appended[appended.Count - 3], compositionBarrier),
+                "PREVIEW_PREREQUISITE_REGISTRATION_CHANGED");
+            // Release only the completed tail, in reverse registration order.
+            ReleaseNodeGeometry();
+            Check(nodeGeometryReleased, "PREVIEW_GEOMETRY_RELEASE_UNCONFIRMED");
+            appended.RemoveAt(appended.Count - 1);
+            ReleaseCompositionProducer();
+            Check(compositionProducerReleased, "PREVIEW_COMPOSITION_PRODUCER_RELEASE_UNCONFIRMED");
+            appended.RemoveAt(appended.Count - 1);
+            ReleaseCompositionBarrier();
+            Check(compositionBarrierReleased, "PREVIEW_COMPOSITION_BARRIER_RELEASE_UNCONFIRMED");
+            appended.RemoveAt(appended.Count - 1);
         }
 
         // Normal completion and exceptional teardown use the same graph
@@ -685,7 +953,7 @@ namespace SkylinesLink.Mod.Native
 
         private void ReleaseInitializer()
         {
-            if (initializer == null) return;
+            if (initializer == null || initializerReleased || initializerReleaseFailure != null) return;
             try
             {
                 Check(!NativeWorkMayReadSource, "BUILDING_INITIALIZATION_RELEASE_HAS_READER");
@@ -699,7 +967,7 @@ namespace SkylinesLink.Mod.Native
 
         private void ReleaseInitializationBarrier()
         {
-            if (initializationBarrier == null) return;
+            if (initializationBarrier == null || initializationBarrierReleased || initializationBarrierReleaseFailure != null) return;
             try
             {
                 Check(!NativeWorkMayReadSource, "BUILDING_INITIALIZATION_RELEASE_HAS_READER");
@@ -722,7 +990,7 @@ namespace SkylinesLink.Mod.Native
                 catch (Exception error) { Fail("GENERATED_NODE_LINK_CONFIRMATION_FAILED"); exceptionType ??= ShortType(error); }
             if (compositionReceipt != null && !compositionConfirmationAttempted
                 && (generatedSubObjects == null || generatedSubObjects.AbsenceConfirmed))
-                try { compositionConfirmationAttempted = true; generatedNode.ConfirmNativeComposition(compositionReceipt); }
+                try { compositionConfirmationAttempted = true; generatedNode.ConfirmNativeComposition(compositionReceipt, null); }
                 catch (Exception error) { Fail("GENERATED_NODE_COMPOSITION_CONFIRMATION_FAILED"); exceptionType ??= ShortType(error); }
             try { generatedNode.Release(); }
             catch (Exception error) { Fail("GENERATED_NODE_RELEASE_FAILED"); exceptionType ??= ShortType(error); }
@@ -743,7 +1011,7 @@ namespace SkylinesLink.Mod.Native
             try
             {
                 Check(!NativeWorkMayReadSource, "SUBOBJECT_REFERENCES_RELEASE_HAS_READER");
-                Check(generatedSubObjects == null || generatedSubObjects.AbsenceConfirmed,
+                Check(WorldOwnershipTransferred || generatedSubObjects == null || generatedSubObjects.AbsenceConfirmed,
                     "SUBOBJECT_REFERENCES_CHILD_ABSENCE_UNCONFIRMED");
                 subObjectReferencesRegistration!.Destroy();
                 subObjectReferencesReleased = RegistrationReleased(subObjectReferencesRegistration, subObjectReferences.DestructionReturned)
@@ -755,7 +1023,8 @@ namespace SkylinesLink.Mod.Native
 
         private void ReleaseCompositionProducer()
         {
-            if (compositionProducer == null) return;
+            if (compositionProducer == null || compositionProducerReleased || compositionProducerReleaseCalled) return;
+            compositionProducerReleaseCalled = true;
             try
             {
                 Check(!NativeWorkMayReadSource, "COMPOSITION_PRODUCER_RELEASE_HAS_READER");
@@ -767,9 +1036,68 @@ namespace SkylinesLink.Mod.Native
             catch (Exception error) { compositionProducerReleaseFailure = error is CheckFailure check ? check.Code : "COMPOSITION_PRODUCER_DESTROY_FAILED"; }
         }
 
+        private void ReleaseNodeGeometry()
+        {
+            if (nodeGeometryProducer == null || nodeGeometryReleased || nodeGeometryReleaseCalled) return;
+            nodeGeometryReleaseCalled = true;
+            try
+            {
+                Check(!NativeWorkMayReadSource, "NODE_GEOMETRY_RELEASE_HAS_READER");
+                nodeGeometryRegistration!.Destroy();
+                nodeGeometryReleased = RegistrationReleased(nodeGeometryRegistration, nodeGeometryProducer.DestructionReturned)
+                    && nodeGeometryProducer.StorageReleased;
+                Check(nodeGeometryReleased, "NODE_GEOMETRY_RELEASE_UNCONFIRMED");
+            }
+            catch (Exception error)
+            {
+                Fail(error is CheckFailure check ? check.Code : "NODE_GEOMETRY_DESTROY_FAILED");
+                exceptionType ??= ShortType(error);
+            }
+        }
+
+        private void ReleaseNodeCost()
+        {
+            if (nodeCostProducer == null || nodeCostReleased) return;
+            try
+            {
+                Check(!NativeWorkMayReadSource, "PREVIEW_COST_RELEASE_HAS_READER");
+                nodeCostRegistration!.Destroy();
+                nodeCostReleased = RegistrationReleased(nodeCostRegistration, nodeCostProducer.DestructionReturned)
+                    && nodeCostProducer.StorageReleased;
+                Check(nodeCostReleased, "PREVIEW_COST_RELEASE_UNCONFIRMED");
+            }
+            catch (Exception error)
+            {
+                Fail(error is CheckFailure check ? check.Code : "PREVIEW_COST_DESTROY_FAILED");
+                exceptionType ??= ShortType(error);
+            }
+        }
+
+        internal JObject? PreviewFollowupSnapshot()
+        {
+            if (previewFollowups == null && nodeCostProducer == null) return null;
+            var result = (JObject?)previewFollowups?.DeepClone() ?? new JObject();
+            result["nativeLane"] = (JToken?)previewLane?.Snapshot() ?? JValue.CreateNull();
+            result["nativeRoad"] = (JToken?)previewRoad?.Snapshot() ?? JValue.CreateNull();
+            result["nativeValidation"] = (JToken?)previewValidation?.Snapshot() ?? JValue.CreateNull();
+            result["nativeCancellation"] = (JToken?)previewCancellation?.Snapshot() ?? JValue.CreateNull();
+            result["nativeCommitRehearsal"] = (JToken?)previewCommitRehearsal?.RehearsalSnapshot() ?? JValue.CreateNull();
+            result["nodeCost"] = (JToken?)nodeCostProducer?.Snapshot() ?? JValue.CreateNull();
+            result["costRegistrationReleased"] = nodeCostReleased;
+            return result;
+        }
+
+        internal JObject? NodeGeometrySnapshot()
+        {
+            JObject? geometry = nodeGeometryProducer?.Snapshot();
+            if (geometry != null) geometry["registrationReleased"] = nodeGeometryReleased;
+            return geometry;
+        }
+
         private void ReleaseCompositionBarrier()
         {
-            if (compositionBarrier == null) return;
+            if (compositionBarrier == null || compositionBarrierReleased || compositionBarrierReleaseCalled) return;
+            compositionBarrierReleaseCalled = true;
             try
             {
                 Check(!NativeWorkMayReadSource, "COMPOSITION_BARRIER_RELEASE_HAS_READER");
@@ -788,7 +1116,7 @@ namespace SkylinesLink.Mod.Native
             try
             {
                 Check(!NativeWorkMayReadSource, "SUBNET_REFERENCES_RELEASE_HAS_READER");
-                Check((generatedNode == null || generatedNode.AbsenceConfirmed)
+                Check(WorldOwnershipTransferred || (generatedNode == null || generatedNode.AbsenceConfirmed)
                     && (generatedEntity == null || generatedEntity.AbsenceConfirmed),
                     "SUBNET_REFERENCES_SOURCE_ABSENCE_UNCONFIRMED");
                 subNetReferencesRegistration!.Destroy();
@@ -905,7 +1233,7 @@ namespace SkylinesLink.Mod.Native
             ["sourceDefinitionsCreationReturned"] = definitions?.CreateReturned ?? false,
             ["generationPlaybackCalled"] = false,
             ["playbackCalled"] = (resolutionBarrier?.PlaybackStarted ?? false) || (initializationBarrier?.PlaybackStarted ?? false),
-                ["scope"] = "Scoped root/node materialization and named native mechanisms. Composition Select/Create jobs run with linked children: cache hits are observed direct node writes; misses retain unplayed output and require shared publication. Node references are acknowledged separately from cache geometry readiness. SubObjects/SubNet are natively linked and unlinked. Full preview, shared cache publication/initialization, validation, normal cancellation, fees and construction remain unqualified. Native internal deallocator execution is unobserved."
+                ["scope"] = "Scoped root/node generation and retirement. Native selection observes direct node writes on a cache hit. On a miss a separate typed batch can publish a World-owned composition. Default initialization and reuse are observed by the round trip. Full preview, validation, normal cancellation, fees and construction remain unqualified."
         };
 
         private JObject BuildingInitializationFacts() => new JObject {
@@ -945,8 +1273,10 @@ namespace SkylinesLink.Mod.Native
             ["inputs"] = compositionInputs == null ? JValue.CreateNull() : compositionInputs.Snapshot(),
             ["native"] = compositionProducer == null ? JValue.CreateNull() : compositionProducer.Snapshot(),
             ["receipt"] = compositionReceipt == null ? JValue.CreateNull() : compositionReceipt.Snapshot(),
-            ["unpublishedCandidate"] = compositionCandidate == null ? JValue.CreateNull() : compositionCandidate.Snapshot(),
+            ["candidate"] = compositionCandidate == null ? JValue.CreateNull() : compositionCandidate.Snapshot(),
             ["initializationInputs"] = compositionInitializationInputs == null ? JValue.CreateNull() : compositionInitializationInputs.Snapshot(),
+            ["publication"] = compositionPublication == null ? JValue.CreateNull() : compositionPublication.Snapshot(),
+            ["structuralStateUnknown"] = StructuralStateUnknown,
             ["producer"] = SystemFacts(compositionProducerRegistration, compositionProducer?.CreationReturned ?? false,
                 compositionProducer?.DestructionReturned ?? false, compositionProducerReleased, compositionProducerReleaseFailure),
             ["barrier"] = SystemFacts(compositionBarrierRegistration, compositionBarrier?.CreationReturned ?? false,
@@ -954,7 +1284,7 @@ namespace SkylinesLink.Mod.Native
             ["selectionApplied"] = compositionProducer?.SelectionApplied ?? false,
             ["needsSharedPublication"] = compositionProducer?.NeedsPublication ?? false,
             ["nodeReferenceConfirmed"] = generatedNode?.CompositionConfirmed ?? false,
-            ["sharedCacheOwnedByActor"] = false, ["sourcePlaybackCalled"] = false,
+            ["sharedCacheOwnedByActor"] = false, ["sourcePlaybackCalled"] = compositionPublication?.EnteredPlayback ?? false,
             ["cacheGeometryReadyEstablished"] = false, ["fullPipelineQualified"] = false
         };
 
@@ -968,6 +1298,7 @@ namespace SkylinesLink.Mod.Native
                 subNetReferences?.DestructionReturned ?? false, subNetReferencesReleased, subNetReferencesReleaseFailure),
             ["applicability"] = postApplicability == null ? JValue.CreateNull() : postApplicability.Snapshot(),
             ["parentReleaseHeld"] = subNetParentReleaseHeld,
+            ["livePreviewGraphChecks"] = LivePreviewGraphChecks,
             ["markerExpiryPassed"] = generatedNode?.MarkerExpiryPassed ?? false,
             ["nodeDiscardReady"] = generatedNode?.DiscardReady ?? false,
             ["nativeCleanupControllerInvoked"] = false, ["sourcePlaybackCalled"] = false,

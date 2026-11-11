@@ -20,13 +20,14 @@ using SubObject = Game.Objects.SubObject;
 
 namespace SkylinesLink.Mod.Native
 {
-    // A read-only qualification of this single, new Orphan. The complete
+    // A read-only qualification of one exact Orphan role. The complete
     // section DAG is conservative while the native selected mask is unknown;
     // rejecting a cycle here does not define the eventual product boundary.
     internal sealed class CompositionSelectionPreflight
     {
         private const int TableLimit = 256, SectionLimit = 256, RowLimit = 4096, PieceLimit = 4096;
         private readonly Action requireScope, requireLinkedChildren;
+        private readonly GeneratedSubObjectsPayload? relocation;
         private State? before;
         private bool attempted, passed;
         private int unchangedChecks;
@@ -35,7 +36,7 @@ namespace SkylinesLink.Mod.Native
         private string? failureCode, exceptionType;
 
         internal CompositionSelectionPreflight(World source, Entity root, Entity node, int actor,
-            Action requireScope, Action requireLinkedChildren)
+            Action requireScope, Action requireLinkedChildren, GeneratedSubObjectsPayload? relocation = null)
         {
             Source = source ?? throw new ArgumentNullException(nameof(source));
             this.requireScope = requireScope ?? throw new ArgumentNullException(nameof(requireScope));
@@ -43,13 +44,19 @@ namespace SkylinesLink.Mod.Native
             Require(root != Entity.Null && node != Entity.Null && root != node && root.Index >= 0
                 && node.Index >= 0 && root.Version > 0 && node.Version > 0 && actor > 0,
                 "COMPOSITION_PREFLIGHT_IDENTITY_REJECTED");
-            Root = root; Node = node; Actor = actor;
+            Require(relocation == null || relocation.IsRelocation && ReferenceEquals(relocation.Source, source)
+                && relocation.Actor == actor && relocation.Root == root && (relocation.OldNode == node || relocation.Node == node),
+                "COMPOSITION_PREFLIGHT_RELOCATION_IDENTITY_REJECTED");
+            Root = root; Node = node; Actor = actor; this.relocation = relocation;
         }
 
         internal World Source { get; }
         internal Entity Root { get; }
         internal Entity Node { get; }
         internal int Actor { get; }
+        internal bool IsRelocation => relocation != null;
+        internal bool IsOldNode => relocation?.OldNode == Node;
+        internal bool SharesRelocation(CompositionSelectionPreflight other) => relocation != null && ReferenceEquals(relocation, other.relocation);
         internal Entity Prefab => before?.NodePrefab.m_Prefab ?? Entity.Null;
         internal NativeOrphan BeforeOrphan => before?.Orphan ?? default;
         internal bool Passed => passed;
@@ -127,15 +134,20 @@ namespace SkylinesLink.Mod.Native
             state.City = city; state.Prefabs = prefabs; state.LeftHandTraffic = city!.leftHandTraffic; Guard();
 
             Scoped(Root); Scoped(Node);
-            state.RootTemp = NewParent(Root, 9); state.NodeTemp = NewParent(Node, 5);
+            state.RootTemp = ParentTemp(Root, 9); state.NodeTemp = ParentTemp(Node, 5);
             Require(Has<Game.Objects.Object>(Root) && !Has<Owner>(Root)
                 && !Has<Game.Net.Edge>(Root) && !Has<NativeOrphan>(Root) && !Has<Game.Net.Composition>(Root)
                 && Has<NativeNode>(Node) && !Has<Game.Net.Edge>(Node) && Has<NativeOrphan>(Node)
                 && !Has<Game.Net.Composition>(Node) && !Has<Game.Net.Upgraded>(Node)
                 && !Has<OwnerDefinition>(Root) && !Has<OwnerDefinition>(Node),
                 "COMPOSITION_PREFLIGHT_ROLE_CHANGED");
-            state.NodeOwner = Read<Owner>(Node);
-            Require(state.NodeOwner.m_Owner == Root, "COMPOSITION_PREFLIGHT_OWNER_CHANGED");
+            if (IsOldNode)
+                Require(!Has<Owner>(Node), "COMPOSITION_PREFLIGHT_OLD_NODE_OWNER_CHANGED");
+            else
+            {
+                state.NodeOwner = Read<Owner>(Node);
+                Require(state.NodeOwner.m_Owner == Root, "COMPOSITION_PREFLIGHT_OWNER_CHANGED");
+            }
             state.RootTransform = Read<NativeTransform>(Root); state.NodeData = Read<NativeNode>(Node);
             Require(Finite(state.RootTransform.m_Position) && Finite(state.RootTransform.m_Rotation.value)
                 && Finite(state.NodeData.m_Position) && Finite(state.NodeData.m_Rotation.value),
@@ -148,6 +160,16 @@ namespace SkylinesLink.Mod.Native
                 "COMPOSITION_PREFLIGHT_INITIAL_ORPHAN_NOT_EMPTY");
             state.ConnectedEdges = Buffer<Game.Net.ConnectedEdge>(Node, true, state)!;
             Require(state.ConnectedEdges.Length == 0, "COMPOSITION_PREFLIGHT_CONNECTED_EDGE_BRANCH_UNSUPPORTED");
+            if (IsOldNode)
+            {
+                // The iterator can traverse Original's edges even with an
+                // empty buffer on the temporary node.
+                Entity original = state.NodeTemp.m_Original;
+                Reference(original, optional: false);
+                Require(Has<NativeNode>(original) && !Has<Temp>(original)
+                    && Buffer<Game.Net.ConnectedEdge>(original, true, state)!.Length == 0,
+                    "COMPOSITION_PREFLIGHT_ORIGINAL_EDGES_UNSUPPORTED");
+            }
 
             state.RootPrefab = Read<PrefabRef>(Root); state.NodePrefab = Read<PrefabRef>(Node);
             state.RootPrefabData = Registered(state.RootPrefab.m_Prefab, prefabs!);
@@ -161,7 +183,7 @@ namespace SkylinesLink.Mod.Native
             Scoped(state.Child); state.ChildOwner = Read<Owner>(state.Child);
             Require(state.ChildOwner.m_Owner == Node, "COMPOSITION_PREFLIGHT_CHILD_OWNER_CHANGED");
             state.ChildTemp = Read<Temp>(state.Child);
-            Require(state.ChildTemp.m_Original == Entity.Null && state.ChildTemp.m_Flags == TempFlags.Create,
+            Require(IsRelocation || state.ChildTemp.m_Original == Entity.Null && state.ChildTemp.m_Flags == TempFlags.Create,
                 "COMPOSITION_PREFLIGHT_CHILD_NOT_NEW");
             state.ChildPrefab = Read<PrefabRef>(state.Child);
             state.ChildPrefabData = Registered(state.ChildPrefab.m_Prefab, prefabs!);
@@ -253,13 +275,14 @@ namespace SkylinesLink.Mod.Native
             state.Pieces.Add(entity, new PieceRow(data, Optional<NetTerrainData>(entity)));
         }
 
-        private Temp NewParent(Entity entity, uint flags)
+        private Temp ParentTemp(Entity entity, uint flags)
         {
             Require(Has<Created>(entity) && Has<Updated>(entity) && !Has<Deleted>(entity),
                 "COMPOSITION_PREFLIGHT_PARENT_MARKERS_CHANGED");
             Temp value = Read<Temp>(entity);
-            Require(value.m_Original == Entity.Null && (uint)value.m_Flags == flags && Finite(value.m_CurvePosition),
-                "COMPOSITION_PREFLIGHT_PARENT_NOT_NEW");
+            bool expected = relocation == null ? value.m_Original == Entity.Null && (uint)value.m_Flags == flags
+                : value.Equals(relocation.CapturedParentTemp(entity));
+            Require(expected && Finite(value.m_CurvePosition), "COMPOSITION_PREFLIGHT_PARENT_TEMP_CHANGED");
             return value;
         }
 
