@@ -78,7 +78,7 @@ export function validateSourcePath(path, mode) {
   if (/(^|\/)(?:\.local|\.git|node_modules|artifacts|bin|obj|game-libs|decompiled|research-inputs)(\/|$)/i.test(path)) throw new Error('CORE_PRIVATE_SOURCE');
   const name = path.split('/').at(-1);
   const special = new Set(['LICENSE', '.editorconfig', '.gitattributes', '.gitignore', '.gitkeep', '.node-version', '.nvmrc', '.npmrc']);
-  if (!special.has(name) && !brandingSources.has(path) && !/\.(?:cs|csproj|json|md|mjs|ts|ps1|slnx|props|targets|template|yaml|yml|config)$/i.test(name)
+  if (!special.has(name) && !brandingSources.has(path) && !/\.(?:cs|csproj|json|md|mjs|cjs|ts|ps1|slnx|props|targets|template|yaml|yml|config)$/i.test(name)
     && !/^(?:src\/host|tools\/release)\/licenses\/[^/]+\.txt$/.test(path)) throw new Error('CORE_SOURCE_EXTENSION');
 }
 

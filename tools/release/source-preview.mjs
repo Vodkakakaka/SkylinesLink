@@ -87,7 +87,7 @@ export async function buildSourcePreview() {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try { console.log(JSON.stringify(await buildSourcePreview())); }
   catch (error) {
-    console.error(JSON.stringify({ code: /^SOURCE_PREVIEW_[A-Z_]+$/.test(error.message) ? error.message : 'SOURCE_PREVIEW_FAILED' }));
+    console.error(JSON.stringify({ code: /^(?:SOURCE_PREVIEW|CORE)_[A-Z_]+$/.test(error.message) ? error.message : 'SOURCE_PREVIEW_FAILED' }));
     process.exitCode = 1;
   }
 }

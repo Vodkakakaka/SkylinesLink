@@ -12,6 +12,11 @@ test('开发工具接受基线及更高稳定版本，拒绝旧版及预发布�
     assert.equal(meetsMinimumVersion(actual, '>=26.13.0'), false);
 });
 
+test('源码预览保留 CommonJS 客户端适配器及无凭据的包管理配置', () => {
+  validateSourcePath('tests/integration/clients/dsh-config-reader.cjs', '100644');
+  validateSourcePath('.npmrc', '100644');
+});
+
 const root = resolve(import.meta.dirname, '../..');
 const informationalVersion = '0.1.0-dev.0+' + 'a'.repeat(40);
 const records = () => managedNames.map((name, index) => ({ name, file: `${name}.dll`, managed: true, version: '0.1.0.0', probeTypePresent: false,
