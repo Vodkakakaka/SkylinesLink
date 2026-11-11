@@ -11,6 +11,8 @@
   <Import Project="$(SkylinesLinkGameToolchain)/Mod.props" Condition="Exists('$(SkylinesLinkGameToolchain)/Mod.props')" />
   <Import Project="$(SkylinesLinkGameToolchain)/Mod.targets" Condition="Exists('$(SkylinesLinkGameToolchain)/Mod.targets')" />
   <ItemGroup>
+    <!-- The developer targeting pack is a locked build input, never a player payload. -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
     <Compile Include="../../shared/Processes/WindowsOwnedChild.cs" Link="Shared/Processes/WindowsOwnedChild.cs" />
     <ProjectReference Include="../SkylinesLink.Application/SkylinesLink.Application.csproj" />
     <ProjectReference Include="../SkylinesLink.Infrastructure/SkylinesLink.Infrastructure.csproj" />
