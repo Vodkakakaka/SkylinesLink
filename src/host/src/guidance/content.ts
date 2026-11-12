@@ -152,7 +152,7 @@ A stop receipt records a task control decision. \`pending\` does not mean every 
 停止回执记录的是任务控制决定。\`pending\` 不表示所有动作都已停止；决定已持久化也不会撤销既有效果，更不能证明实际工作已经结束。它不会暂停 AI 模型、对话或整个游戏。当前没有任务创建或执行工具；旧权威会明确返回 \`TASKS_UNAVAILABLE\`。`,
   },
   {
-    guideId: 'planning', revision: '3', language: 'en',
+    guideId: 'planning', revision: '4', language: 'en',
     title: 'Plan from evidence and the current user task',
     summary: 'Define neutral task constraints and a conditional evidence-to-result workflow without pretending that this build can preview or execute city construction.',
     capabilityRefs: foundationRefs,
@@ -176,10 +176,29 @@ Only when the required domain reads, native preview, execution and result querie
 4. Execute only within the user's current scope and actual permissions. Preserve the plan and original operation identities. Use the supplied operation query, including \`operations.get\` where applicable, to resolve progress and uncertainty without replay.
 5. Read back actual created objects, shape, connections and effects before calling the task complete. Report unverified effects and subjective player feedback separately from measured results. Revise the affected remainder when evidence requires it; do not discard a proven completed prefix.
 
+## Keep the plan useful as the city changes
+
+Keep distant areas at the level of purpose, relationships and constraints. By default, refine the near-term area and dependencies needed next; other explicitly requested areas can also be refined within the available budget. There is no mandatory number of detail levels. A coarse sketch is not a native preview. When domain capabilities become available, obtain the full required geometry, effects and cost checks for the part actually being built, rather than materializing the whole future city.
+
+For important facilities or areas, retain why the current design was chosen, whether it is temporary or transitional, and any known review or replacement condition. Do not invent a missing rationale. Growth, unlocks, changed demand or observed problems may invalidate a formerly adequate layout. Preserve what was actually built and the original operation results; reassess current suitability separately. Revise the affected future work without replaying the completed prefix or silently changing an accepted action. If the impact is unclear, mark it for review.
+
+When continuity is required, prove the replacement's actual service or connection before removing the old one. An explicitly accepted demolish-then-rebuild plan may allow an interruption, but its affected users, costs, protection and recovery steps must be clear. A higher-level facility does not automatically replace every distinct function of a smaller one.
+
+For resuming work, retain the relevant upper-level objective and constraints, current area, built facts, open problems and next few steps. Do not require the full transcript or every distant detail for each call. Keep queries and geometry bounded; opening a planning view is not a request to simulate, build or continuously scan the city.
+
+## Check the domain, not just the object count
+
+These are checks to request from supplied capabilities, not claims that this build already supplies them:
+
+- Roads: compare roles, declared growth assumptions, required movements, conflict and downstream capacity. Check real widths, curves, heights, merge alignment and generated lanes. Bus-only lanes must not silently remove the only ordinary-car movement. A compact option must still serve the same required directions; a dead end may already have a valid native U-turn. No intersection type or fixed lane count is universally best.
+- Sites and buildings: compare the full main structure, attachments, entrances, resources, terrain and environmental effects together. Read actual effects, stacking conditions and costs instead of judging by names or levels. For accumulating services, distinguish stored amount, remaining capacity, processing or transfer rate, and emptying destination.
+- Travel and industry: check relevant homes, jobs, schools, services, hubs and production destinations in the task's scope. Follow entrances, internal paths, interchange and dispatch through to actual arrival, processing or transport. Distinguish configured capacity from observed throughput; one valid path does not prove all demand is covered.
+- Changes: preserve intentional open space and protected objects. Treat requested shapes, native candidates and built results separately. Apply current normal limits even when a low-level setter would accept more. Compare alternatives using compatible observations, and disclose missing evidence instead of assuming a complete survey.
+
 Player actions can change the facts during work. Recheck affected evidence and qualification instead of taking over the player's mouse, keyboard, selection or active tool. Concurrent in-game isolation remains unverified in this build.`,
   },
   {
-    guideId: 'planning', revision: '3', language: 'zh-CN',
+    guideId: 'planning', revision: '4', language: 'zh-CN',
     title: '依据证据与当前用户任务规划',
     summary: '建立中性的任务约束与条件式工作流，不把当前构建说成已经能够预览或执行城市建设。',
     capabilityRefs: foundationRefs,
@@ -202,6 +221,25 @@ Player actions can change the facts during work. Recheck affected evidence and q
 3. 通过对应可信能力核当前正常游戏规则与资格，在实际支持的预览中检查几何、影响与费用；不绕过校验，也不拿数学计算或好看的概念图冒充实机结果。
 4. 仅在用户当前允许范围和实际权限内执行，保留计划及原操作身份；使用实际提供的结果查询，适用时包括 \`operations.get\`，核进度与未知结果，不重放。
 5. 回读实际生成对象、形状、衔接与效果，再判断是否完成；未验证影响、主观玩家评价和实测结果分别说明。证据要求修改时只修受影响的剩余部分，保留已证实完成的前缀。
+
+## 让规划随城市发展继续有用
+
+远期区域保留用途、关系和约束即可；默认细化近期区域及下一步所需依赖；用户明确要求的其他范围也可在预算内按需细化，不规定细节层数。粗略草图不是原生预览。相关领域能力实际提供后，对真正要施工的部分取得完整几何、影响和费用检查，不必先物化整座未来城市。
+
+对重要设施或区域保留当前选择依据、是否临时／过渡以及已知复评或替换条件；不知道原理由就保留未知。增长、解锁、需求变化或实际问题可能使原先合适的布局过时。已建事实和原操作结果保留，当前是否适用另行评估；修订受影响的未来工作，不重放已完成前缀，也不静默改变已受理动作，影响不明则明确待复审。
+
+任务要求持续服务或连接时，实际接替后才撤旧。明确受理的先拆后建可以允许中断，但须说明受影响使用者、费用、保护和恢复步骤；等级更高的设施不自动替代小设施的每一种独有功能。
+
+接续时保留必要上层目标与约束、当前区域、已建事实、未解问题和接下来少量步骤，不要求每次调用读取完整会话或全部远期细节。查询与几何有界，打开规划页不代表要求模拟、施工或持续扫描全城。
+
+## 核功能链，而不只数对象
+
+以下是对实际提供的能力应提出的检查，不表示当前构建已经具备它们：
+
+- 道路：按职责、明确增长假设、必要运动、冲突及下游容量比较方案；核真实断面、曲线、高程、分合流对齐和生成车道。公交专道不能悄悄挤掉普通车唯一必要方向；紧凑方案仍须承担相同方向，尽端可能已有正常原生掉头。没有普遍最优的路口类型或固定车道数。
+- 场址与建筑：主体、附属、入口、资源、地形和环境影响联合比较；读取真实效果、叠加条件和成本，不只按名字或等级判断。积累型服务区分存量、剩余容量、处理／转移速率及清空去向。
+- 出行与产业：在任务范围内核相关住宅、就业、学校、服务、枢纽和生产目的地；从入口、内部路径、换乘和派遣追到实际到达、处理或运输。配置容量与实测吞吐分开，一条路径通过不证明全部需求已覆盖。
+- 修改：保留有意留白和保护对象，分别核请求形状、原生候选和实建结果。底层setter接受数值也须遵守当前正常限制；比较使用相容观测，缺证据明确说明，不把局部调查说成完整覆盖。
 
 玩家操作可能在工作过程中改变事实，应重核受影响证据与资格，不夺取玩家鼠标、键盘、选择或活动工具。当前构建尚未验证游戏内并行隔离。`,
   },
