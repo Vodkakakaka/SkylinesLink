@@ -233,7 +233,7 @@ namespace SkylinesLink.Mod.Native
                 testCity.SuspendAutomaticReturnForNativeUnknown();
                 return;
             }
-            try { testCity.Step(stopIntent.Requested); }
+            try { testCity.Step(stopIntent.Requested && normalConnection?.HoldingCityForPreviewCleanup != true); }
             catch (Exception error) { SetFailure("PROBE_CITY_STEP_FAILED", error.GetType().Name); }
         }
 
@@ -287,7 +287,8 @@ namespace SkylinesLink.Mod.Native
                     if (menu && ReadOwnedWindows(out _)) RunSelectedExperiment(config);
                     CaptureRequestedModules(menu);
                 }
-                if (testCity != null && testCity.ResourcesReleased && config.Experiment != "normalCityOverview")
+                if (testCity != null && testCity.ResourcesReleased && config.Experiment != "normalCityOverview"
+                    && config.Experiment != "normalCityParallelPreview")
                     RequestHostStop(StopReason.ExperimentFinished, denyQuit: false);
                 if (normalSettings != null && normalSettings.ChecksPassed && normalSettings.ResourcesReleased)
                     RequestHostStop(StopReason.ExperimentFinished, denyQuit: false);
@@ -302,10 +303,12 @@ namespace SkylinesLink.Mod.Native
             switch (config.Experiment)
             {
                 case "normalCityOverview":
+                case "normalCityParallelPreview":
                     if (normalConnection == null)
                     {
                         normalConnection = new NormalConnectionProbe(sourceMod, sourceUpdate, config.EnvironmentId,
-                            config.ProfileId, productVersion, report, cityOverview: true);
+                            config.ProfileId, productVersion, report, cityOverview: true,
+                            parallelPreview: config.Experiment == "normalCityParallelPreview");
                         AdvanceNormalConnection();
                     }
                     if (testCity == null && normalConnection.ReadyToLoadCity)
@@ -486,7 +489,8 @@ namespace SkylinesLink.Mod.Native
                 ["failureCode"] = failureCode == null ? JValue.CreateNull() : new JValue(failureCode),
                 ["exceptionType"] = exceptionType == null ? JValue.CreateNull() : new JValue(exceptionType)
             };
-            if (config.Experiment == "normalSettings" || config.Experiment == "normalConnection" || config.Experiment == "normalCityOverview")
+            if (config.Experiment == "normalSettings" || config.Experiment == "normalConnection" || config.Experiment == "normalCityOverview"
+                || config.Experiment == "normalCityParallelPreview")
             {
                 if (config.Experiment == "normalSettings")
                     status["normalSettings"] = normalSettings == null ? JValue.CreateNull() : normalSettings.Read();
@@ -707,6 +711,13 @@ namespace SkylinesLink.Mod.Native
             var encoding = new UTF8Encoding(false, true);
             byte[] bytes = encoding.GetBytes(status.ToString(Formatting.None));
             bool cityObservation = (string?)status["experiment"] == "normalCityOverview";
+            if ((string?)status["experiment"] == "normalCityParallelPreview")
+            {
+                JToken? preview = (status["normalConnection"] as JObject)?["parallelPreview"];
+                if (preview != null && preview.Type != JTokenType.Null && (!(preview is JObject)
+                    || encoding.GetByteCount(preview.ToString(Formatting.None)) > 8192))
+                    throw new ProbeFailure("PROBE_STATUS_BUDGET");
+            }
             if (cityObservation)
             {
                 // The closed geometry projection has at most 256 records, each
@@ -957,9 +968,9 @@ namespace SkylinesLink.Mod.Native
                 if (value["experiment"] != null)
                 {
                     result.Experiment = String("experiment");
-                    if ((result.Experiment != "definitionContainer" && result.Experiment != "straightDefinition" && result.Experiment != "scopedClear" && result.Experiment != "mapIdentity" && result.Experiment != "testCity" && result.Experiment != "normalSettings" && result.Experiment != "normalConnection" && result.Experiment != "normalCityOverview") || result.ConnectionMode != "noOwner") throw new ProbeFailure("PROBE_CONFIGURATION_INVALID");
+                    if ((result.Experiment != "definitionContainer" && result.Experiment != "straightDefinition" && result.Experiment != "scopedClear" && result.Experiment != "mapIdentity" && result.Experiment != "testCity" && result.Experiment != "normalSettings" && result.Experiment != "normalConnection" && result.Experiment != "normalCityOverview" && result.Experiment != "normalCityParallelPreview") || result.ConnectionMode != "noOwner") throw new ProbeFailure("PROBE_CONFIGURATION_INVALID");
                 }
-                if (result.Experiment == "testCity" || result.Experiment == "normalCityOverview")
+                if (result.Experiment == "testCity" || result.Experiment == "normalCityOverview" || result.Experiment == "normalCityParallelPreview")
                 {
                     result.TestMapMetadataGuid = String("testMapMetadataGuid"); result.TestMapDataGuid = String("testMapDataGuid");
                     foreach (string id in new[] { result.TestMapMetadataGuid, result.TestMapDataGuid })
@@ -970,7 +981,8 @@ namespace SkylinesLink.Mod.Native
                 if (!string.Equals(result.RunId, launchRunId, StringComparison.Ordinal)) throw new ProbeFailure("PROBE_LAUNCH_MISMATCH");
                 if (!Guid.TryParseExact(result.RunId, "N", out Guid run) || run.ToString("N") != result.RunId || AuthorizationState.NormalizeEnvironment(result.EnvironmentId) != result.EnvironmentId)
                     throw new ProbeFailure("PROBE_CONFIGURATION_INVALID");
-                if ((result.Experiment == "normalSettings" || result.Experiment == "normalConnection" || result.Experiment == "normalCityOverview") && result.EnvironmentId != "probe-" + result.RunId)
+                if ((result.Experiment == "normalSettings" || result.Experiment == "normalConnection" || result.Experiment == "normalCityOverview"
+                    || result.Experiment == "normalCityParallelPreview") && result.EnvironmentId != "probe-" + result.RunId)
                     throw new ProbeFailure("PROBE_CONFIGURATION_INVALID");
                 AuthorizationState.ValidateIdentifier(result.ProfileId); AuthorizationState.ValidateHex(result.CoreHash);
                 string expected = String("expectedUserDataPath");

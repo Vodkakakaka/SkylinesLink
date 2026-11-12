@@ -19,18 +19,21 @@ namespace SkylinesLink.Mod.Native
     internal sealed class NormalConnectionProbe
     {
         private const double ServingSeconds = 45;
+        private double RequiredServingSeconds => parallelPreview ? 0 : ServingSeconds;
         private readonly object sync = new object();
         private readonly IMod mod;
         private readonly UpdateSystem updateSystem;
         private readonly string environment, profile, expectedVersion;
         private readonly Action<string>? report;
         private readonly bool cityOverview;
+        private readonly bool parallelPreview;
         private NormalModSession? root;
         private TestCityLifecycleProbe? city;
         private JObject? before, active, afterStop;
         private JObject? configuredMenu, returnedMenu;
         private JObject? objectInputSurvey;
         private CompositionRoundTrip? compositionRoundTrip;
+        private ParallelPreviewProbe? externalPreview;
         private Action? definitionScopeGuard;
         private bool startAttempted, applyAttempted, applyObservedBusy, servingCompleted, stopping, resourcesReleased;
         private bool staleGuardRejected;
@@ -41,7 +44,7 @@ namespace SkylinesLink.Mod.Native
         private string? failureCode, exceptionType;
 
         internal NormalConnectionProbe(IMod mod, UpdateSystem updateSystem, string environment,
-            string profile, string expectedVersion, Action<string>? report, bool cityOverview = false)
+            string profile, string expectedVersion, Action<string>? report, bool cityOverview = false, bool parallelPreview = false)
         {
             this.mod = mod ?? throw new ArgumentNullException(nameof(mod));
             this.updateSystem = updateSystem ?? throw new ArgumentNullException(nameof(updateSystem));
@@ -51,18 +54,25 @@ namespace SkylinesLink.Mod.Native
             this.expectedVersion = expectedVersion ?? throw new ArgumentNullException(nameof(expectedVersion));
             this.report = report;
             this.cityOverview = cityOverview;
+            if (parallelPreview && !cityOverview) throw new ArgumentException("The external preview requires the owned test city.");
+            this.parallelPreview = parallelPreview;
         }
 
-        internal bool ResourcesReleased { get { lock (sync) return resourcesReleased && (compositionRoundTrip?.ResourcesReleased ?? true); } }
-        internal bool Finished { get { lock (sync) return resourcesReleased && (compositionRoundTrip?.WorkersFinished ?? true); } }
-        internal bool SuppressAutomaticReturn { get { lock (sync) return compositionRoundTrip?.NativeStateUncertain == true; } }
+        internal bool ResourcesReleased { get { lock (sync) return resourcesReleased && (compositionRoundTrip?.ResourcesReleased ?? true)
+            && (externalPreview?.ResourcesReleased ?? true); } }
+        internal bool Finished { get { lock (sync) return resourcesReleased && (compositionRoundTrip?.WorkersFinished ?? true)
+            && (externalPreview?.WorkersFinished ?? true); } }
+        internal bool SuppressAutomaticReturn { get { lock (sync) return compositionRoundTrip?.NativeStateUncertain == true
+            || externalPreview?.NativeStateUncertain == true; } }
+        internal bool HoldingCityForPreviewCleanup { get { lock (sync) return externalPreview?.CleanupPending == true; } }
         internal bool ChecksPassed { get { lock (sync) return Passed; } }
         internal string? FailureCode { get { lock (sync) return failureCode; } }
         internal string? ExceptionType { get { lock (sync) return exceptionType; } }
         private bool Passed => resourcesReleased && before != null && active != null && afterStop != null
             && applyObservedBusy && servingCompleted && failureCode == null
             && (!cityOverview || configuredMenu != null && returnedMenu != null && city?.ChecksPassed == true
-                && staleGuardRejected && compositionRoundTrip?.Passed == true && compositionRoundTrip.ResourcesReleased);
+                && staleGuardRejected && (parallelPreview ? externalPreview?.Passed == true
+                    : compositionRoundTrip?.Passed == true && compositionRoundTrip.ResourcesReleased));
 
         internal bool ReadyToLoadCity
         { get { lock (sync) return cityOverview && configuredMenu != null && city == null && !stopping && failureCode == null; } }
@@ -190,7 +200,7 @@ namespace SkylinesLink.Mod.Native
                 if (!city.QualifiedForRead || root!.IsBusy()) return;
                 // This is the original protection deadline, not a renewed lease.
                 // Leave ten seconds for the owned return-to-menu prefix.
-                Check(city.CanHoldReadWindow(ServingSeconds + 10), "NORMAL_CITY_READ_WINDOW_INSUFFICIENT");
+                Check(city.CanHoldReadWindow(RequiredServingSeconds + 10), "NORMAL_CITY_READ_WINDOW_INSUFFICIENT");
                 if (!ScopeSampleDue()) return;
                 var sample = Capture();
                 CheckConnectionIdentity(sample, configuredMenu!);
@@ -199,15 +209,32 @@ namespace SkylinesLink.Mod.Native
                 if (Text(sample, "contextState") != "ready") return;
                 CheckActiveScope(sample, "ready", configuredMenu!);
                 Check(Generation(sample) > Generation(configuredMenu!), "NORMAL_CITY_LOADING_GENERATION_MISSING");
-                if (compositionRoundTrip == null)
+                if (parallelPreview)
                 {
-                    objectInputSurvey = CaptureObjectInputSurvey(sample);
-                    Check(city.CanHoldReadWindow(ServingSeconds + 10), "NORMAL_CITY_READ_WINDOW_INSUFFICIENT_AFTER_SURVEY");
-                    compositionRoundTrip = BindCompositionRoundTrip(sample);
+                    if (externalPreview == null)
+                    {
+                        var source = updateSystem.World;
+                        Guid session = Game.PSI.Telemetry.GetCurrentSession();
+                        Check(session != Guid.Empty && definitionScopeGuard == null, "EXTERNAL_PREVIEW_SCOPE_UNAVAILABLE");
+                        definitionScopeGuard = BindDefinitionScopeGuard(sample, source, GameManager.instance, session);
+                        externalPreview = new ParallelPreviewProbe(source, updateSystem, definitionScopeGuard);
+                    }
+                    externalPreview.Advance();
+                    Check(externalPreview.FailureCode == null, externalPreview.FailureCode ?? "EXTERNAL_PREVIEW_FAILED");
+                    if (!externalPreview.Passed) return;
                 }
-                compositionRoundTrip.Advance();
-                if (!compositionRoundTrip.Passed) return;
-                Check(city.CanHoldReadWindow(ServingSeconds + 10), "NORMAL_CITY_READ_WINDOW_INSUFFICIENT_AFTER_DEFINITION");
+                else
+                {
+                    if (compositionRoundTrip == null)
+                    {
+                        objectInputSurvey = CaptureObjectInputSurvey(sample);
+                        Check(city.CanHoldReadWindow(ServingSeconds + 10), "NORMAL_CITY_READ_WINDOW_INSUFFICIENT_AFTER_SURVEY");
+                        compositionRoundTrip = BindCompositionRoundTrip(sample);
+                    }
+                    compositionRoundTrip.Advance();
+                    if (!compositionRoundTrip.Passed) return;
+                }
+                Check(city.CanHoldReadWindow(RequiredServingSeconds + 10), "NORMAL_CITY_READ_WINDOW_INSUFFICIENT_AFTER_DEFINITION");
                 active = sample;
                 servingStarted = Stopwatch.GetTimestamp();
                 return;
@@ -215,7 +242,7 @@ namespace SkylinesLink.Mod.Native
             if (!servingCompleted)
             {
                 Check(city.QualifiedForRead, "NORMAL_CITY_READ_QUALIFICATION_LOST");
-                if (ElapsedSeconds(servingStarted) < ServingSeconds) return;
+                if (ElapsedSeconds(servingStarted) < RequiredServingSeconds) return;
                 var sample = Capture();
                 CheckActiveScope(sample, "ready", active!);
                 Check(Generation(sample) == Generation(active!), "NORMAL_CITY_READ_SCOPE_CHANGED");
@@ -392,7 +419,10 @@ namespace SkylinesLink.Mod.Native
         private void AdvanceStop()
         {
             compositionRoundTrip?.ReleaseInputSnapshot();
+            externalPreview?.RequestStop();
+            externalPreview?.Advance();
             if (SuppressAutomaticReturn) city?.SuspendAutomaticReturnForNativeUnknown();
+            if (HoldingCityForPreviewCleanup) return;
             // Stop intent does not revoke the city's actual load/return owner.
             // Keep the ordinary connection alive until that owner truly releases.
             if (city != null && !city.ResourcesReleased && !SuppressAutomaticReturn)
@@ -447,12 +477,13 @@ namespace SkylinesLink.Mod.Native
         internal JObject Read()
         {
             lock (sync)
-                return new JObject {
+            {
+                var result = new JObject {
                     ["phase"] = PhaseName(),
                     ["checksPassed"] = Passed, ["resourcesReleased"] = ResourcesReleased, ["finished"] = Finished,
                     ["applySource"] = "ConnectionSettings.ApplyConnection", ["applyAttempted"] = applyAttempted,
-                    ["applyObservedBusy"] = applyObservedBusy, ["servingWindowSeconds"] = ServingSeconds,
-                    ["servingWindowCompleted"] = servingCompleted, ["externalClientResultRequired"] = true,
+                    ["applyObservedBusy"] = applyObservedBusy, ["servingWindowSeconds"] = RequiredServingSeconds,
+                    ["servingWindowCompleted"] = servingCompleted, ["externalClientResultRequired"] = !parallelPreview,
                     ["guardChecks"] = guardChecks, ["fullUICaptures"] = fullUICaptures,
                     ["staleGuardRejected"] = staleGuardRejected,
                     ["before"] = ProjectSample(before),
@@ -467,6 +498,9 @@ namespace SkylinesLink.Mod.Native
                     ["failureCode"] = failureCode == null ? JValue.CreateNull() : new JValue(failureCode),
                     ["exceptionType"] = exceptionType == null ? JValue.CreateNull() : new JValue(exceptionType)
                 };
+                if (parallelPreview) result["parallelPreview"] = externalPreview == null ? JValue.CreateNull() : externalPreview.Snapshot();
+                return result;
+            }
         }
 
         private JToken ProjectSample(JObject? sample)

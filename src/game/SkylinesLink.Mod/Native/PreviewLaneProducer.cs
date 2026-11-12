@@ -366,6 +366,25 @@ namespace SkylinesLink.Mod.Native
             for (int i = 0; i < rows.Length; i++) rows[i] = buffer[i];
             inspectedDefaults = rows;
             Require(buffer.Length == 4, "PREVIEW_LANE_DEFAULT_COUNT_CHANGED");
+            RequireUtilityDefaultRows(entities, rows);
+            return rows;
+        }
+
+        // Shared fixed-fixture input check: it does not run the native lane
+        // system or infer that every orphan node has no output.
+        internal static void RequireStandaloneUtilityDefaults(EntityManager entities, Entity prefab)
+        {
+            RequirePrefab(entities, prefab);
+            Require(entities.HasBuffer<DefaultNetLane>(prefab), "PREVIEW_LANE_DEFAULT_COUNT_CHANGED");
+            var buffer = entities.GetBuffer<DefaultNetLane>(prefab, true);
+            Require(buffer.Length == 4, "PREVIEW_LANE_DEFAULT_COUNT_CHANGED");
+            var rows = new DefaultNetLane[4];
+            for (int i = 0; i < rows.Length; i++) rows[i] = buffer[i];
+            RequireUtilityDefaultRows(entities, rows);
+        }
+
+        private static void RequireUtilityDefaultRows(EntityManager entities, DefaultNetLane[] rows)
+        {
             const LaneFlags limits = LaneFlags.LeftLimit | LaneFlags.RightLimit | LaneFlags.Utility;
             Require(rows[0].m_Position.Equals(new float3(-0.5f, 9f, 0f))
                 && rows[1].m_Position.Equals(new float3(0f, 9f, 0f))
@@ -378,7 +397,6 @@ namespace SkylinesLink.Mod.Native
                 "PREVIEW_LANE_DEFAULT_BRANCH_CHANGED");
             RequireLanePrefab(entities, rows[0].m_Lane, LaneFlags.Utility, 16);
             RequireLanePrefab(entities, rows[2].m_Lane, LaneFlags.Utility | LaneFlags.Underground, 15);
-            return rows;
         }
 
         private static void RequireLanePrefab(EntityManager entities, Entity prefab, LaneFlags flags, int typeCount)

@@ -29,6 +29,8 @@ The latest development source records optional generated members, bounded typed 
 
 These checks do not establish a public construction API, general asset support, dynamic player/AI coexistence or actual service operation. A separate menu-only exit control without the product assemblies also ended with a native access violation. This narrows the observed preconditions; it does not identify the cause or prove that the process-local background policy is unrelated.
 
+A separate default-pipeline preview prerequisite now has explicit phase ordering, bounded native-method inspection and one cleanup path for partial initialization. Its latest game run rejected a registered ToolBase patch before creating the external actor or emitting a preview, then released the owned resources. The preview/hold/cancel sequence has not passed. This experiment neither qualifies modified tool providers nor establishes simultaneous player/AI operation; normal process exit also remains unresolved.
+
 ### Build and verify
 
 Use Windows, PowerShell 7 and stable tools meeting the minimum versions in the [toolchain guide](toolchain.md). VS Code is sufficient as an editor. From a checkout:
@@ -83,6 +85,8 @@ Player installation and updates, the game UI, full city information and actions,
 操作与历史组件覆盖身份、持久意图、有界工作、恢复及真实未知结果。原生施工探针是由显式编译符号隔离的开发实验，不是公开建筑工具或通用施工引擎。
 
 ### 原生实验更新
+
+新增的默认管线预览前提实验明确了阶段排序、有界原生方法检查和部分初始化的统一收尾。最新实机在创建外部工具或输出预览前，因已注册的 ToolBase 补丁而拒绝，随后释放自有资源。预览／保持／取消尚未通过；这个实验不证明已适配修改过的工具 Provider，也不证明玩家与 AI 可同时操作。进程正常退出问题仍未解决。
 
 最新开发源码增加实际可选生成成员、有界的类型化拒绝诊断，以及取消预览与付款前重建候选的逐值比对。游戏1.6.4的有限建筑实验完成了正常预览／取消／建造、迁移和原址不同资产新建。实机合格的内部源码与后续仅说明文字的修订分别记录，不能将源码更新自动视为重新通过实机。
 
