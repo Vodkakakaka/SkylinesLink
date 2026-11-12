@@ -68,6 +68,7 @@ namespace SkylinesLink.Mod.Native
         private Stage stage;
         private string? failureCode, exceptionType;
         private DefinitionProducerPatchProbe patch = new DefinitionProducerPatchProbe();
+        private DefinitionProducerPatchProbe? latestPatchObservation;
 
         internal ParallelPreviewProbe(World source, UpdateSystem updates, Action requireScope)
         { this.source = source; this.updates = updates; this.requireScope = requireScope; }
@@ -757,6 +758,8 @@ namespace SkylinesLink.Mod.Native
                 {
                     patchFailureType = type.FullName;
                     result.Reason = batch.Reason;
+                    result.CopyPatchSampleFrom(batch);
+                    latestPatchObservation = result;
                     return result;
                 }
                 if (result.HarmonyMvid.Length == 0) result.HarmonyMvid = batch.HarmonyMvid;
@@ -772,6 +775,7 @@ namespace SkylinesLink.Mod.Native
                 result.MethodSetSha256 = BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(identity.ToString())))
                     .Replace("-", "").ToLowerInvariant();
             result.Qualified = true; result.Reason = "NO_REGISTERED_EXTERNAL_PREVIEW_PATCH_OBSERVED";
+            latestPatchObservation = result;
             return result;
         }
         private static void AddMethods(Type type, List<MethodBase> methods)
@@ -784,6 +788,30 @@ namespace SkylinesLink.Mod.Native
             var observed = ObservePipeline();
             Require(observed.Qualified && observed.MethodSetSha256 == patch.MethodSetSha256,
                 "EXTERNAL_PREVIEW_NATIVE_PATCH_CONTRACT_CHANGED");
+        }
+
+        private JToken PatchObservationSnapshot()
+        {
+            var observation = latestPatchObservation;
+            if (observation == null) return JValue.CreateNull();
+            // Fixed keys, two 41-byte declaration IDs and 256 encoded text bytes
+            // keep this compact JSON addition below 1 KiB, including escaping.
+            return new JObject {
+                ["source"] = ReferenceEquals(observation, patch) ? "initial" : "recheck",
+                ["methodsChecked"] = observation.MethodsChecked,
+                ["sample"] = !observation.PatchSampleObserved ? JValue.CreateNull() : new JObject {
+                    ["originalIdentity"] = Value(observation.PatchSampleOriginalIdentity),
+                    ["originalMethod"] = Value(observation.PatchSampleOriginalName),
+                    ["category"] = Value(observation.PatchSampleCategory),
+                    ["owner"] = Value(observation.PatchSampleOwner),
+                    ["patchIdentity"] = Value(observation.PatchSampleMethodIdentity),
+                    ["patchMethod"] = Value(observation.PatchSampleMethodName),
+                    ["methodPatchCount"] = observation.PatchSampleMethodPatchCount,
+                    ["sampleIncomplete"] = observation.PatchSampleIncomplete,
+                    ["fieldsMissing"] = observation.PatchSampleFieldsMissing,
+                    ["truncated"] = observation.PatchSampleTruncated
+                }
+            };
         }
 
         internal JObject Snapshot() => new JObject {
@@ -815,6 +843,7 @@ namespace SkylinesLink.Mod.Native
             ["nativeMethodsChecked"] = patch.MethodsChecked,
             ["nativeTypesDeclared"] = nativeTypesDeclared, ["nativeMethodsDeclared"] = nativeMethodsDeclared,
             ["patchFailureType"] = patchFailureType == null ? JValue.CreateNull() : new JValue(patchFailureType),
+            ["patchObservation"] = PatchObservationSnapshot(),
             ["definitionResourcesReleased"] = definition.ResourcesReleased,
             ["ownedDefinitionQueryRetained"] = definitionsCreated, ["ownedTempQueryRetained"] = tempsCreated,
             ["inputs"] = (JToken?)inputReceipt?.DeepClone() ?? JValue.CreateNull(),

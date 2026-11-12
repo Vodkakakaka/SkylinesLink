@@ -17,6 +17,10 @@ namespace SkylinesLink.Mod.Native
         internal bool Qualified;
         internal int MethodsChecked, PatchedMethods;
         internal string Reason = "PATCH_OBSERVATION_UNAVAILABLE", HarmonyMvid = "", MethodSetSha256 = "";
+        internal bool PatchSampleObserved, PatchSampleIncomplete, PatchSampleFieldsMissing, PatchSampleTruncated;
+        internal int PatchSampleMethodPatchCount;
+        internal string? PatchSampleOriginalIdentity, PatchSampleOriginalName, PatchSampleCategory, PatchSampleOwner;
+        internal string? PatchSampleMethodIdentity, PatchSampleMethodName;
 
         internal static DefinitionProducerPatchProbe Observe()
         {
@@ -101,19 +105,28 @@ namespace SkylinesLink.Mod.Native
                     result.MethodSetSha256 = BitConverter.ToString(sha.ComputeHash(identityBytes)).Replace("-", "").ToLowerInvariant();
                 foreach (MethodBase method in methods)
                 {
-                    // Only public GetPatchInfo is invoked. Private producer
-                    // methods are metadata keys, never invoked by reflection.
+                    // GetPatchInfo and the inspected public PatchMethod getter
+                    // only expose metadata. Producer/patch bodies are not invoked.
                     object? info = getInfo.Invoke(null, new object[] { method });
                     result.MethodsChecked++;
                     if (info == null) continue;
                     if (info.GetType() != patches) return result;
                     bool patched = false;
+                    int methodPatchCount = 0;
                     foreach (FieldInfo category in categories)
                     {
-                        if (!(category.GetValue(info) is ICollection values) || values.Count < 0 || values.Count > 4096) return result;
-                        patched |= values.Count > 0;
+                        if (!(category.GetValue(info) is ICollection values)) return result;
+                        int count = values.Count;
+                        if (count < 0 || count > 4096) return result;
+                        patched |= count > 0;
+                        methodPatchCount += count;
                     }
-                    if (patched) result.PatchedMethods++;
+                    if (patched)
+                    {
+                        result.PatchedMethods++;
+                        if (!result.PatchSampleObserved)
+                            result.ObserveFirstPatch(method, info, categories, methodPatchCount, harmony);
+                    }
                 }
                 result.Qualified = result.PatchedMethods == 0;
                 result.Reason = result.Qualified ? "NO_REGISTERED_" + kind + "_PATCH_OBSERVED" : kind + "_PATCHES_UNQUALIFIED";
@@ -122,6 +135,81 @@ namespace SkylinesLink.Mod.Native
             // This is not a native-detour detector, lock, sandbox or guarantee
             // against arbitrary code/TOCTOU. Provider qualification stays open.
             return result;
+        }
+
+        private void ObserveFirstPatch(MethodBase original, object info, FieldInfo[] categories, int patchCount, Assembly harmony)
+        {
+            PatchSampleObserved = PatchSampleIncomplete = true;
+            PatchSampleMethodPatchCount = patchCount;
+            try
+            {
+                // Declaration IDs are compact; canonical qualification keys above
+                // still retain the complete declaring/generic context separately.
+                PatchSampleOriginalIdentity = MetadataIdentity(original);
+                PatchSampleOriginalName = DiagnosticText(original.Name, 64);
+                object? first = null;
+                foreach (FieldInfo category in categories)
+                {
+                    if (!(category.GetValue(info) is ICollection values) || values.Count < 0 || values.Count > 4096)
+                    { PatchSampleFieldsMissing = true; return; }
+                    if (values.Count == 0) continue;
+                    PatchSampleCategory = category.Name;
+                    // First record in fixed category order, not execution order
+                    // or a complete patch list. Never enumerate additional rows.
+                    foreach (object value in values) { first = value; break; }
+                    break;
+                }
+                Type? patchType = harmony.GetType("HarmonyLib.Patch", false);
+                if (first == null || patchType == null || first.GetType() != patchType)
+                { PatchSampleFieldsMissing = true; return; }
+                FieldInfo? owner = patchType.GetField("owner", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                PropertyInfo? method = patchType.GetProperty("PatchMethod", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                MethodInfo? getter = method?.GetGetMethod();
+                if (owner == null || owner.FieldType != typeof(string) || method == null || method.PropertyType != typeof(MethodInfo)
+                    || getter == null || getter.IsStatic || getter.GetParameters().Length != 0)
+                { PatchSampleFieldsMissing = true; return; }
+                if (owner.GetValue(first) is string ownerText) PatchSampleOwner = DiagnosticText(ownerText, 128);
+                else PatchSampleFieldsMissing = true;
+                // In inspected 2.2.2 this getter resolves metadata from loaded
+                // modules only. Patch.GetMethod may invoke a factory; never use it.
+                if (!(method.GetValue(first, null) is MethodInfo patchMethod))
+                { PatchSampleFieldsMissing = true; return; }
+                PatchSampleMethodIdentity = MetadataIdentity(patchMethod);
+                PatchSampleMethodName = DiagnosticText(patchMethod.Name, 64);
+            }
+            catch (Exception) { PatchSampleFieldsMissing = true; }
+            // Diagnostic availability never changes qualification or retirement.
+        }
+
+        internal void CopyPatchSampleFrom(DefinitionProducerPatchProbe source)
+        {
+            PatchSampleObserved = source.PatchSampleObserved; PatchSampleIncomplete = source.PatchSampleIncomplete;
+            PatchSampleFieldsMissing = source.PatchSampleFieldsMissing; PatchSampleTruncated = source.PatchSampleTruncated;
+            PatchSampleMethodPatchCount = source.PatchSampleMethodPatchCount;
+            PatchSampleOriginalIdentity = source.PatchSampleOriginalIdentity; PatchSampleOriginalName = source.PatchSampleOriginalName;
+            PatchSampleCategory = source.PatchSampleCategory; PatchSampleOwner = source.PatchSampleOwner;
+            PatchSampleMethodIdentity = source.PatchSampleMethodIdentity; PatchSampleMethodName = source.PatchSampleMethodName;
+        }
+
+        private static string MetadataIdentity(MethodBase method) =>
+            method.Module.ModuleVersionId.ToString("N") + ":" + method.MetadataToken.ToString("x8");
+
+        private string DiagnosticText(string value, int encodedBudget)
+        {
+            int length = 0, used = 0;
+            while (length < value.Length)
+            {
+                char c = value[length];
+                // Six bytes per non-ASCII/control code unit also bounds JSON
+                // escaping. Quotes/backslashes need two; printable ASCII one.
+                int cost = c < 32 || c >= 127 ? 6 : c == '"' || c == '\\' ? 2 : 1;
+                if (used + cost > encodedBudget) break;
+                used += cost; length++;
+            }
+            if (length == value.Length) return value;
+            if (length > 0 && char.IsHighSurrogate(value[length - 1]) && char.IsLowSurrogate(value[length])) length--;
+            PatchSampleTruncated = true;
+            return value.Substring(0, length);
         }
 
         private static bool AllowedModule(MethodBase method, string kind)

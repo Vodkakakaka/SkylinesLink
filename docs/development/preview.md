@@ -31,6 +31,8 @@ These checks do not establish a public construction API, general asset support, 
 
 A separate default-pipeline preview prerequisite now has explicit phase ordering, bounded native-method inspection and one cleanup path for partial initialization. Its latest game run rejected a registered ToolBase patch before creating the external actor or emitting a preview, then released the owned resources. The preview/hold/cancel sequence has not passed. This experiment neither qualifies modified tool providers nor establishes simultaneous player/AI operation; normal process exit also remains unresolved.
 
+The development probe can retain a bounded prefix of registered-patch metadata to distinguish the original method, patch owner and patch method. The added output stays below 1 KiB and distinguishes initial inspection from a recheck. It does not invoke patch bodies or factories, change qualification rules or become a condition for cleanup. These diagnostic fields have build and offline validation; their actual game observation is still pending.
+
 ### Build and verify
 
 Use Windows, PowerShell 7 and stable tools meeting the minimum versions in the [toolchain guide](toolchain.md). VS Code is sufficient as an editor. From a checkout:
@@ -87,6 +89,8 @@ Player installation and updates, the game UI, full city information and actions,
 ### 原生实验更新
 
 新增的默认管线预览前提实验明确了阶段排序、有界原生方法检查和部分初始化的统一收尾。最新实机在创建外部工具或输出预览前，因已注册的 ToolBase 补丁而拒绝，随后释放自有资源。预览／保持／取消尚未通过；这个实验不证明已适配修改过的工具 Provider，也不证明玩家与 AI 可同时操作。进程正常退出问题仍未解决。
+
+开发探针补充了已注册补丁的有界元数据前缀，用于区分原方法、补丁归属及补丁方法；新增输出小于 1 KiB，并区分初次检查与复检。它不调用补丁或工厂代码，不改变资格规则，也不成为清理的前置条件。这些诊断字段已完成构建和离线核验，实际游戏观测仍待验证。
 
 最新开发源码增加实际可选生成成员、有界的类型化拒绝诊断，以及取消预览与付款前重建候选的逐值比对。游戏1.6.4的有限建筑实验完成了正常预览／取消／建造、迁移和原址不同资产新建。实机合格的内部源码与后续仅说明文字的修订分别记录，不能将源码更新自动视为重新通过实机。
 
