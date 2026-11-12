@@ -420,15 +420,21 @@ namespace SkylinesLink.Mod.Native
         private static void RequireMainThread() => Require(MainThreadDispatcher.isMainThread, "SUBNET_REFERENCES_MAIN_THREAD_REQUIRED");
         private static void Require(bool condition, string code) { if (!condition) throw Failure(code); }
         private static Rejection Failure(string code) => new Rejection(code);
-        private sealed class Rejection : Exception { internal readonly string Code; internal Rejection(string code) : base(code) { Code = code; } }
+        private sealed class Rejection : Exception, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal Rejection(string code) : base(code)
+            { Code = code; }
+        }
 
         private sealed class Bindings
         {
             internal readonly FieldInfo SubNets;
             internal Bindings()
             {
-                Require(typeof(NativeReferencesSystem).Module.ModuleVersionId.ToString("N") == "e15551e93dea48558dde1da3cea7d7ef"
-                    && typeof(World).Module.ModuleVersionId.ToString("N") == "3d6b23aeb28144a6a5f4cbd5fd3d75e6", "SUBNET_REFERENCES_NATIVE_BUILD_UNQUALIFIED");
+                Require(NativeConstructionBuild.Game(typeof(NativeReferencesSystem).Module)
+                    && NativeConstructionBuild.Entities(typeof(World).Module), "SUBNET_REFERENCES_NATIVE_BUILD_UNQUALIFIED");
                 FieldInfo? value = typeof(NativeReferencesSystem).GetField("m_SubNetQuery",
                     BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
                 Require(value != null && value.DeclaringType == typeof(NativeReferencesSystem) && value.FieldType == typeof(EntityQuery)

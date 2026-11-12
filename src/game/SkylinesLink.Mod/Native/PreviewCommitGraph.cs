@@ -28,9 +28,14 @@ namespace SkylinesLink.Mod.Native
         internal bool DefaultRelationsStable { get; private set; }
         internal bool InitialElectricityAbsent { get; }
         internal (Entity Root, Entity Node) BuildingAndNode => (members[0], members[1]);
+        // Asset-required rows were proved at capture. This graph owns only the
+        // structural bound: two parents, the admitted node row, and actual leaves.
+        internal static bool IsNewMemberCount(int count) => count >= 2 + SubObjectGenerationPreflight.NormalNodeRows
+            && count <= 2 + SubObjectGenerationPreflight.MaximumNormalCreates;
 
         internal PreviewCommitGraph(EntityManager entities, Entity[] graph)
         {
+            Require(IsNewMemberCount(graph.Length), "PREVIEW_COMMIT_MEMBER_COUNT_UNCONFIRMED");
             members = (Entity[])graph.Clone();
             prefabs = new Entity[members.Length];
             owners = new Entity[members.Length];
@@ -47,6 +52,13 @@ namespace SkylinesLink.Mod.Native
                     ? entities.GetComponentData<Owner>(member).m_Owner : Entity.Null;
             }
             Require(owners[0] == Entity.Null && owners[1] == members[0], "PREVIEW_COMMIT_PARENT_CHANGED");
+            int nodeChildren = 0;
+            for (int index = 2; index < members.Length; index++)
+            {
+                Require(owners[index] == members[0] || owners[index] == members[1], "PREVIEW_COMMIT_CHILD_OWNER_UNCONFIRMED");
+                if (owners[index] == members[1]) nodeChildren++;
+            }
+            Require(nodeChildren == 1, "PREVIEW_COMMIT_NODE_CHILD_COUNT_UNCONFIRMED");
             placement = entities.GetComponentData<Transform>(members[0]);
             price = previewTemps[0].m_Cost;
             Require(price > 0 && entities.HasComponent<Building>(members[0]) && entities.HasComponent<Game.Net.Node>(members[1]),
@@ -249,7 +261,7 @@ namespace SkylinesLink.Mod.Native
             for (int parent = 0; parent < 2; parent++)
             {
                 var children = entities.GetBuffer<Game.Objects.SubObject>(members[parent], true);
-                Require(children.Length == (parent == 0 ? 4 : 1), "PREVIEW_COMMIT_SUBOBJECT_COUNT_CHANGED");
+                Require(children.Length <= members.Length - 2, "PREVIEW_COMMIT_SUBOBJECT_COUNT_CHANGED");
                 foreach (var row in children)
                 {
                     int index = Array.IndexOf(members, row.m_SubObject, 2);
@@ -257,6 +269,7 @@ namespace SkylinesLink.Mod.Native
                         "PREVIEW_COMMIT_SUBOBJECT_EDGE_CHANGED");
                 }
             }
+            Require(seen.Count == members.Length - 2, "PREVIEW_COMMIT_SUBOBJECT_COUNT_CHANGED");
             for (int index = 0; index < members.Length; index++)
             {
                 var owner = entities.HasComponent<Owner>(members[index])

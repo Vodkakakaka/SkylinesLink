@@ -53,10 +53,12 @@ namespace SkylinesLink.Mod.Native
             ? MathUtils.Intersect(bounds.m_Bounds.xz, search.xz)
             : MathUtils.Intersect(bounds.m_Bounds, search);
 
-        internal sealed class Rejection : Exception
+        internal sealed class Rejection : Exception, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code) : base(code) { Code = code; }
+            internal Rejection(string code) : base(code)
+            { Code = code; }
         }
     }
 }

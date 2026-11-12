@@ -14,7 +14,7 @@ using Node = Game.Net.Node;
 
 namespace SkylinesLink.Mod.Native
 {
-    // The seven live entities are already proven by the two owning graph ports.
+    // The live entities are already proven by the two owning graph ports.
     // Preserve the native owner predicate when including their Disabled chunks.
     internal static class PreviewLaneInputs
     {
@@ -46,19 +46,25 @@ namespace SkylinesLink.Mod.Native
                 else
                 {
                     var rows = ReadObjectRows(entities, prefab, ref remainingObjectRows);
-                    bool construction = entities.HasComponent<UnderConstruction>(entity);
-                    int? upgrades = Count<InstalledUpgrade>(entities, entity);
+                    var state = ReadObjectState(entities, entity);
                     owner["declaredLanes"] = rows;
-                    owner["underConstruction"] = construction;
-                    owner["destroyed"] = entities.HasComponent<Destroyed>(entity);
-                    owner["upgrades"] = Number(upgrades);
+                    owner["underConstruction"] = state.UnderConstruction;
+                    owner["destroyed"] = state.Destroyed;
+                    owner["upgrades"] = Number(state.Upgrades);
                     emptyBranches &= !matches || (liveLanes == 0 && (rows is not JArray table || table.Count == 0)
-                        && !construction && (upgrades ?? 0) == 0);
+                        && !state.UnderConstruction && (state.Upgrades ?? 0) == 0);
                 }
                 owners.Add(owner);
             }
             return new JObject { ["owners"] = owners, ["emptyInputsObserved"] = emptyBranches, ["nativeInvoked"] = false };
         }
+
+        internal static (bool Building, bool Transform, bool Owner, bool Edge, bool Node,
+            bool UnderConstruction, bool Destroyed, int? Upgrades) ReadObjectState(EntityManager entities, Entity entity) =>
+            (entities.HasComponent<Building>(entity), entities.HasComponent<Transform>(entity),
+                entities.HasComponent<Owner>(entity), entities.HasComponent<Edge>(entity), entities.HasComponent<Node>(entity),
+                entities.HasComponent<UnderConstruction>(entity), entities.HasComponent<Destroyed>(entity),
+                Count<InstalledUpgrade>(entities, entity));
 
         private static JObject ReadNode(EntityManager entities, Entity entity, Entity prefab)
         {

@@ -124,10 +124,14 @@ namespace SkylinesLink.Mod.Native
         private readonly long[] phaseTicks = new long[(int)Phase.Release + 1];
         private uint enteredPhases;
         private Phase? currentPhase;
+        private Phase? failedPhase;
+        private string? failureSite;
         private long phaseStarted;
 
         internal bool Finished => finished;
         internal string? FailureCode => failureCode;
+        internal NewObjectPreviewEvidence? ObservedPreviewEvidence { get; private set; }
+        internal JObject? CancellationSnapshot() => previewCancellation?.Snapshot();
         internal bool StructuralStateUnknown => compositionPublication?.EnteredPlayback == true && !compositionPublication.PlaybackReturned
             || previewCancellation?.StructuralStateUnknown == true || previewCommit?.StructuralStateUnknown == true;
         internal Entity PublishedComposition => compositionPublication?.PublishedEntity ?? Entity.Null;
@@ -179,7 +183,8 @@ namespace SkylinesLink.Mod.Native
                     : previewCancellation?.Passed == true && previewCommitRehearsal?.RehearsalPassed == true)))
             && ResourcesReleased && protection?.Passed == true && failureCode == null;
 
-        internal void RunOnce(World source, ObjectDefinitionPayload payload, Action requireCurrentScope, Entity expectedComposition, bool submit = false)
+        internal void RunOnce(World source, ObjectDefinitionPayload payload, Action requireCurrentScope, Entity expectedComposition,
+            bool submit = false, bool resolveComposition = false, NewObjectPreviewEvidence? expectedPreview = null)
         {
             if (ran) throw new InvalidOperationException("OBJECT_GENERATION_ALREADY_ATTEMPTED");
             ran = true;
@@ -188,6 +193,7 @@ namespace SkylinesLink.Mod.Native
             try
             {
                 Check(MainThreadDispatcher.isMainThread, "OBJECT_GENERATION_MAIN_THREAD_REQUIRED");
+                Check(!resolveComposition || !submit && expectedComposition == Entity.Null, "COMPOSITION_RESOLUTION_MODE_INVALID");
                 if (source == null) throw new ArgumentNullException(nameof(source));
                 if (payload == null) throw new CheckFailure("OBJECT_GENERATION_PAYLOAD_SOURCE_MISMATCH");
                 Check(ReferenceEquals(payload.Source, source), "OBJECT_GENERATION_PAYLOAD_SOURCE_MISMATCH");
@@ -361,7 +367,7 @@ namespace SkylinesLink.Mod.Native
                 admission = new ObjectGenerationPreflight();
                 admission.Run(source, payload, requireCurrentScope);
                 Check(admission.Passed && admission.ResourcesReleased && admission.SourceTreeReadCompleted,
-                    "OBJECT_GENERATION_SPATIAL_ADMISSION_UNQUALIFIED");
+                    admission.FailureCode ?? "OBJECT_GENERATION_SPATIAL_ADMISSION_UNQUALIFIED");
                 // Do not yield or invoke player/provider callbacks between the
                 // successful tree witness and this native read of the same tree.
                 producer.GenerateOnce(payload, definitions, admission);
@@ -441,7 +447,7 @@ namespace SkylinesLink.Mod.Native
                 Check(subObjectPayload != null, "SUBOBJECT_GENERATION_TYPED_OUTPUT_UNSUPPORTED");
                 subObjectGenerationPassed = true;
                 BeginPhase(Phase.SubObjectMaterialization);
-                subObjectReferences.BindParents(generatedEntity.Entity, generatedNode.Entity, requireCurrentScope);
+                subObjectReferences.BindParents(subObjectPayload!, requireCurrentScope);
                 generatedSubObjects = new GeneratedSubObjectEntities(source, subObjectPayload!, 1);
                 generatedSubObjects.BindParentGraphGuard(subObjectReferences.RequireCurrentGraph);
                 generatedSubObjects.Create(requireCurrentScope);
@@ -458,7 +464,7 @@ namespace SkylinesLink.Mod.Native
                 postApplicability.RunOnce();
                 Check(postApplicability.ChecksPassed, "POST_GENERATION_APPLICABILITY_UNQUALIFIED");
                 BeginPhase(Phase.CompositionSelectionPreflight);
-                compositionInputs = new CompositionSelectionPreflight(source, generatedEntity.Entity, generatedNode.Entity, 1,
+                compositionInputs = new CompositionSelectionPreflight(subObjectPayload!, generatedNode.Entity,
                     requireCurrentScope, subObjectReferences.RequireLinkedGraph);
                 compositionInputs.RunOnce();
                 Check(compositionInputs.Passed && compositionInputs.ResourcesReleased, "COMPOSITION_INPUTS_UNQUALIFIED");
@@ -469,7 +475,8 @@ namespace SkylinesLink.Mod.Native
                 compositionReceipt = compositionProducer.Receipt;
                 Check(compositionReceipt != null, "COMPOSITION_RECEIPT_UNAVAILABLE"); compositionObserved = true;
                 if (expectedComposition == Entity.Null)
-                    Check(compositionProducer.NeedsPublication, "COMPOSITION_INITIAL_CACHE_MISS_REQUIRED");
+                    Check(compositionProducer.NeedsPublication || resolveComposition && compositionReceipt!.ObservedSelection,
+                        "COMPOSITION_INITIAL_CACHE_MISS_REQUIRED");
                 else
                     Check(compositionReceipt!.ObservedSelection && compositionReceipt.After.m_Composition == expectedComposition,
                         "COMPOSITION_REUSE_ENTITY_MISMATCH");
@@ -511,7 +518,7 @@ namespace SkylinesLink.Mod.Native
                     Check(nodeGeometryProducer.GeometryPassed && !NativeWorkMayReadSource, "NODE_GEOMETRY_OUTPUT_UNQUALIFIED");
                     RequireLivePreviewGraph(requireCurrentScope);
                     BeginPhase(Phase.PreviewFollowups);
-                    ObservePreviewFollowups(source, requireCurrentScope, submit);
+                    ObservePreviewFollowups(source, requireCurrentScope, submit, payload, subObjectPayload!, expectedPreview);
                 }
                 else
                 {
@@ -524,18 +531,15 @@ namespace SkylinesLink.Mod.Native
             }
             catch (Exception error)
             {
-                Fail(error switch {
-                    CheckFailure check => check.Code,
-                    PreviewLaneExecution.Rejection lane => lane.Code,
-                    PreviewRoadExecution.Rejection road => road.Code,
-                    PreviewValidationExecution.Rejection validation => validation.Code,
-                    PreviewCancellationExecution.Rejection cancellation => cancellation.Code,
-                    PreviewCommitExecution.Rejection commit => commit.Code,
-                    CompositionPublication.Rejection publication => publication.Code,
-                    CompositionInitializationExpectation.Rejection initialization => initialization.Code,
-                    _ => "OBJECT_GENERATION_LIFECYCLE_FAILED"
-                });
-                exceptionType = ShortType(error);
+                Fail(NativeProbeFailure.CodeOf(error) ?? "OBJECT_GENERATION_LIFECYCLE_FAILED");
+                var cause = error.GetBaseException();
+                exceptionType = ShortType(cause);
+                var method = cause.TargetSite;
+                if (method != null)
+                {
+                    string site = (method.DeclaringType?.Name ?? "") + "." + method.Name;
+                    failureSite = site.Length <= 128 ? site : site.Substring(0, 128);
+                }
             }
             finally
             {
@@ -627,7 +631,8 @@ namespace SkylinesLink.Mod.Native
             requireCurrentScope();
         }
 
-        private void ObservePreviewFollowups(World source, Action requireScope, bool submit)
+        private void ObservePreviewFollowups(World source, Action requireScope, bool submit,
+            ObjectDefinitionPayload definition, GeneratedSubObjectsPayload cohort, NewObjectPreviewEvidence? expectedPreview)
         {
             ReplacePreviewRegistrations();
             // The initialized components have already been read back. Close
@@ -640,12 +645,12 @@ namespace SkylinesLink.Mod.Native
             GuardLivePreviewGraph(requireScope);
 
             var children = generatedSubObjects!;
-            Check(children.TargetCount == 5, "PREVIEW_FOLLOWUP_GRAPH_COUNT_CHANGED");
+            Check(PreviewCommitGraph.IsNewMemberCount(children.TargetCount + 2), "PREVIEW_FOLLOWUP_GRAPH_COUNT_CHANGED");
             var graph = new Entity[children.TargetCount + 2];
             graph[0] = generatedEntity!.Entity;
             graph[1] = generatedNode!.Entity;
-            // Follow-up consumers bind fixed role slots. Native child creation
-            // order has no ownership meaning across chunks.
+            // Preserve the receipt order by reading actual ownership. Native
+            // child creation order has no ownership meaning across chunks.
             var entities = source.EntityManager;
             int nextBuildingSlot = 2, nodeChildSlot = graph.Length - 1, nativeNodeChildIndex = -1;
             for (int i = 0; i < children.TargetCount; i++)
@@ -674,7 +679,7 @@ namespace SkylinesLink.Mod.Native
             Check(!protection!.Contains<PreviewLaneBarrier>() && !protection.Contains<PreviewLaneSkipSink>()
                 && !protection.Contains<PreviewLaneProducer>(), "PREVIEW_LANE_OWNER_ALREADY_PRESENT");
             previewLane = new PreviewLaneExecution();
-            previewLane.RunOnce(source, graph[0], graph[1], appended, requireScope,
+            previewLane.RunOnce(cohort, appended, requireScope,
                 () => GuardLivePreviewGraph(requireScope), ObserveProtection);
             GuardLivePreviewGraph(requireScope);
             Check(JToken.DeepEquals(laneInputs, PreviewLaneInputs.Read(source.EntityManager, graph)),
@@ -707,6 +712,10 @@ namespace SkylinesLink.Mod.Native
             GuardLivePreviewGraph(requireScope);
             previewFollowups["costs"] = costs.Complete(source, graph);
             GuardLivePreviewGraph(requireScope);
+            ObservedPreviewEvidence = new NewObjectPreviewEvidence(definition, entities, cohort, children, costs.ObservedCost!.Value);
+            Check(expectedPreview == null || ObservedPreviewEvidence.Matches(expectedPreview),
+                "REBUILD_CANCELLED_PREVIEW_CHANGED");
+            previewFollowups["cancelledPreviewMatched"] = expectedPreview == null ? JValue.CreateNull() : new JValue(true);
 
             ReleaseNodeCost();
             Check(nodeCostReleased && appended.Remove(nodeCostProducer), "PREVIEW_COST_RELEASE_UNCONFIRMED");
@@ -1233,7 +1242,7 @@ namespace SkylinesLink.Mod.Native
             ["sourceDefinitionsCreationReturned"] = definitions?.CreateReturned ?? false,
             ["generationPlaybackCalled"] = false,
             ["playbackCalled"] = (resolutionBarrier?.PlaybackStarted ?? false) || (initializationBarrier?.PlaybackStarted ?? false),
-                ["scope"] = "Scoped root/node generation and retirement. Native selection observes direct node writes on a cache hit. On a miss a separate typed batch can publish a World-owned composition. Default initialization and reuse are observed by the round trip. Full preview, validation, normal cancellation, fees and construction remain unqualified."
+                ["scope"] = "This section reports scoped native generation, value readback and retirement. Composition ownership, normal cancellation, payment and world handoff have separate results under compositionRoundTrip. Read those results for their actual outcome; this section alone does not qualify complete asset, geometry or operational coverage."
         };
 
         private JObject BuildingInitializationFacts() => new JObject {
@@ -1351,12 +1360,58 @@ namespace SkylinesLink.Mod.Native
                 ["includesStatusSerialization"] = false, ["cpuOrPercentileMeasurement"] = false };
         }
 
-        private void Fail(string code) { failureCode ??= code; }
+        internal JObject? FailureSnapshot()
+        {
+            if (failureCode == null) return null;
+            var snapshot = new JObject {
+                ["code"] = failureCode, ["phase"] = failedPhase?.ToString(), ["type"] = exceptionType, ["site"] = failureSite
+            };
+            if (failedPhase == Phase.PreviewFollowups && failureCode.StartsWith("PREVIEW_LANE_", StringComparison.Ordinal))
+                snapshot["laneInputs"] = previewLane?.InputSnapshot();
+            if (failedPhase == Phase.SubObjectGeneration && subObjectInputSurvey?["prefabs"] is JArray prefabs && prefabs.Count == 2)
+            {
+                snapshot["declaredRootChildren"] = prefabs[0]?["subObjects"]?["length"]?.DeepClone();
+                snapshot["declaredNodeChildren"] = prefabs[1]?["subObjects"]?["length"]?.DeepClone();
+                if (failureCode == "SUBOBJECT_PREFLIGHT_ROW_BRANCH_UNSUPPORTED")
+                {
+                    snapshot["rowColumns"] = new JArray("prefab", "flags", "parent", "group", "probability");
+                    snapshot["rootRows"] = DescribeRows(prefabs[0]);
+                    snapshot["nodeRows"] = DescribeRows(prefabs[1]);
+                }
+            }
+            return snapshot;
+
+            static JArray? DescribeRows(JToken owner)
+            {
+                if (owner["subObjects"]?["rows"] is not JArray rows || rows.Count > SubObjectGenerationPreflight.MaximumNormalCreates)
+                    return null;
+                var result = new JArray();
+                foreach (var row in rows)
+                    result.Add(new JArray(Cell(row, "prefab"), Cell(row, "flags"), Cell(row, "parentIndex"),
+                        Cell(row, "groupIndex"), Cell(row, "probability")));
+                return result;
+
+                static JToken Cell(JToken row, string field) => row[field]?.DeepClone() ?? JValue.CreateNull();
+            }
+        }
+
+        private void Fail(string code)
+        {
+            if (failureCode != null) return;
+            failureCode = code;
+            failedPhase = currentPhase;
+        }
         private static JToken Value(string? value) => value == null ? JValue.CreateNull() : new JValue(value);
         private static string ShortType(Exception error)
         { string value = error.GetType().FullName ?? error.GetType().Name; return value.Length <= 128 ? value : value.Substring(0, 128); }
         private static void Check(bool condition, string code) { if (!condition) throw new CheckFailure(code); }
-        private sealed class CheckFailure : Exception { internal readonly string Code; internal CheckFailure(string code) { Code = code; } }
+        private sealed class CheckFailure : Exception, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal CheckFailure(string code)
+            { Code = code; }
+        }
     }
 }
 #endif

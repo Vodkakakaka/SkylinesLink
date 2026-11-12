@@ -55,8 +55,8 @@ namespace SkylinesLink.Mod.Native
             // no input states, ToolSystem.tools entry or scene callbacks exist.
             RequireMainThread();
             Enabled = false;
-            if (typeof(ObjectToolBaseSystem).Module.ModuleVersionId.ToString("N") != "e15551e93dea48558dde1da3cea7d7ef" ||
-                typeof(World).Module.ModuleVersionId.ToString("N") != "3d6b23aeb28144a6a5f4cbd5fd3d75e6")
+            if (!NativeConstructionBuild.Game(typeof(ObjectToolBaseSystem).Module) ||
+                !NativeConstructionBuild.Entities(typeof(World).Module))
                 throw new InvalidOperationException("OBJECT_PRODUCER_NATIVE_BUILD_UNQUALIFIED");
             m_ObjectSearchSystem = World.GetExistingSystemManaged<Game.Objects.SearchSystem>()
                 ?? throw new InvalidOperationException("OBJECT_PRODUCER_SEARCH_UNAVAILABLE");

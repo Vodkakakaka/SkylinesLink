@@ -57,7 +57,7 @@ namespace SkylinesLink.Mod.Native
             MethodInfo? method = typeof(EntityManager).GetMethod("CreateArchetype", BindingFlags.Public | BindingFlags.Instance,
                 null, new[] { typeof(ComponentType[]) }, null);
             Require(method != null && method.DeclaringType == typeof(EntityManager) && method.ReturnType == typeof(EntityArchetype)
-                && !method.IsGenericMethod && method.Module.ModuleVersionId.ToString("N") == "3d6b23aeb28144a6a5f4cbd5fd3d75e6",
+                && !method.IsGenericMethod && NativeConstructionBuild.Entities(method.Module),
                 "NATIVE_ARCHETYPE_PUBLIC_API_UNQUALIFIED");
             return method!.Invoke(entities, new object[] { merged }) is EntityArchetype result
                 ? result : throw new InvalidOperationException("NATIVE_ARCHETYPE_CREATE_UNCONFIRMED");

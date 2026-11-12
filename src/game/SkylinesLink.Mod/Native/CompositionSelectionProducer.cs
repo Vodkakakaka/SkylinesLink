@@ -511,7 +511,13 @@ namespace SkylinesLink.Mod.Native
         private static void RequireMainThread() => Require(MainThreadDispatcher.isMainThread, "COMPOSITION_SELECTION_MAIN_THREAD_REQUIRED");
         private static void Require(bool condition, string code) { if (!condition) throw Failure(code); }
         private static Rejection Failure(string code) => new Rejection(code);
-        private sealed class Rejection : Exception { internal readonly string Code; internal Rejection(string code) : base(code) { Code = code; } }
+        private sealed class Rejection : Exception, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal Rejection(string code) : base(code)
+            { Code = code; }
+        }
 
         private sealed class MissObservation
         {
@@ -532,8 +538,8 @@ namespace SkylinesLink.Mod.Native
             internal readonly FieldInfo Updated, All, Configuration, Barrier, Loaded, UnusedCompositionSystem;
             internal Bindings()
             {
-                Require(typeof(CompositionSelectSystem).Module.ModuleVersionId.ToString("N") == "e15551e93dea48558dde1da3cea7d7ef"
-                    && typeof(World).Module.ModuleVersionId.ToString("N") == "3d6b23aeb28144a6a5f4cbd5fd3d75e6", "COMPOSITION_SELECTION_NATIVE_BUILD_UNQUALIFIED");
+                Require(NativeConstructionBuild.Game(typeof(CompositionSelectSystem).Module)
+                    && NativeConstructionBuild.Entities(typeof(World).Module), "COMPOSITION_SELECTION_NATIVE_BUILD_UNQUALIFIED");
                 Updated = Field("m_UpdatedQuery", typeof(EntityQuery)); All = Field("m_AllQuery", typeof(EntityQuery));
                 Configuration = Field("m_CityConfigurationSystem", typeof(CityConfigurationSystem));
                 Barrier = Field("m_ModificationBarrier", typeof(ModificationBarrier3)); Loaded = Field("m_Loaded", typeof(bool));

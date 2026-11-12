@@ -467,9 +467,9 @@ namespace SkylinesLink.Mod.Native
             internal readonly FieldInfo SubTypes, StoppedTypes, PreviewTypes, Map, MapRead, MapWrite;
             internal Bindings()
             {
-                Require(typeof(GenerateObjectsSystem).Module.ModuleVersionId.ToString("N") == "e15551e93dea48558dde1da3cea7d7ef"
-                    && typeof(World).Module.ModuleVersionId.ToString("N") == "3d6b23aeb28144a6a5f4cbd5fd3d75e6"
-                    && typeof(NativeHashMap<OwnerDefinition, Entity>).Module.ModuleVersionId.ToString("N") == "f4ddbc30cb47406191074a184ca0481e",
+                Require(NativeConstructionBuild.Game(typeof(GenerateObjectsSystem).Module)
+                    && NativeConstructionBuild.Entities(typeof(World).Module)
+                    && NativeConstructionBuild.Collections(typeof(NativeHashMap<OwnerDefinition, Entity>).Module),
                     "OBJECT_GENERATION_NATIVE_BUILD_UNQUALIFIED");
                 Tool = Field("m_ToolSystem", typeof(ToolSystem)); Simulation = Field("m_SimulationSystem", typeof(SimulationSystem));
                 Search = Field("m_NetSearchSystem", typeof(Game.Net.SearchSystem)); Barrier = Field("m_ModificationBarrier", typeof(ModificationBarrier1));

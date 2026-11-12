@@ -227,10 +227,12 @@ namespace SkylinesLink.Mod.Native
         private static void RequireMainThread() => Require(MainThreadDispatcher.isMainThread, "NODE_COST_MAIN_THREAD_REQUIRED");
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
 
-        private sealed class Rejection : Exception
+        private sealed class Rejection : Exception, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code) : base(code) { Code = code; }
+            internal Rejection(string code) : base(code)
+            { Code = code; }
         }
 
         private sealed class Bindings
@@ -239,8 +241,8 @@ namespace SkylinesLink.Mod.Native
 
             internal Bindings()
             {
-                Require(typeof(CostSystem).Module.ModuleVersionId.ToString("N") == "e15551e93dea48558dde1da3cea7d7ef"
-                    && typeof(World).Module.ModuleVersionId.ToString("N") == "3d6b23aeb28144a6a5f4cbd5fd3d75e6",
+                Require(NativeConstructionBuild.Game(typeof(CostSystem).Module)
+                    && NativeConstructionBuild.Entities(typeof(World).Module),
                     "NODE_COST_NATIVE_BUILD_UNQUALIFIED");
                 Tools = Field("m_ToolSystem", typeof(ToolSystem));
                 Simulation = Field("m_SimulationSystem", typeof(SimulationSystem));

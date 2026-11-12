@@ -55,7 +55,7 @@ namespace SkylinesLink.Mod.Native
             creationStarted = true;
             Enabled = false;
             Require(MainThreadDispatcher.isMainThread && output != null && ReferenceEquals(output.World, World)
-                && typeof(ApplyNotificationsSystem).Module.ModuleVersionId.ToString("N") == "e15551e93dea48558dde1da3cea7d7ef",
+                && NativeConstructionBuild.Game(typeof(ApplyNotificationsSystem).Module),
                 "PREVIEW_COMMIT_NOTIFICATION_CONFIGURATION_MISSING");
             // Include enabled actor Temp as well, then reject it by the exact
             // membership check. A Disabled filter could hide foreign actor Temp.

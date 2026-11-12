@@ -125,9 +125,9 @@ namespace SkylinesLink.Mod.Native
             internal Bindings()
             {
                 var type = typeof(IconCommandSystem);
-                Require(type.Module.ModuleVersionId.ToString("N") == "e15551e93dea48558dde1da3cea7d7ef"
+                Require(NativeConstructionBuild.Game(type.Module)
                     && typeof(IconCommandBuffer).Module == type.Module
-                    && typeof(World).Module.ModuleVersionId.ToString("N") == "3d6b23aeb28144a6a5f4cbd5fd3d75e6",
+                    && NativeConstructionBuild.Entities(typeof(World).Module),
                     "PREVIEW_ICON_NATIVE_BUILD_UNQUALIFIED");
                 Queues = Field(type, "m_Queues", typeof(List<NativeQueue<IconCommandBuffer.Command>>));
                 BufferIndex = Field(type, "m_BufferIndex", typeof(int));

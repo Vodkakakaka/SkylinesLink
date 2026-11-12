@@ -1,9 +1,11 @@
 #if SKYLINESLINK_INTEGRATION_PROBE
 using System;
+using System.Collections.Generic;
 using Game.City;
 using Game.Prefabs;
 using Newtonsoft.Json.Linq;
 using Unity.Entities;
+using Unity.Mathematics;
 using AgeMask = Game.Tools.AgeMask;
 
 namespace SkylinesLink.Mod.Native
@@ -18,6 +20,19 @@ namespace SkylinesLink.Mod.Native
         private readonly Batch reuse = new Batch();
         private readonly Batch commit = new Batch();
         private readonly Batch rebuild = new Batch();
+        private Batch rebuildPreparation = new Batch();
+        private Batch? rebuildPreview;
+        private JObject? rebuildCancellation;
+        private readonly JArray rejectedRebuildShapes = new JArray();
+        private JObject? selectedRebuildShape;
+        private GroundPreviewSite? rebuildSite;
+        private Entity rebuildComposition;
+        private int? rebuildPreparationFrame;
+        private int? rebuildPreviewFrame;
+        private NewObjectPreviewEvidence? rebuildPreviewEvidence;
+        private uint rebuildDataInitBefore, rebuildMeshRefBefore;
+        private uint rebuildQuotedCost;
+        private bool rebuildCacheHit, rebuildCompositionReady;
         private readonly NetCompositionSystem dataInit;
         private readonly NetCompositionMeshRefSystem meshRef;
         private readonly uint dataInitBefore, meshRefBefore;
@@ -45,14 +60,17 @@ namespace SkylinesLink.Mod.Native
             meshRefBefore = meshRef.CheckedStateRef.LastSystemVersion;
         }
 
-        internal bool WorkersFinished => publish.Finished && reuse.Finished && commit.Finished && rebuild.Finished
+        internal bool WorkersFinished => publish.Finished && reuse.Finished && commit.Finished && rebuild.Finished && rebuildPreparation.Finished
+            && rebuildPreview?.Finished != false
             && relocation?.Finished != false && relocationGeneration?.Finished != false && relocationPreview?.Finished != false
             && moveDefinition?.Finished != false && moveGeneration?.Finished != false && move?.Finished != false;
-        internal bool ResourcesReleased => publish.ResourcesReleased && reuse.ResourcesReleased && commit.ResourcesReleased && rebuild.ResourcesReleased
+        internal bool ResourcesReleased => publish.ResourcesReleased && reuse.ResourcesReleased && commit.ResourcesReleased && rebuild.ResourcesReleased && rebuildPreparation.ResourcesReleased
+            && rebuildPreview?.ResourcesReleased != false
             && relocation?.ResourcesReleased != false && relocationGeneration?.ResourcesReleased != false
             && relocationPreview?.ResourcesReleased != false && moveDefinition?.ResourcesReleased != false
             && moveGeneration?.ResourcesReleased != false && move?.ResourcesReleased != false;
-        internal bool NativeStateUncertain => publish.NativeStateUncertain || reuse.NativeStateUncertain || commit.NativeStateUncertain || rebuild.NativeStateUncertain
+        internal bool NativeStateUncertain => publish.NativeStateUncertain || reuse.NativeStateUncertain || commit.NativeStateUncertain || rebuild.NativeStateUncertain || rebuildPreparation.NativeStateUncertain
+            || rebuildPreview?.NativeStateUncertain == true
             || relocation?.NativeWorkMayReadSource == true || relocationGeneration?.NativeWorkMayReadSource == true
             || relocationPreview?.NativeStateUncertain == true || moveDefinition?.NativeWorkMayReadSource == true
             || moveGeneration?.NativeWorkMayReadSource == true || move?.NativeStateUncertain == true;
@@ -146,7 +164,7 @@ namespace SkylinesLink.Mod.Native
             }
             if (rebuild.Generation == null)
             {
-                RunBatch(rebuild, publish.Generation!.PublishedComposition, submit: true);
+                AdvanceAlternateBuild(frame);
                 return;
             }
             var second = rebuild.Generation.Commit!;
@@ -158,10 +176,153 @@ namespace SkylinesLink.Mod.Native
             var newlyBuilt = second.RequirePublishedBuildingAndNode();
             var oldFixture = submitted.RequirePublishedBuildingAndNode();
             move.RequireSeparateBuild(newlyBuilt.Root, newlyBuilt.Node);
+            var entities = source.EntityManager;
             Require(newlyBuilt.Root != oldFixture.Root && newlyBuilt.Node != oldFixture.Node
-                && source.EntityManager.GetComponentData<Game.Objects.Transform>(newlyBuilt.Root).m_Position.Equals(commit.Definition!.PlacementPosition),
+                && rebuild.RootPrefab == rebuildPreparation.RootPrefab && rebuild.RootPrefab != commit.RootPrefab
+                && entities.GetComponentData<PrefabRef>(newlyBuilt.Root).m_Prefab == rebuild.RootPrefab
+                && entities.GetComponentData<PrefabRef>(oldFixture.Root).m_Prefab == commit.RootPrefab
+                && entities.GetComponentData<Game.Objects.Transform>(newlyBuilt.Root).m_Position.Equals(rebuild.Definition!.PlacementPosition),
                 "RELOCATION_PREVIEW_REBUILD_IDENTITY_OR_SITE_CHANGED");
             rebuildVerified = true;
+        }
+
+        private void AdvanceAlternateBuild(int frame)
+        {
+            if (rebuildPreparation.Generation == null)
+            {
+                Require(rebuildPreparationFrame == null, "REBUILD_COMPOSITION_RESOLUTION_REPEATED");
+                rebuildPreparationFrame = frame;
+                PrepareAlternateDefinition();
+                rebuildDataInitBefore = dataInit.CheckedStateRef.LastSystemVersion;
+                rebuildMeshRefBefore = meshRef.CheckedStateRef.LastSystemVersion;
+                RunGenerationBatch(rebuildPreparation, Entity.Null, submit: false, resolveComposition: true);
+
+                var generation = rebuildPreparation.Generation!;
+                var selected = generation.SelectionReceipt ?? throw new Rejection("REBUILD_COMPOSITION_SELECTION_MISSING");
+                rebuildCacheHit = selected.ObservedSelection;
+                rebuildComposition = rebuildCacheHit ? selected.After.m_Composition : generation.PublishedComposition;
+                Require(rebuildComposition != Entity.Null && rebuildCacheHit != selected.NeedsPublication,
+                    "REBUILD_COMPOSITION_IDENTITY_UNAVAILABLE");
+                return;
+            }
+
+            int preparedAt = rebuildPreparationFrame ?? throw new Rejection("REBUILD_COMPOSITION_PREPARATION_MISSING");
+            Require(frame >= preparedAt && frame - preparedAt <= 180 && rebuildPreparation.Passed && rebuild.Definition == null,
+                "REBUILD_COMPOSITION_NOT_READY");
+            if (frame == preparedAt) return;
+            if (!rebuildCompositionReady)
+            {
+                var prepared = rebuildPreparation.Generation!;
+                if (rebuildCacheHit) RequirePublishedRow(prepared.SelectionReceipt!, rebuildComposition);
+                else
+                {
+                    Require(ReferenceEquals(source.GetExistingSystemManaged<NetCompositionSystem>(), dataInit)
+                        && ReferenceEquals(source.GetExistingSystemManaged<NetCompositionMeshRefSystem>(), meshRef),
+                        "REBUILD_COMPOSITION_PROVIDER_CHANGED");
+                    if (dataInit.CheckedStateRef.LastSystemVersion == rebuildDataInitBefore
+                        || meshRef.CheckedStateRef.LastSystemVersion == rebuildMeshRefBefore) return;
+                    var inputs = prepared.InitializationInputs ?? throw new Rejection("REBUILD_COMPOSITION_INPUT_TICKET_MISSING");
+                    try
+                    {
+                        dataInit.CheckedStateRef.CompleteDependency();
+                        requireScope();
+                        meshRef.CheckedStateRef.CompleteDependency();
+                        requireScope();
+                        inputs.RequireUnchanged();
+                        prepared.InitializationExpectation!.RequireReady(rebuildComposition, requireScope);
+                    }
+                    finally { inputs.ReleaseSnapshots(); }
+                }
+                rebuildCompositionReady = true;
+            }
+            if (frame == rebuildPreviewFrame) return;
+
+            Entity expectedPrefab = rebuildPreparation.RootPrefab;
+            var confirmed = SelectWindInput(out var city, row =>
+                row.RootIndex == expectedPrefab.Index && row.RootVersion == expectedPrefab.Version);
+            if (!rebuildPreviewFrame.HasValue)
+            {
+                var preview = rebuildPreview = new Batch();
+                RunDefinitionBatch(preview, confirmed, city, rebuildSite!, rebuildComposition, submit: false,
+                    samePlacement: rebuildPreparation.Definition);
+                var generation = preview.Generation!;
+                RequirePublishedRow(generation.SelectionReceipt!, rebuildComposition);
+                var cancelled = generation.CancellationSnapshot() ?? throw new Rejection("REBUILD_PREVIEW_CANCELLATION_MISSING");
+                rebuildPreviewEvidence = generation.ObservedPreviewEvidence;
+                Require(rebuildPreviewEvidence != null && rebuildPreviewEvidence.Cost > 0 && (bool?)cancelled["passed"] == true
+                    && (bool?)cancelled["fundsUnchanged"] == true && (bool?)cancelled["groupAbsent"] == true
+                    && (bool?)cancelled["slotsReleased"] == true, "REBUILD_PREVIEW_CANCELLATION_UNCONFIRMED");
+                rebuildCancellation = new JObject {
+                    ["frame"] = frame, ["cost"] = rebuildPreviewEvidence!.Cost, ["members"] = cancelled["members"]?.DeepClone(),
+                    ["identity"] = rebuildPreviewEvidence.Snapshot(),
+                    ["fundsUnchanged"] = true, ["groupAbsent"] = true, ["slotsReleased"] = true
+                };
+                rebuildPreviewFrame = frame;
+                rebuildPreview = null;
+                return;
+            }
+            RunDefinitionBatch(rebuild, confirmed, city, rebuildSite!, rebuildComposition, submit: true,
+                samePlacement: rebuildPreparation.Definition, expectedPreview: rebuildPreviewEvidence);
+            RequirePublishedRow(rebuild.Generation!.SelectionReceipt!, rebuildComposition);
+        }
+
+        private void PrepareAlternateDefinition()
+        {
+            var examined = new HashSet<Entity>();
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                var input = SelectWindInput(out var configuration, EligibleAlternate);
+                rebuildPreparation = new Batch();
+                try { rebuildSite = site!.RequalifyAnchor(input.Root, requireScope); }
+                catch (GroundPreviewSite.Rejection error) { throw new Rejection(error.Code); }
+                RunDefinition(rebuildPreparation, input, configuration, rebuildSite);
+                var payload = rebuildPreparation.Definition!.RequirePayload(source);
+                var shape = DescribeRebuildCourse(payload, input.Root);
+                if (ObjectGenerationPreflight.IsSupportedShape(payload))
+                {
+                    selectedRebuildShape = shape;
+                    foreach (var row in input.Candidates)
+                        if (row.RootIndex == input.Root.Index && row.RootVersion == input.Root.Version) rebuildQuotedCost = row.RootConstructionCost;
+                    Require(rebuildQuotedCost > 0, "REBUILD_PREFAB_COST_UNAVAILABLE");
+                    return;
+                }
+
+                rejectedRebuildShapes.Add(shape);
+                examined.Add(input.Root);
+                bool remaining = false;
+                foreach (var row in input.Candidates) remaining |= row.Eligible && EligibleAlternate(row);
+                if (!remaining) break;
+            }
+            throw new Rejection("REBUILD_NATIVE_SHAPE_OUTSIDE_PROBE");
+
+            bool EligibleAlternate(ObjectDefinitionInputProbe.CandidateStatistics row)
+            {
+                var prefab = new Entity { Index = row.RootIndex, Version = row.RootVersion };
+                return prefab != commit.RootPrefab && !examined.Contains(prefab)
+                    && row.RootSubNetCount == 1 && row.RootSubAreaCount == 0;
+            }
+        }
+
+        private static JObject DescribeRebuildCourse(ObjectDefinitionPayload payload, Entity prefab)
+        {
+            var course = payload.Course;
+            var start = course.m_StartPosition;
+            var end = course.m_EndPosition;
+            var curve = course.m_Curve;
+            return new JObject {
+                ["prefab"] = PreviewCommitGraph.Id(prefab), ["coursePrefab"] = PreviewCommitGraph.Id(payload.CourseCreation.m_Prefab),
+                ["nativeSingleNodeInput"] = payload.IsDetachedSingleNodeCourse,
+                ["courseLength"] = course.m_Length,
+                ["start"] = Point(start.m_Position), ["end"] = Point(end.m_Position),
+                ["startEntity"] = PreviewCommitGraph.Id(start.m_Entity), ["endEntity"] = PreviewCommitGraph.Id(end.m_Entity),
+                ["startFlags"] = (uint)start.m_Flags, ["endFlags"] = (uint)end.m_Flags,
+                ["curve"] = new JArray(Point(curve.a), Point(curve.b), Point(curve.c), Point(curve.d)),
+                ["ownerPositionMatches"] = payload.CourseOwner.m_Position.Equals(payload.RootObject.m_Position),
+                ["ownerRotationMatches"] = payload.CourseOwner.m_Rotation.Equals(payload.RootObject.m_Rotation),
+                ["rootElevation"] = payload.RootObject.m_Elevation
+            };
+
+            static JArray Point(float3 value) => new JArray(value.x, value.y, value.z);
         }
 
         private void RunRelocation(PreviewCommitExecution submitted, bool submit)
@@ -203,32 +364,56 @@ namespace SkylinesLink.Mod.Native
             var input = SelectWindInput(out var configuration);
             if (expectedComposition != Entity.Null)
                 Require(input.Root == publish.RootPrefab, "COMPOSITION_REUSE_ROOT_PREFAB_CHANGED");
-            batch.RootPrefab = input.Root;
             try { site ??= GroundPreviewSite.Select(source, input.Root, requireScope); }
             catch (GroundPreviewSite.Rejection error) { throw new Rejection(error.Code); }
+            RunDefinitionBatch(batch, input, configuration, site!, expectedComposition, submit,
+                samePlacement: expectedComposition == Entity.Null ? null : publish.Definition);
+        }
+
+        private void RunDefinitionBatch(Batch batch, ObjectDefinitionInputProbe.Result input, CityConfigurationSystem configuration,
+            GroundPreviewSite ground, Entity expectedComposition, bool submit, bool resolveComposition = false,
+            ObjectDefinitionExecutionProbe? samePlacement = null, NewObjectPreviewEvidence? expectedPreview = null)
+        {
+            RunDefinition(batch, input, configuration, ground);
+            if (samePlacement != null)
+                Require(batch.Definition!.RequirePayload(source).Values.Matches(samePlacement.RequirePayload(source).Values),
+                    "GROUND_PREVIEW_REUSE_DEFINITION_CHANGED");
+            RunGenerationBatch(batch, expectedComposition, submit, resolveComposition, expectedPreview);
+        }
+
+        private void RunDefinition(Batch batch, ObjectDefinitionInputProbe.Result input, CityConfigurationSystem configuration,
+            GroundPreviewSite ground)
+        {
+            requireScope();
+            Require(batch.Definition == null, "COMPOSITION_BATCH_ALREADY_ATTEMPTED");
+            batch.RootPrefab = input.Root;
             batch.Definition = new ObjectDefinitionExecutionProbe();
-            batch.Definition.RunOnce(input, configuration.defaultTheme, configuration.leftHandTraffic, site, default,
+            batch.Definition.RunOnce(input, configuration.defaultTheme, configuration.leftHandTraffic, ground, default,
                 AgeMask.Sapling, requireScope);
             Require(batch.Definition.ChecksPassed && batch.Definition.ResourcesReleased,
                 batch.Definition.FailureCode ?? "OBJECT_EXECUTION_NOT_QUALIFIED");
-            if (expectedComposition != Entity.Null)
-                Require(batch.Definition.PlacementPosition.Equals(publish.Definition!.PlacementPosition)
-                    && batch.Definition.PlacementOffsetY == publish.Definition.PlacementOffsetY,
-                    "GROUND_PREVIEW_REUSE_POSITION_CHANGED");
+        }
+
+        private void RunGenerationBatch(Batch batch, Entity expectedComposition, bool submit, bool resolveComposition = false,
+            NewObjectPreviewEvidence? expectedPreview = null)
+        {
             requireScope();
+            Require(batch.Generation == null && batch.Definition?.ResourcesReleased == true, "COMPOSITION_BATCH_DEFINITION_UNAVAILABLE");
             batch.Generation = new ObjectGenerationExecutionProbe();
-            batch.Generation.RunOnce(source, batch.Definition.RequirePayload(source), requireScope, expectedComposition, submit);
+            batch.Generation.RunOnce(source, batch.Definition!.RequirePayload(source), requireScope, expectedComposition,
+                submit, resolveComposition, expectedPreview);
             Require(batch.Passed, batch.Generation.FailureCode ?? "OBJECT_GENERATION_LIFECYCLE_NOT_QUALIFIED");
             requireScope();
         }
 
-        private ObjectDefinitionInputProbe.Result SelectWindInput(out CityConfigurationSystem configuration)
+        private ObjectDefinitionInputProbe.Result SelectWindInput(out CityConfigurationSystem configuration,
+            Func<ObjectDefinitionInputProbe.CandidateStatistics, bool>? accepts = null)
         {
             var prefabs = source.GetExistingSystemManaged<PrefabSystem>()
                 ?? throw new Rejection("OBJECT_EXECUTION_DEPENDENCY_UNAVAILABLE");
             configuration = source.GetExistingSystemManaged<CityConfigurationSystem>()
                 ?? throw new Rejection("OBJECT_EXECUTION_DEPENDENCY_UNAVAILABLE");
-            var input = ObjectDefinitionInputProbe.Select(source, prefabs, configuration, ObjectDefinitionInputProbe.Purpose.WindPower);
+            var input = ObjectDefinitionInputProbe.Select(source, prefabs, configuration, ObjectDefinitionInputProbe.Purpose.WindPower, accepts);
             Require(input.Complete && input.Root != Entity.Null && ReferenceEquals(input.Source, source), "OBJECT_EXECUTION_INPUT_UNAVAILABLE");
             return input;
         }
@@ -253,7 +438,11 @@ namespace SkylinesLink.Mod.Native
             requireScope();
         }
 
-        internal void ReleaseInputSnapshot() => publish.Generation?.InitializationInputs?.ReleaseSnapshots();
+        internal void ReleaseInputSnapshot()
+        {
+            publish.Generation?.InitializationInputs?.ReleaseSnapshots();
+            rebuildPreparation.Generation?.InitializationInputs?.ReleaseSnapshots();
+        }
         internal JObject? DefinitionSnapshot() => publish.Definition?.Snapshot();
         internal JObject? GenerationSnapshot() => publish.Generation?.Snapshot();
         internal JObject Snapshot()
@@ -284,6 +473,19 @@ namespace SkylinesLink.Mod.Native
                 ["relocationPreview"] = relocationPreview?.Snapshot(),
                 ["relocationCommit"] = move?.CommitSnapshot(), ["rebuildVerified"] = rebuildVerified,
                 ["rebuild"] = rebuild.Generation?.Commit?.Snapshot(),
+                ["rebuildChoice"] = rebuildPreparationFrame == null ? null : new JObject {
+                    ["prefab"] = PreviewCommitGraph.Id(rebuildPreparation.RootPrefab), ["quotedCost"] = rebuildQuotedCost,
+                    ["selectionFrame"] = Frame(rebuildPreparationFrame), ["nativeCacheHit"] = rebuildCacheHit,
+                    ["previewCost"] = rebuild.Generation?.ObservedPreviewEvidence?.Cost,
+                    ["submittedPreviewIdentity"] = rebuild.Generation?.ObservedPreviewEvidence?.Snapshot(),
+                    ["composition"] = PreviewCommitGraph.Id(rebuildComposition), ["compositionReady"] = rebuildCompositionReady,
+                    ["selectedShape"] = selectedRebuildShape?.DeepClone(),
+                    ["rejectedShapes"] = rejectedRebuildShapes.DeepClone(),
+                    ["cancellation"] = rebuildCancellation?.DeepClone(),
+                    ["generationFailure"] = (rebuild.Generation ?? rebuildPreview?.Generation ?? rebuildPreparation.Generation)?.FailureSnapshot(),
+                    ["site"] = rebuildSite?.Snapshot(), ["position"] = rebuild.Definition == null ? null : new JArray(
+                        rebuild.Definition.PlacementPosition.x, rebuild.Definition.PlacementPosition.y, rebuild.Definition.PlacementPosition.z)
+                },
                 ["survivesRetirement"] = survivesRetirement, ["passed"] = Passed
             };
         }
@@ -303,10 +505,12 @@ namespace SkylinesLink.Mod.Native
         }
 
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
-        internal sealed class Rejection : Exception
+        internal sealed class Rejection : Exception, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code) : base(code) { Code = code; }
+            internal Rejection(string code) : base(code)
+            { Code = code; }
         }
     }
 }

@@ -37,7 +37,8 @@ namespace SkylinesLink.Mod.Native
             if (source == null || graph == null || appended == null || requireScope == null
                 || guardLiveGraph == null || observeProtection == null) throw new Rejection("PREVIEW_CANCEL_TOOL_CONTEXT_MISSING");
             int parents = captured == null ? 2 : 3;
-            Require(graph.Length == (captured == null ? 7 : 9) && (captured == null || captured.Length == graph.Length),
+            Require((captured == null ? PreviewCommitGraph.IsNewMemberCount(graph.Length) : graph.Length == 9)
+                && (captured == null || captured.Length == graph.Length),
                 "PREVIEW_CANCEL_TOOL_GRAPH_BOUND");
             attempted = true;
             Entity[] members = (Entity[])graph.Clone();
@@ -171,10 +172,12 @@ namespace SkylinesLink.Mod.Native
 
         internal static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
 
-        internal sealed class Rejection : InvalidOperationException
+        internal sealed class Rejection : InvalidOperationException, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code, Exception? inner = null) : base(code, inner) { Code = code; }
+            internal Rejection(string code, Exception? inner = null) : base(code, inner)
+            { Code = code; }
         }
     }
 
@@ -222,7 +225,7 @@ namespace SkylinesLink.Mod.Native
         private int actor;
         private Temp[]? captured;
         private int ParentCount => captured == null ? 2 : 3;
-        private int MemberCount => captured == null ? 7 : 9;
+        private int memberCount;
         private static readonly BindingFlags Fields = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
         private FieldInfo? queryField, barrierField;
         private PreviewCancelToolBarrier? barrier;
@@ -284,9 +287,11 @@ namespace SkylinesLink.Mod.Native
 
         internal void Produce(Entity[] graph, Action requireScope, Action guardLiveGraph)
         {
-            Require(CreationReturned && !destructionStarted && !attempted && graph.Length == MemberCount,
+            Require(CreationReturned && !destructionStarted && !attempted
+                && (captured == null ? PreviewCommitGraph.IsNewMemberCount(graph.Length) : graph.Length == 9 && captured.Length == graph.Length),
                 "PREVIEW_CANCEL_TOOL_PRODUCTION_REJECTED");
             attempted = true;
+            memberCount = graph.Length;
             members = graph; scope = requireScope; liveGraph = guardLiveGraph;
             try
             {
@@ -336,16 +341,17 @@ namespace SkylinesLink.Mod.Native
         {
             queryCount = query.CalculateEntityCount();
             chunkCount = query.CalculateChunkCount();
-            Require(queryCount == MemberCount && chunkCount >= ParentCount && chunkCount <= MemberCount, "PREVIEW_CANCEL_TOOL_QUERY_BOUND");
+            Require(graph.Length == memberCount && queryCount == memberCount && chunkCount >= ParentCount && chunkCount <= memberCount,
+                "PREVIEW_CANCEL_TOOL_QUERY_BOUND");
             using var values = query.ToEntityArray(Allocator.Temp);
-            Require(values.Length == MemberCount, "PREVIEW_CANCEL_TOOL_QUERY_CHANGED");
+            Require(values.Length == memberCount, "PREVIEW_CANCEL_TOOL_QUERY_CHANGED");
             foreach (Entity entity in values)
                 Require(Array.IndexOf(graph, entity) >= 0, "PREVIEW_CANCEL_TOOL_FOREIGN_QUERY_MEMBER");
         }
 
         internal void RequireGraph(EntityManager entities, Entity[] graph, bool markersApplied)
         {
-            Require(graph.Length == MemberCount, "PREVIEW_CANCEL_TOOL_GRAPH_BOUND");
+            Require(attempted && graph.Length == memberCount, "PREVIEW_CANCEL_TOOL_GRAPH_BOUND");
             var childCounts = new int[ParentCount];
             for (int i = 0; i < graph.Length; i++)
             {
@@ -382,7 +388,8 @@ namespace SkylinesLink.Mod.Native
                     childCounts[slot]++;
                 }
             }
-            Require(childCounts[0] == 4 && childCounts[1] == 1 && (ParentCount == 2 || childCounts[2] == 1),
+            Require(childCounts[0] == (captured == null ? graph.Length - 3 : 4)
+                && childCounts[1] == 1 && (ParentCount == 2 || childCounts[2] == 1),
                 "PREVIEW_CANCEL_TOOL_CHILDREN_CHANGED");
         }
 

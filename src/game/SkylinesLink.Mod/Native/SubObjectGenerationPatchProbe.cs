@@ -19,7 +19,7 @@ namespace SkylinesLink.Mod.Native
             try
             {
                 Type parent = typeof(SubObjectSystem);
-                if (parent.Module.ModuleVersionId.ToString("N") != "e15551e93dea48558dde1da3cea7d7ef") return Unqualified();
+                if (!NativeConstructionBuild.Game(parent.Module)) return Unqualified();
                 Type? handles = parent.GetNestedType("TypeHandle", BindingFlags.NonPublic);
                 if (handles == null || !handles.IsValueType || handles.DeclaringType != parent) return Unqualified();
                 var types = new List<Type> { parent, handles, typeof(Game.Common.ModificationBarrier2B), typeof(Game.SafeCommandBufferSystem) };

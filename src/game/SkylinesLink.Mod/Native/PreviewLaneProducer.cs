@@ -38,10 +38,19 @@ namespace SkylinesLink.Mod.Native
         private TerrainSystem? terrain;
         private EntityQuery owners, buildingSettings;
         private Entity root, node;
+        private GeneratedSubObjectsPayload? cohort;
         private RelocationInput? relocation;
         private (int RootLanes, int RootUpgrades, int OldNodeLanes, int OldNodeEdges)? originalBuffers;
         private Action? currentScope;
         private DefaultNetLane[] admitted = Array.Empty<DefaultNetLane>();
+        // A bounded value copy of the latest admission read, for a rejected
+        // candidate. These fields do not grant eligibility or retain ECS data.
+        private Node? inspectedNode;
+        private (bool Building, bool Transform, bool Owner, bool Edge, bool Node,
+            bool UnderConstruction, bool Destroyed, int? Upgrades)? inspectedRoot;
+        private uint? inspectedGeneral, inspectedLeft, inspectedRight;
+        private int? inspectedDefaultCount;
+        private DefaultNetLane[] inspectedDefaults = Array.Empty<DefaultNetLane>();
         private int actor, ownerCount, chunkCount, configCount;
         private bool creationStarted, destructionStarted, requested, patchQualified;
         private bool nativeEntered, nativeReturned, nativeJoined, writerConfirmed;
@@ -121,18 +130,21 @@ namespace SkylinesLink.Mod.Native
                 && cohort.OldNode == oldNode.Node && cohort.Node == newNode.Node,
                 "PREVIEW_LANE_RELOCATION_INPUT_CHANGED");
             relocation = new RelocationInput(cohort, oldNode, newNode, geometry);
-            GenerateOnce(cohort.Root, cohort.Node, requireScope);
+            GenerateOnce(cohort, requireScope);
         }
 
-        internal void GenerateOnce(Entity root, Entity node, Action requireScope)
+        internal void GenerateOnce(GeneratedSubObjectsPayload cohort, Action requireScope)
         {
             RequireMainThread();
+            if (cohort == null) throw new ArgumentNullException(nameof(cohort));
             if (requireScope == null) throw new ArgumentNullException(nameof(requireScope));
-            Require(CreationReturned && !destructionStarted && !requested && root != Entity.Null && node != Entity.Null
-                && root.Index >= 0 && node.Index >= 0 && root != node, "PREVIEW_LANE_GENERATION_REJECTED");
+            Require(CreationReturned && !destructionStarted && !requested && ReferenceEquals(cohort.Source, World)
+                && cohort.Actor == actor && cohort.Root.Index >= 0 && cohort.Node.Index >= 0
+                && cohort.IsRelocation == (relocation != null), "PREVIEW_LANE_GENERATION_REJECTED");
             requested = true;
-            this.root = root;
-            this.node = node;
+            this.cohort = cohort;
+            root = cohort.Root;
+            node = cohort.Node;
             currentScope = requireScope;
             try
             {
@@ -182,6 +194,7 @@ namespace SkylinesLink.Mod.Native
 
         private DefaultNetLane[] Qualify(Action scope)
         {
+            ResetInputObservation();
             Guard(scope);
             RequireBindings();
             Require(tools!.actionMode == GameMode.Game, "PREVIEW_LANE_MODE_CHANGED");
@@ -202,10 +215,10 @@ namespace SkylinesLink.Mod.Native
 
             var entities = EntityManager;
             RequireOwner(entities, root, TempFlags.Create | TempFlags.Essential);
-            Require(entities.HasComponent<Building>(root) && entities.HasComponent<Transform>(root)
-                && !entities.HasComponent<Owner>(root) && !entities.HasComponent<Edge>(root) && !entities.HasComponent<Node>(root)
-                && !entities.HasComponent<Game.Objects.UnderConstruction>(root) && !entities.HasComponent<Destroyed>(root)
-                && entities.HasBuffer<InstalledUpgrade>(root) && entities.GetBuffer<InstalledUpgrade>(root, true).Length == 0,
+            var rootState = PreviewLaneInputs.ReadObjectState(entities, root);
+            inspectedRoot = rootState;
+            Require(rootState.Building && rootState.Transform && !rootState.Owner && !rootState.Edge && !rootState.Node
+                && !rootState.UnderConstruction && !rootState.Destroyed && (rootState.Upgrades ?? 0) == 0,
                 "PREVIEW_LANE_ROOT_BRANCH_CHANGED");
             Entity prefab = RequireNode(entities, node, requiresOwner: true, relocation?.NewNode, relocation?.Geometry.New);
             if (relocation != null)
@@ -217,9 +230,10 @@ namespace SkylinesLink.Mod.Native
 
             RequireNoDeclaredLanes(entities, root);
             var childIds = new HashSet<Entity>();
-            RequireChildren(entities, root, 4, childIds);
-            RequireChildren(entities, node, 1, childIds);
-            if (relocation != null) RequireChildren(entities, relocation.OldNode.Node, 1, childIds);
+            RequireChildren(entities, root, cohort!.ChildCount(root), childIds);
+            RequireChildren(entities, node, cohort.ChildCount(node), childIds);
+            if (relocation != null)
+                RequireChildren(entities, relocation.OldNode.Node, cohort.ChildCount(relocation.OldNode.Node), childIds);
 
             var data = terrain!.GetHeightData(false);
             Require(data.heights.IsCreated && (!data.hasBackdrop || data.downscaledHeights.IsCreated)
@@ -234,6 +248,7 @@ namespace SkylinesLink.Mod.Native
         private Entity RequireNode(EntityManager entities, Entity target, bool requiresOwner,
             CompositionSelectionReceipt? receipt, NodeGeometry? expectedGeometry)
         {
+            ResetNodeInputObservation();
             RequireOwner(entities, target, TempFlags.Create | TempFlags.IsLast);
             Require(entities.HasComponent<Node>(target) && entities.HasComponent<NodeGeometry>(target)
                 && !entities.HasComponent<Transform>(target) && !entities.HasComponent<Edge>(target)
@@ -244,6 +259,7 @@ namespace SkylinesLink.Mod.Native
                 && !entities.HasBuffer<ConnectedNode>(target), "PREVIEW_LANE_NODE_BRANCH_CHANGED");
             var current = entities.GetComponentData<Node>(target);
             var geometry = entities.GetComponentData<NodeGeometry>(target);
+            inspectedNode = current;
             Require(math.all(math.isfinite(current.m_Position)) && current.m_Rotation.Equals(quaternion.identity)
                 && geometry.m_Position == current.m_Position.y && math.all(math.isfinite(geometry.m_Bounds.min))
                 && math.all(math.isfinite(geometry.m_Bounds.max)), "PREVIEW_LANE_NODE_GEOMETRY_INVALID");
@@ -267,6 +283,9 @@ namespace SkylinesLink.Mod.Native
                 && entities.GetComponentData<PrefabRef>(composition).m_Prefab == prefab,
                 "PREVIEW_LANE_COMPOSITION_UNAVAILABLE");
             var flags = entities.GetComponentData<NetCompositionData>(composition).m_Flags;
+            inspectedGeneral = (uint)flags.m_General;
+            inspectedLeft = (uint)flags.m_Left;
+            inspectedRight = (uint)flags.m_Right;
             Require(flags.m_General == (CompositionFlags.General.Node | CompositionFlags.General.Invert | CompositionFlags.General.DeadEnd)
                 && flags.m_Left == 0 && flags.m_Right == 0, "PREVIEW_LANE_COMPOSITION_BRANCH_CHANGED");
             float width = entities.GetComponentData<NetGeometryData>(prefab).m_DefaultWidth;
@@ -339,12 +358,14 @@ namespace SkylinesLink.Mod.Native
             Require(!entities.HasBuffer<PrefabSubLane>(prefab), "PREVIEW_LANE_OBJECT_LANES_PRESENT");
         }
 
-        private static DefaultNetLane[] ReadDefaults(EntityManager entities, Entity prefab)
+        private DefaultNetLane[] ReadDefaults(EntityManager entities, Entity prefab)
         {
             var buffer = entities.GetBuffer<DefaultNetLane>(prefab, true);
-            Require(buffer.Length == 4, "PREVIEW_LANE_DEFAULT_COUNT_CHANGED");
-            var rows = new DefaultNetLane[4];
+            inspectedDefaultCount = buffer.Length;
+            var rows = new DefaultNetLane[Math.Min(buffer.Length, 4)];
             for (int i = 0; i < rows.Length; i++) rows[i] = buffer[i];
+            inspectedDefaults = rows;
+            Require(buffer.Length == 4, "PREVIEW_LANE_DEFAULT_COUNT_CHANGED");
             const LaneFlags limits = LaneFlags.LeftLimit | LaneFlags.RightLimit | LaneFlags.Utility;
             Require(rows[0].m_Position.Equals(new float3(-0.5f, 9f, 0f))
                 && rows[1].m_Position.Equals(new float3(0f, 9f, 0f))
@@ -381,6 +402,44 @@ namespace SkylinesLink.Mod.Native
             Require(LanePassed && admitted.Length == 4, "PREVIEW_LANE_ADMISSION_UNAVAILABLE");
             return new[] { admitted[0].m_Lane, admitted[2].m_Lane };
         }
+
+        private void ResetInputObservation()
+        {
+            inspectedRoot = null;
+            ResetNodeInputObservation();
+        }
+
+        private void ResetNodeInputObservation()
+        {
+            inspectedNode = null;
+            inspectedGeneral = inspectedLeft = inspectedRight = null;
+            inspectedDefaultCount = null;
+            inspectedDefaults = Array.Empty<DefaultNetLane>();
+        }
+
+        internal JObject InputSnapshot()
+        {
+            var rows = new JArray();
+            foreach (DefaultNetLane row in inspectedDefaults)
+                rows.Add(new JArray(row.m_Lane.Index, row.m_Lane.Version,
+                    row.m_Position.x, row.m_Position.y, row.m_Position.z, (uint)row.m_Flags));
+            return new JObject {
+                ["root"] = inspectedRoot is { } value ? new JObject {
+                    ["building"] = value.Building, ["transform"] = value.Transform, ["owner"] = value.Owner,
+                    ["edge"] = value.Edge, ["node"] = value.Node, ["underConstruction"] = value.UnderConstruction,
+                    ["destroyed"] = value.Destroyed, ["upgrades"] = value.Upgrades.HasValue ? new JValue(value.Upgrades.Value) : JValue.CreateNull()
+                } : null,
+                ["rotation"] = inspectedNode.HasValue ? new JArray(inspectedNode.Value.m_Rotation.value.x,
+                    inspectedNode.Value.m_Rotation.value.y, inspectedNode.Value.m_Rotation.value.z,
+                    inspectedNode.Value.m_Rotation.value.w) : null,
+                ["compositionFlags"] = new JArray(Observed(inspectedGeneral), Observed(inspectedLeft), Observed(inspectedRight)),
+                ["defaultCount"] = inspectedDefaultCount.HasValue ? new JValue(inspectedDefaultCount.Value) : JValue.CreateNull(),
+                ["rowColumns"] = new JArray("prefabIndex", "prefabVersion", "x", "y", "z", "flags"),
+                ["rows"] = rows, ["rowsComplete"] = inspectedDefaultCount.HasValue && inspectedDefaultCount.Value == rows.Count
+            };
+        }
+
+        private static JValue Observed(uint? value) => value.HasValue ? new JValue(value.Value) : JValue.CreateNull();
 
         private void RequireBindings()
         {
@@ -449,10 +508,12 @@ namespace SkylinesLink.Mod.Native
         private static void RequireMainThread() => Require(MainThreadDispatcher.isMainThread, "PREVIEW_LANE_MAIN_THREAD_REQUIRED");
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
 
-        private sealed class Rejection : InvalidOperationException
+        private sealed class Rejection : InvalidOperationException, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code) : base(code) { Code = code; }
+            internal Rejection(string code) : base(code)
+            { Code = code; }
         }
 
         private sealed class Bindings

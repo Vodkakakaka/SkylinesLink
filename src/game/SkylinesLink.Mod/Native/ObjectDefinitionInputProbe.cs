@@ -116,7 +116,7 @@ namespace SkylinesLink.Mod.Native
         }
 
         internal static Result Select(World source, PrefabSystem prefabs, CityConfigurationSystem configuration,
-            Purpose purpose = Purpose.Medical)
+            Purpose purpose = Purpose.Medical, Func<CandidateStatistics, bool>? accepts = null)
         {
             var reports = new List<CandidateStatistics>();
             if (!MainThreadDispatcher.isMainThread || source == null || !source.IsCreated || prefabs == null || configuration == null
@@ -147,11 +147,13 @@ namespace SkylinesLink.Mod.Native
                         try
                         {
                             input.Inspect(candidate);
-                            if (candidate.Eligible && (chosen == null || Compare(candidate, chosen) < 0)) chosen = candidate;
                         }
                         catch (InputFailure failure) { candidate.Complete = false; candidate.Failure = failure.Code; }
                         catch (Exception) { candidate.Complete = false; candidate.Failure = "SOURCE_READ_FAILED"; }
-                        reports.Add(new CandidateStatistics(candidate));
+                        var report = new CandidateStatistics(candidate);
+                        reports.Add(report);
+                        if (candidate.Eligible && (accepts == null || accepts(report))
+                            && (chosen == null || Compare(candidate, chosen) < 0)) chosen = candidate;
                         if (!candidate.Complete)
                             return new Result(source, purpose, Entity.Null, count, false, candidate.Failure, reports);
                     }

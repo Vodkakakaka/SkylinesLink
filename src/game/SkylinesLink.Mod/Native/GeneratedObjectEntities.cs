@@ -307,7 +307,13 @@ namespace SkylinesLink.Mod.Native
         private static JToken Text(string? value) => value == null ? JValue.CreateNull() : new JValue(value);
         private static void RequireMainThread() => Require(MainThreadDispatcher.isMainThread, "GENERATED_OBJECT_MAIN_THREAD_REQUIRED");
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
-        private sealed class Rejection : Exception { internal readonly string Code; internal Rejection(string code) : base(code) { Code = code; } }
+        private sealed class Rejection : Exception, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal Rejection(string code) : base(code)
+            { Code = code; }
+        }
     }
 }
 #endif

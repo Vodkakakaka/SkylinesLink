@@ -45,8 +45,7 @@ namespace SkylinesLink.Mod.Native
             try
             {
                 Guard();
-                Require(typeof(Game.Net.SubNetReferencesSystem).Module.ModuleVersionId.ToString("N")
-                    == "e15551e93dea48558dde1da3cea7d7ef", "POST_GENERATION_APPLICABILITY_SDK_CHANGED");
+                Require(NativeConstructionBuild.Game(typeof(Game.Net.SubNetReferencesSystem).Module), "POST_GENERATION_APPLICABILITY_SDK_CHANGED");
                 ownerInputs = Read(new EntityQueryDesc {
                     All = new[] { ComponentType.ReadOnly<OwnerDefinition>(), ComponentType.ReadOnly<Owner>(),
                         ComponentType.ReadOnly<ObjectGenerationScope>(), ComponentType.ReadOnly<Disabled>() },
@@ -121,7 +120,13 @@ namespace SkylinesLink.Mod.Native
         };
         private static JToken Number(int? value) => value.HasValue ? new JValue(value.Value) : JValue.CreateNull();
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
-        private sealed class Rejection : Exception { internal readonly string Code; internal Rejection(string code) : base(code) { Code = code; } }
+        private sealed class Rejection : Exception, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal Rejection(string code) : base(code)
+            { Code = code; }
+        }
     }
 }
 #endif

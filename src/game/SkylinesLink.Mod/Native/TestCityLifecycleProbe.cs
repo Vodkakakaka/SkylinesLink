@@ -22,8 +22,6 @@ namespace SkylinesLink.Mod.Native
     // persistent-setting write, private SDK entry point or native cancellation.
     internal sealed class TestCityLifecycleProbe
     {
-        private const string GameMvid = "e15551e93dea48558dde1da3cea7d7ef";
-        private const string EntitiesMvid = "3d6b23aeb28144a6a5f4cbd5fd3d75e6";
         private const string NormalMode = "NormalMode";
 
         private enum Phase { Created, QueueWaiting, Preparing, Loading, AwaitingCity, Qualifying, Returning, Restoring, Released, Unresolved }
@@ -159,8 +157,8 @@ namespace SkylinesLink.Mod.Native
             if (stopIntent) { ReleaseAfterRestore(observed); return; }
             try
             {
-                Check(typeof(GameManager).Assembly.ManifestModule.ModuleVersionId.ToString("N") == GameMvid
-                    && typeof(World).Assembly.ManifestModule.ModuleVersionId.ToString("N") == EntitiesMvid, "NATIVE_BUILD_UNQUALIFIED");
+                Check(NativeConstructionBuild.Game(typeof(GameManager).Assembly.ManifestModule)
+                    && NativeConstructionBuild.Entities(typeof(World).Assembly.ManifestModule), "NATIVE_BUILD_UNQUALIFIED");
                 values = OwnedValues.Capture(update, OnLoaded);
                 Check(values.ReadyMenu, "TEST_CITY_MENU_REQUIRED");
                 ObserveAudit(capture: true);

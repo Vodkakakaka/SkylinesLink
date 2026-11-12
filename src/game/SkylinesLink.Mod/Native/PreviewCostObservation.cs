@@ -17,6 +17,7 @@ namespace SkylinesLink.Mod.Native
         private readonly CitySystem citySystem;
         private readonly Entity city;
         private readonly PlayerMoney funds;
+        internal int? ObservedCost { get; private set; }
 
         internal PreviewCostObservation(World source, Entity[] graph, Temp[]? captured = null)
         {
@@ -51,6 +52,7 @@ namespace SkylinesLink.Mod.Native
             var after = ReadFunds(source);
             if (after.money != funds.money || cost < 0 || cost > int.MaxValue)
                 throw new InvalidOperationException("PREVIEW_COST_BALANCE_OR_TOTAL_CHANGED");
+            ObservedCost = (int)cost;
             return new JObject { ["entities"] = rows, ["observedTempCost"] = cost, ["observedTempValue"] = value,
                 ["treasury"] = after.money, ["fundsUnchanged"] = true,
                 ["observedAmountCovered"] = Math.Max(0, after.money) >= cost };

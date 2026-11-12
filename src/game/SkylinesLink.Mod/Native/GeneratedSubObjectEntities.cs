@@ -457,7 +457,7 @@ namespace SkylinesLink.Mod.Native
             RequireMainThread();
             if (requireLinkedGraph == null) throw new ArgumentNullException(nameof(requireLinkedGraph));
             Require(createReturned && parentGraphGuard != null && !releaseCalled && !discardRequested
-                && targets.Length == (payload.IsRelocation ? 6 : 5),
+                && targets.Length == (payload.IsRelocation ? 6 : payload.RootChildCount + payload.NodeChildCount),
                 "GENERATED_SUBOBJECT_DISCARD_NOT_READY");
             discardRequested = true;
             try
@@ -757,7 +757,13 @@ namespace SkylinesLink.Mod.Native
         private static bool Finite(float4 value) => math.all(math.isfinite(value));
         private static void RequireMainThread() => Require(MainThreadDispatcher.isMainThread, "GENERATED_SUBOBJECT_MAIN_THREAD_REQUIRED");
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
-        private sealed class Rejection : Exception { internal readonly string Code; internal Rejection(string code) : base(code) { Code = code; } }
+        private sealed class Rejection : Exception, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal Rejection(string code) : base(code)
+            { Code = code; }
+        }
         private readonly struct Step
         { internal readonly int Target, Write; internal Step(int target, int write) { Target = target; Write = write; } }
         private sealed class TargetState

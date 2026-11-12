@@ -35,7 +35,7 @@ namespace SkylinesLink.Mod.Native
         internal void RunOnce(World source, Entity[] graph, PreviewCommitBarrier output, PreviewCommitTriggerSink triggers,
             List<ComponentSystemBase> appended, Action requireScope, Action guardLiveGraph, Action observeProtection)
         {
-            Require(MainThreadDispatcher.isMainThread && !attempted && graph.Length == 7,
+            Require(MainThreadDispatcher.isMainThread && !attempted && PreviewCommitGraph.IsNewMemberCount(graph.Length),
                 "PREVIEW_COMMIT_NET_EXECUTION_REJECTED");
             attempted = true;
             try
@@ -138,10 +138,12 @@ namespace SkylinesLink.Mod.Native
             if (!condition) throw new Rejection(code);
         }
 
-        internal sealed class Rejection : InvalidOperationException
+        internal sealed class Rejection : InvalidOperationException, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code, Exception? inner = null) : base(code, inner) { Code = code; }
+            internal Rejection(string code, Exception? inner = null) : base(code, inner)
+            { Code = code; }
         }
     }
 
@@ -551,8 +553,8 @@ namespace SkylinesLink.Mod.Native
 
         private static void RequirePinnedModules()
         {
-            Require(typeof(ApplyNetSystem).Module.ModuleVersionId.ToString("N") == "e15551e93dea48558dde1da3cea7d7ef"
-                && typeof(EntityCommandBuffer).Module.ModuleVersionId.ToString("N") == "3d6b23aeb28144a6a5f4cbd5fd3d75e6",
+            Require(NativeConstructionBuild.Game(typeof(ApplyNetSystem).Module)
+                && NativeConstructionBuild.Entities(typeof(EntityCommandBuffer).Module),
                 "PREVIEW_COMMIT_NET_MODULE_ABI");
         }
 

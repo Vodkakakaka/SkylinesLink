@@ -140,9 +140,7 @@ namespace SkylinesLink.Mod.Native
             Require(payload.RootCreation.m_Flags == 0 && payload.CourseCreation.m_Flags == 0
                 && payload.RootCreation.m_Original == Entity.Null && payload.CourseCreation.m_Original == Entity.Null
                 && payload.CourseCreation.m_Owner == Entity.Null && payload.CourseOwner.m_Prefab == payload.RootCreation.m_Prefab
-                && payload.Course.m_StartPosition.m_Entity == Entity.Null && payload.Course.m_EndPosition.m_Entity == Entity.Null
-                && payload.Course.m_StartPosition.m_Position.Equals(payload.Course.m_EndPosition.m_Position)
-                && ((payload.Course.m_StartPosition.m_Flags | payload.Course.m_EndPosition.m_Flags) & CoursePosFlags.DontCreate) == 0,
+                && payload.IsDetachedSingleNodeCourse,
                 "NODE_GENERATION_SINGLE_POINT_REQUIRED");
             RequirePrefab(payload.CourseCreation.m_Prefab);
             if (payload.CourseCreation.m_SubPrefab != Entity.Null) RequirePrefab(payload.CourseCreation.m_SubPrefab);
@@ -337,9 +335,9 @@ namespace SkylinesLink.Mod.Native
             internal readonly FieldInfo Tool, Search, Terrain, Objects, Barrier, Definitions, Deleted;
             internal Bindings()
             {
-                Require(typeof(GenerateNodesSystem).Module.ModuleVersionId.ToString("N") == "e15551e93dea48558dde1da3cea7d7ef"
-                    && typeof(World).Module.ModuleVersionId.ToString("N") == "3d6b23aeb28144a6a5f4cbd5fd3d75e6"
-                    && typeof(NativeHashMap<OwnerDefinition, Entity>).Module.ModuleVersionId.ToString("N") == "f4ddbc30cb47406191074a184ca0481e",
+                Require(NativeConstructionBuild.Game(typeof(GenerateNodesSystem).Module)
+                    && NativeConstructionBuild.Entities(typeof(World).Module)
+                    && NativeConstructionBuild.Collections(typeof(NativeHashMap<OwnerDefinition, Entity>).Module),
                     "NODE_GENERATION_NATIVE_BUILD_UNQUALIFIED");
                 Tool = Field("m_ToolSystem", typeof(ToolSystem)); Search = Field("m_SearchSystem", typeof(Game.Net.SearchSystem));
                 Terrain = Field("m_TerrainSystem", typeof(TerrainSystem)); Objects = Field("m_GenerateObjectsSystem", typeof(GenerateObjectsSystem));

@@ -67,7 +67,7 @@ namespace SkylinesLink.Mod.Native
         internal void RunOnce(World source, Entity[] members, List<ComponentSystemBase> appended, Action requireScope,
             Action guardLiveGraph, Action observeProtection, Action? confirmWorldOwnership, PreviewValidationExecution? eligibility = null)
         {
-            Require(!attempted && MainThreadDispatcher.isMainThread && members.Length == 7
+            Require(!attempted && MainThreadDispatcher.isMainThread && PreviewCommitGraph.IsNewMemberCount(members.Length)
                 && (confirmWorldOwnership == null) == (eligibility == null),
                 "PREVIEW_COMMIT_UNAVAILABLE");
             attempted = true;
@@ -107,7 +107,7 @@ namespace SkylinesLink.Mod.Native
                 net.RunOnce(source, members, barrier.Instance, triggerSink.Instance, appended, requireScope, guardLiveGraph, observeProtection);
                 Require(net.Passed && !NativeWorkMayReadSource && barrier.Instance.PendingCount == PreviewCommitBarrier.PaymentBufferIndex,
                     "PREVIEW_COMMIT_NET_UNCONFIRMED");
-                var actions = triggerSink.Instance.CaptureJoined(objects.CompletedDependency, net.CompletedDependency);
+                var actions = triggerSink.Instance.CaptureJoined(objects.CompletedDependency, net.CompletedDependency, members.Length);
                 events = graph.ObserveEvents(actions);
                 RequirePreparedInputs();
                 costsBeforePreparation.RequireFundsUnchanged(source);
@@ -285,10 +285,12 @@ namespace SkylinesLink.Mod.Native
         };
 
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
-        internal sealed class Rejection : InvalidOperationException
+        internal sealed class Rejection : InvalidOperationException, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code, Exception? inner = null) : base(code, inner) { Code = code; }
+            internal Rejection(string code, Exception? inner = null) : base(code, inner)
+            { Code = code; }
         }
     }
 }

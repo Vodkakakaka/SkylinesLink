@@ -1,5 +1,6 @@
 #if SKYLINESLINK_INTEGRATION_PROBE
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using Colossal.Core;
 using Game.Audio;
@@ -43,6 +44,7 @@ namespace SkylinesLink.Mod.Native
         private EntityQuery modifications, updatedRoads, trafficConfig, buildingConfig, connectionPrefabs;
         private EntityArchetype eventArchetype;
         private Entity root;
+        private Entity[]? newGraph;
         private GeneratedSubObjectsPayload? relocation;
         private (int Subnets, int Lanes, int Children, int SecondaryUtilities)? originalInputs;
         private Action? currentScope, searchBounds;
@@ -133,10 +135,19 @@ namespace SkylinesLink.Mod.Native
             Require(cohort.IsRelocation && ReferenceEquals(cohort.Source, World) && cohort.Actor == actor,
                 "PREVIEW_ROAD_RELOCATION_INPUT_CHANGED");
             relocation = cohort;
-            SearchOnce(cohort.Root, requireScope, requireSearchBounds);
+            Search(cohort.Root, requireScope, requireSearchBounds);
         }
 
-        internal void SearchOnce(Entity root, Action requireScope, Action requireSearchBounds)
+        internal void SearchOnce(Entity[] graph, Action requireScope, Action requireSearchBounds)
+        {
+            RequireMainThread();
+            Require(!requested && relocation == null && PreviewCommitGraph.IsNewMemberCount(graph.Length),
+                "PREVIEW_ROAD_NEW_GRAPH_UNQUALIFIED");
+            newGraph = (Entity[])graph.Clone();
+            Search(newGraph[0], requireScope, requireSearchBounds);
+        }
+
+        private void Search(Entity root, Action requireScope, Action requireSearchBounds)
         {
             RequireMainThread();
             if (requireScope == null) throw new ArgumentNullException(nameof(requireScope));
@@ -264,19 +275,32 @@ namespace SkylinesLink.Mod.Native
             Require(subnets.Length == 1, "PREVIEW_ROAD_SUBNET_BRANCH_UNQUALIFIED");
             Entity node = subnets[0].m_SubNet;
             RequireOwned(entities, node);
-            Require((relocation == null || node == relocation.Node)
+            Require((relocation == null ? newGraph != null && node == newGraph[1] : node == relocation.Node)
                 && entities.HasComponent<Game.Net.Node>(node) && !entities.HasComponent<Game.Net.Edge>(node)
                 && !entities.HasBuffer<ConnectedBuilding>(node) && entities.HasComponent<Owner>(node)
                 && entities.GetComponentData<Owner>(node).m_Owner == root, "PREVIEW_ROAD_SUBNET_BRANCH_UNQUALIFIED");
             var children = entities.GetBuffer<LiveSubObject>(root, true);
-            Require(children.Length == 4, "PREVIEW_ROAD_SECONDARY_BRANCH_UNQUALIFIED");
+            Require(children.Length == (newGraph == null ? 4 : newGraph.Length - 3), "PREVIEW_ROAD_SECONDARY_BRANCH_UNQUALIFIED");
+            var seen = newGraph == null ? null : new HashSet<Entity>();
             for (int index = 0; index < children.Length; index++)
             {
                 Entity child = children[index].m_SubObject;
                 RequireOwned(entities, child);
                 Require(entities.HasComponent<Owner>(child) && entities.GetComponentData<Owner>(child).m_Owner == root
-                    && !IsSecondaryUtility(entities, child),
+                    && !IsSecondaryUtility(entities, child)
+                    && (newGraph == null || Array.IndexOf(newGraph, child, 2) >= 2 && seen!.Add(child)),
                     "PREVIEW_ROAD_SECONDARY_BRANCH_UNQUALIFIED");
+            }
+            if (newGraph != null)
+            {
+                Require(entities.HasBuffer<LiveSubObject>(node), "PREVIEW_ROAD_NODE_CHILD_UNQUALIFIED");
+                var nodeChildren = entities.GetBuffer<LiveSubObject>(node, true);
+                Require(nodeChildren.Length == 1, "PREVIEW_ROAD_NODE_CHILD_UNQUALIFIED");
+                Entity child = nodeChildren[0].m_SubObject;
+                RequireOwned(entities, child);
+                Require(Array.IndexOf(newGraph, child, 2) >= 2 && seen!.Add(child)
+                    && entities.HasComponent<Owner>(child) && entities.GetComponentData<Owner>(child).m_Owner == node
+                    && seen!.Count == newGraph.Length - 2, "PREVIEW_ROAD_NODE_CHILD_UNQUALIFIED");
             }
 
             Entity prefab = ReadPrefab(entities, root, out BuildingData data);
@@ -457,10 +481,12 @@ namespace SkylinesLink.Mod.Native
         private static void RequireMainThread() => Require(MainThreadDispatcher.isMainThread, "PREVIEW_ROAD_MAIN_THREAD_REQUIRED");
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
 
-        internal sealed class Rejection : InvalidOperationException
+        internal sealed class Rejection : InvalidOperationException, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code) : base(code) { Code = code; }
+            internal Rejection(string code) : base(code)
+            { Code = code; }
         }
 
         private readonly struct RootState

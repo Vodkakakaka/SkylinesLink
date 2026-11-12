@@ -20,8 +20,6 @@ namespace SkylinesLink.Mod.Native
     internal sealed class ObjectGenerationPreflight
     {
         private const string BoundsCode = "OBJECT_GENERATION_PREFLIGHT";
-        private const string CollectionsMvid = "0e5688e687474130b7127b3c25780e8b";
-        private const string MathematicsMvid = "26c1af9d8d9740058d0326fb5ad00f64";
         private World? admittedSource;
         private ObjectDefinitionPayload? admittedPayload;
         private EntityArchetype archetype;
@@ -38,6 +36,7 @@ namespace SkylinesLink.Mod.Native
         private int fixtureItemsAdded, fixtureItemCallbacks, fixtureNodeCallbacks;
 
         internal bool Passed => passed;
+        internal string? FailureCode => failureCode;
         // The qualification tree is owned; the source tree is only borrowed.
         // A managed callback exception unwinds the read before Run returns.
         internal bool ResourcesReleased => (!fixtureAllocationAttempted || fixtureAllocationReturned && fixtureReleaseReturned)
@@ -63,7 +62,7 @@ namespace SkylinesLink.Mod.Native
                 Require(versionsQualified, "OBJECT_GENERATION_PREFLIGHT_NATIVE_BUILD_UNQUALIFIED");
                 requireCurrentScope();
                 QualifyManagedAbort();
-                RequireShape(payload);
+                Require(IsSupportedShape(payload), "OBJECT_GENERATION_PREFLIGHT_PAYLOAD_OUTSIDE_PROBE");
                 shapeQualified = true;
 
                 EntityManager entities = source.EntityManager;
@@ -106,8 +105,8 @@ namespace SkylinesLink.Mod.Native
         }
 
         internal static bool SearchVersionsQualified =>
-            typeof(NativeQuadTree<Entity, QuadTreeBoundsXZ>).Module.ModuleVersionId.ToString("N") == CollectionsMvid
-            && typeof(MathUtils).Module.ModuleVersionId.ToString("N") == MathematicsMvid;
+            NativeConstructionBuild.ColossalCollections(typeof(NativeQuadTree<Entity, QuadTreeBoundsXZ>).Module)
+            && NativeConstructionBuild.Mathematics(typeof(MathUtils).Module);
 
         internal static Bounds3 CourseSearchBounds(EntityManager entities, Entity prefab, CoursePos start, out float radius)
         {
@@ -244,19 +243,19 @@ namespace SkylinesLink.Mod.Native
             }
         }
 
-        private static void RequireShape(ObjectDefinitionPayload payload)
-        {
-            Require(Detached(payload.RootCreation) && Detached(payload.CourseCreation)
+        internal static bool IsSupportedShape(ObjectDefinitionPayload payload) =>
+            Detached(payload.RootCreation) && Detached(payload.CourseCreation)
                 && payload.RootCreation.m_SubPrefab == Entity.Null
                 && payload.RootObject.m_ParentMesh == -1 && payload.RootObject.m_Elevation == 0f
                 && Finite(payload.RootObject.m_Position) && Finite(payload.RootObject.m_Rotation.value)
                 && payload.CourseOwner.m_Prefab == payload.RootCreation.m_Prefab
                 && payload.CourseOwner.m_Position.Equals(payload.RootObject.m_Position)
                 && payload.CourseOwner.m_Rotation.Equals(payload.RootObject.m_Rotation)
-                && payload.IsSinglePointCourse && Finite(payload.Course.m_Elevation)
-                && Finite(payload.Course.m_StartPosition) && Finite(payload.Course.m_EndPosition),
-                "OBJECT_GENERATION_PREFLIGHT_PAYLOAD_OUTSIDE_PROBE");
-        }
+                && payload.IsDetachedSingleNodeCourse && Finite(payload.Course.m_Elevation)
+                && Finite(payload.Course.m_Length) && payload.Course.m_Length >= 0f
+                && Finite(payload.Course.m_Curve.a) && Finite(payload.Course.m_Curve.b)
+                && Finite(payload.Course.m_Curve.c) && Finite(payload.Course.m_Curve.d)
+                && Finite(payload.Course.m_StartPosition) && Finite(payload.Course.m_EndPosition);
 
         private static bool Detached(CreationDefinition value) => value.m_Prefab != Entity.Null
             && value.m_Prefab.Index >= 0 && value.m_Flags == (CreationFlags)0 && value.m_Original == Entity.Null
@@ -272,10 +271,12 @@ namespace SkylinesLink.Mod.Native
         private static bool Finite(float4 value) => math.all(math.isfinite(value));
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
 
-        internal sealed class Rejection : Exception
+        internal sealed class Rejection : Exception, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal readonly string Code;
-            internal Rejection(string code) : base(code) { Code = code; }
+            internal Rejection(string code) : base(code)
+            { Code = code; }
         }
 
         // Only cached ordinary facts are projected. No World, archetype or tree

@@ -515,8 +515,13 @@ namespace SkylinesLink.Mod.Native
         private static void Check(bool condition, string code) { if (!condition) throw new CheckFailure(code); }
         private static void RequireMainThread()
         { if (!MainThreadDispatcher.isMainThread) throw new InvalidOperationException("The connection probe requires the main thread."); }
-        private sealed class CheckFailure : Exception
-        { internal CheckFailure(string code) { Code = code; } internal string Code { get; } }
+        private sealed class CheckFailure : Exception, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal string Code { get; }
+            internal CheckFailure(string code)
+            { Code = code; }
+        }
     }
 }
 #endif

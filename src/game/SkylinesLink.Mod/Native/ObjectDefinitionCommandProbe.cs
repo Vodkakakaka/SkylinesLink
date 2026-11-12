@@ -379,7 +379,7 @@ namespace SkylinesLink.Mod.Native
             internal readonly Type Create, Component, Buffer;
             internal Abi()
             {
-                if (typeof(EntityCommandBuffer).Module.ModuleVersionId.ToString("N") != "3d6b23aeb28144a6a5f4cbd5fd3d75e6") throw Failure();
+                if (!NativeConstructionBuild.Entities(typeof(EntityCommandBuffer).Module)) throw Failure();
                 Type basic = Nested("BasicCommandView"), proxy = Nested("EntityCommandBufferDebugView");
                 Create = Nested("CreateCommandView"); Component = Nested("EntityComponentCommandView"); Buffer = Nested("EntityBufferCommandView");
                 Constructor = proxy.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(EntityCommandBuffer) }, null)

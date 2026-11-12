@@ -20,7 +20,6 @@ namespace SkylinesLink.Mod.Native
 {
     internal sealed class PreviewCancelSubObjects
     {
-        internal const int ChildCount = 5;
         private NativeSystemRegistration<PreviewCancelSubObjectProducer>? producer;
         private NativeSystemRegistration<PreviewCancelSubObjectBarrier>? barrier;
         private bool attempted, producerReleased = true, barrierReleased = true, childMarkersConfirmed, protectionConfirmed;
@@ -45,7 +44,7 @@ namespace SkylinesLink.Mod.Native
                 requireScope();
                 guardMarkedParents();
                 int parents = captured == null ? 2 : 3;
-                Require(graph.Length == (captured == null ? ChildCount + 2 : 9)
+                Require((captured == null ? PreviewCommitGraph.IsNewMemberCount(graph.Length) : graph.Length == 9)
                     && (captured == null || captured.Length == graph.Length), "PREVIEW_CANCEL_SUBOBJECT_COHORT_SIZE");
                 var cohort = (Entity[])graph.Clone();
                 var output = new PreviewCancelSubObjectBarrier();
@@ -192,10 +191,12 @@ namespace SkylinesLink.Mod.Native
             if (!condition) throw new Rejection(code);
         }
 
-        internal sealed class Rejection : InvalidOperationException
+        internal sealed class Rejection : InvalidOperationException, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code, Exception? inner = null) : base(code, inner) { Code = code; }
+            internal Rejection(string code, Exception? inner = null) : base(code, inner)
+            { Code = code; }
         }
     }
 
@@ -205,7 +206,7 @@ namespace SkylinesLink.Mod.Native
         private int actor;
         private Temp[]? captured;
         private int ParentCount => captured == null ? 2 : 3;
-        private int MemberCount => captured == null ? PreviewCancelSubObjects.ChildCount + 2 : 9;
+        private int memberCount;
         private static readonly ComponentTypeSet Markers = new ComponentTypeSet(ComponentType.ReadWrite<Applied>(),
             ComponentType.ReadWrite<Created>(), ComponentType.ReadWrite<Updated>());
         private static readonly string[] BindingNames = { "m_TerrainSystem", "m_WaterSystem", "m_ToolSystem", "m_CityConfigurationSystem",
@@ -276,8 +277,8 @@ namespace SkylinesLink.Mod.Native
                 happiness = GetEntityQuery(ComponentType.ReadOnly<CitizenHappinessParameterData>());
                 RequireForUpdate(updates);
 
-                Require(typeof(World).Module.ModuleVersionId.ToString("N") == "3d6b23aeb28144a6a5f4cbd5fd3d75e6"
-                    && typeof(NativeQueue<Entity>).Module.ModuleVersionId.ToString("N") == "f4ddbc30cb47406191074a184ca0481e",
+                Require(NativeConstructionBuild.Entities(typeof(World).Module)
+                    && NativeConstructionBuild.Collections(typeof(NativeQueue<Entity>).Module),
                     "PREVIEW_CANCEL_SUBOBJECT_NATIVE_BUILD_UNQUALIFIED");
                 allocationAttempted = true;
                 loopErrors = new NativeQueue<Entity>(Allocator.Persistent);
@@ -311,8 +312,10 @@ namespace SkylinesLink.Mod.Native
 
         internal void Propagate(Entity[] graph, Action scope, Action markedParents)
         {
-            Require(creationReturned && cohort == null && graph.Length == MemberCount,
+            Require(creationReturned && cohort == null
+                && (captured == null ? PreviewCommitGraph.IsNewMemberCount(graph.Length) : graph.Length == 9 && captured.Length == graph.Length),
                 "PREVIEW_CANCEL_SUBOBJECT_NATIVE_REPEATED");
+            memberCount = graph.Length;
             cohort = graph;
             requireScope = scope;
             guardMarkedParents = markedParents;
@@ -389,7 +392,7 @@ namespace SkylinesLink.Mod.Native
 
             Require(entities.HasComponent<Game.Buildings.Building>(graph[0]) && entities.HasComponent<Game.Net.Node>(graph[1])
                 && !entities.HasComponent<Game.Objects.Object>(graph[1]), "PREVIEW_CANCEL_SUBOBJECT_PARENT_ROLE_CHANGED");
-            RequireRows(entities, graph[0], graph, ParentCount, 4);
+            RequireRows(entities, graph[0], graph, ParentCount, captured == null ? graph.Length - 3 : 4);
             RequireRows(entities, graph[1], graph, ParentCount, 1);
             if (ParentCount == 3)
             {
@@ -429,7 +432,7 @@ namespace SkylinesLink.Mod.Native
             var graph = cohort!;
             ownerCount = updates.CalculateEntityCount();
             tempCount = temps.CalculateEntityCount();
-            Require(ownerCount == ParentCount && tempCount >= 0 && tempCount <= MemberCount - ParentCount
+            Require(ownerCount == ParentCount && tempCount >= 0 && tempCount <= memberCount - ParentCount
                 && buildings.CalculateEntityCount() == 1 && happiness.CalculateEntityCount() == 1,
                 "PREVIEW_CANCEL_SUBOBJECT_QUERY_COUNT");
             using (var owners = updates.ToEntityArray(Allocator.Temp))

@@ -135,7 +135,7 @@ namespace SkylinesLink.Mod.Native
             else return false;
             if (!(method is MethodInfo helper) || !helper.IsPublic || !helper.IsStatic || !helper.IsGenericMethod
                 || helper.DeclaringType != typeof(Colossal.Collections.CollectionUtils) || helper.ReturnType != typeof(bool)
-                || helper.Module.ModuleVersionId.ToString("N") != "0e5688e687474130b7127b3c25780e8b"
+                || !NativeConstructionBuild.ColossalCollections(helper.Module)
                 || helper.Name != "TryAddUniqueValue" && helper.Name != "RemoveValue") return false;
             Type[] generic = helper.GetGenericArguments(); ParameterInfo[] parameters = helper.GetParameters();
             if (generic.Length != 1 || parameters.Length != 2) return false;

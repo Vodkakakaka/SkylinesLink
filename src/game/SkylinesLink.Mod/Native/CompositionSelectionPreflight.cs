@@ -27,7 +27,7 @@ namespace SkylinesLink.Mod.Native
     {
         private const int TableLimit = 256, SectionLimit = 256, RowLimit = 4096, PieceLimit = 4096;
         private readonly Action requireScope, requireLinkedChildren;
-        private readonly GeneratedSubObjectsPayload? relocation;
+        private readonly GeneratedSubObjectsPayload cohort;
         private State? before;
         private bool attempted, passed;
         private int unchangedChecks;
@@ -35,28 +35,24 @@ namespace SkylinesLink.Mod.Native
         private bool currentOrphanObserved;
         private string? failureCode, exceptionType;
 
-        internal CompositionSelectionPreflight(World source, Entity root, Entity node, int actor,
-            Action requireScope, Action requireLinkedChildren, GeneratedSubObjectsPayload? relocation = null)
+        internal CompositionSelectionPreflight(GeneratedSubObjectsPayload cohort, Entity node,
+            Action requireScope, Action requireLinkedChildren)
         {
-            Source = source ?? throw new ArgumentNullException(nameof(source));
+            this.cohort = cohort ?? throw new ArgumentNullException(nameof(cohort));
             this.requireScope = requireScope ?? throw new ArgumentNullException(nameof(requireScope));
             this.requireLinkedChildren = requireLinkedChildren ?? throw new ArgumentNullException(nameof(requireLinkedChildren));
-            Require(root != Entity.Null && node != Entity.Null && root != node && root.Index >= 0
-                && node.Index >= 0 && root.Version > 0 && node.Version > 0 && actor > 0,
-                "COMPOSITION_PREFLIGHT_IDENTITY_REJECTED");
-            Require(relocation == null || relocation.IsRelocation && ReferenceEquals(relocation.Source, source)
-                && relocation.Actor == actor && relocation.Root == root && (relocation.OldNode == node || relocation.Node == node),
-                "COMPOSITION_PREFLIGHT_RELOCATION_IDENTITY_REJECTED");
-            Root = root; Node = node; Actor = actor; this.relocation = relocation;
+            Require(node == cohort.Node || cohort.IsRelocation && node == cohort.OldNode,
+                "COMPOSITION_PREFLIGHT_NODE_ROLE_REJECTED");
+            Node = node;
         }
 
-        internal World Source { get; }
-        internal Entity Root { get; }
+        internal World Source => cohort.Source;
+        internal Entity Root => cohort.Root;
         internal Entity Node { get; }
-        internal int Actor { get; }
-        internal bool IsRelocation => relocation != null;
-        internal bool IsOldNode => relocation?.OldNode == Node;
-        internal bool SharesRelocation(CompositionSelectionPreflight other) => relocation != null && ReferenceEquals(relocation, other.relocation);
+        internal int Actor => cohort.Actor;
+        internal bool IsRelocation => cohort.IsRelocation;
+        internal bool IsOldNode => IsRelocation && cohort.OldNode == Node;
+        internal bool SharesRelocation(CompositionSelectionPreflight other) => IsRelocation && ReferenceEquals(cohort, other.cohort);
         internal Entity Prefab => before?.NodePrefab.m_Prefab ?? Entity.Null;
         internal NativeOrphan BeforeOrphan => before?.Orphan ?? default;
         internal bool Passed => passed;
@@ -176,7 +172,7 @@ namespace SkylinesLink.Mod.Native
             state.NodePrefabData = Registered(state.NodePrefab.m_Prefab, prefabs!);
             state.RootChildren = Buffer<SubObject>(Root, true, state)!;
             state.NodeChildren = Buffer<SubObject>(Node, true, state)!;
-            Require(state.RootChildren.Length == 4 && state.NodeChildren.Length == 1,
+            Require(state.RootChildren.Length == cohort.RootChildCount && state.NodeChildren.Length == cohort.ChildCount(Node),
                 "COMPOSITION_PREFLIGHT_CHILD_COHORT_CHANGED");
             state.Child = state.NodeChildren[0].m_SubObject;
             Require(state.Child != Root && state.Child != Node, "COMPOSITION_PREFLIGHT_CHILD_IDENTITY_REJECTED");
@@ -280,8 +276,8 @@ namespace SkylinesLink.Mod.Native
             Require(Has<Created>(entity) && Has<Updated>(entity) && !Has<Deleted>(entity),
                 "COMPOSITION_PREFLIGHT_PARENT_MARKERS_CHANGED");
             Temp value = Read<Temp>(entity);
-            bool expected = relocation == null ? value.m_Original == Entity.Null && (uint)value.m_Flags == flags
-                : value.Equals(relocation.CapturedParentTemp(entity));
+            bool expected = !IsRelocation ? value.m_Original == Entity.Null && (uint)value.m_Flags == flags
+                : value.Equals(cohort.CapturedParentTemp(entity));
             Require(expected && Finite(value.m_CurvePosition), "COMPOSITION_PREFLIGHT_PARENT_TEMP_CHANGED");
             return value;
         }
@@ -509,8 +505,13 @@ namespace SkylinesLink.Mod.Native
             exceptionType = error.GetType().Name;
         }
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
-        private sealed class Rejection : InvalidOperationException
-        { internal readonly string Code; internal Rejection(string code) : base(code) { Code = code; } }
+        private sealed class Rejection : InvalidOperationException, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal Rejection(string code) : base(code)
+            { Code = code; }
+        }
     }
 }
 #endif

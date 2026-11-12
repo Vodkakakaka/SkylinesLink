@@ -27,9 +27,8 @@ namespace SkylinesLink.Mod.Native
             try
             {
                 requireScope();
-                if (typeof(NativeQuadTree<Entity, QuadTreeBoundsXZ>).Module.ModuleVersionId.ToString("N")
-                        != "0e5688e687474130b7127b3c25780e8b"
-                    || typeof(MathUtils).Module.ModuleVersionId.ToString("N") != "26c1af9d8d9740058d0326fb5ad00f64")
+                if (!NativeConstructionBuild.ColossalCollections(typeof(NativeQuadTree<Entity, QuadTreeBoundsXZ>).Module)
+                    || !NativeConstructionBuild.Mathematics(typeof(MathUtils).Module))
                     throw new InvalidOperationException("PREVIEW_ROAD_BOUNDS_ABI_CHANGED");
 
                 var search = source.GetExistingSystemManaged<SearchSystem>();

@@ -21,8 +21,8 @@ namespace SkylinesLink.Mod.Native
             try
             {
                 Type parent = typeof(CompositionSelectSystem);
-                if (parent.Module.ModuleVersionId.ToString("N") != "e15551e93dea48558dde1da3cea7d7ef"
-                    || typeof(EntityCommandBuffer).Module.ModuleVersionId.ToString("N") != "3d6b23aeb28144a6a5f4cbd5fd3d75e6") return Unqualified();
+                if (!NativeConstructionBuild.Game(parent.Module)
+                    || !NativeConstructionBuild.Entities(typeof(EntityCommandBuffer).Module)) return Unqualified();
                 Type? handles = parent.GetNestedType("TypeHandle", BindingFlags.NonPublic);
                 Type? select = parent.GetNestedType("SelectCompositionJob", BindingFlags.NonPublic);
                 Type? create = parent.GetNestedType("CreateCompositionJob", BindingFlags.NonPublic);

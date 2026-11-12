@@ -36,6 +36,7 @@ namespace SkylinesLink.Mod.Native
         private float2 horizontal;
         private Observation observed;
         private int ownedTiles, candidates, surfaceSamples, freshAttempts, freshConfirmed;
+        private bool anchorOnly;
 
         private GroundPreviewSite(World source, Entity prefab)
         {
@@ -93,12 +94,39 @@ namespace SkylinesLink.Mod.Native
             throw new Rejection("GROUND_SITE_NOT_FOUND");
         }
 
+        internal GroundPreviewSite RequalifyAnchor(Entity rootPrefab, Action scope)
+        {
+            var entities = RequireContext(source, rootPrefab, scope);
+            var ticket = new GroundPreviewSite(source, rootPrefab) { tile = tile, horizontal = horizontal, candidates = 1, anchorOnly = true };
+            ticket.observed = ticket.ObserveAnchor(entities, ReadPlacement(entities, rootPrefab), scope);
+            return ticket;
+        }
+
         internal ControlPoint RequireCurrent(World source, Entity rootPrefab, Action scope, out float appliedOffset)
         {
             Require(ReferenceEquals(this.source, source) && prefab == rootPrefab, "GROUND_SITE_IDENTITY_CHANGED");
             EntityManager entities = RequireContext(source, rootPrefab, scope);
-            var placement = ReadPlacement(entities, rootPrefab);
             freshAttempts++;
+            var value = ObserveAnchor(entities, ReadPlacement(entities, rootPrefab), scope);
+            Require(value.Flags == observed.Flags && value.FrontSample == observed.FrontSample
+                && value.HeightSample.xz.Equals(observed.HeightSample.xz)
+                && value.PrefabOffset.Equals(observed.PrefabOffset), "GROUND_SITE_PLACEMENT_CHANGED");
+            observed = value;
+            freshConfirmed++;
+            appliedOffset = value.AppliedOffset;
+            return new ControlPoint
+            {
+                m_OriginalEntity = Entity.Null,
+                m_Position = new float3(value.Point.x, value.HeightSample.y + appliedOffset, value.Point.z),
+                m_HitPosition = value.Point,
+                m_HitDirection = value.Normal,
+                m_Rotation = quaternion.identity,
+                m_ElementIndex = new int2(-1)
+            };
+        }
+
+        private Observation ObserveAnchor(EntityManager entities, Placement placement, Action scope)
+        {
             ReadTile(entities, tile, out var nodes, out var triangles);
             ReadSurfaces(source, scope, out var terrain, out var water);
             for (int index = 0; index < triangles.Length; index++)
@@ -108,24 +136,9 @@ namespace SkylinesLink.Mod.Native
                 if (clearance < Clearance) continue;
                 Require(TryObserve(horizontal, index, clearance, placement, ref terrain, ref water, out var value),
                     "GROUND_SITE_SURFACE_CHANGED");
-                Require(value.Flags == observed.Flags && value.FrontSample == observed.FrontSample
-                    && value.HeightSample.xz.Equals(observed.HeightSample.xz)
-                    && value.PrefabOffset.Equals(observed.PrefabOffset), "GROUND_SITE_PLACEMENT_CHANGED");
                 scope();
-                observed = value;
-                freshConfirmed++;
-                appliedOffset = value.AppliedOffset;
-                return new ControlPoint
-                {
-                    m_OriginalEntity = Entity.Null,
-                    m_Position = new float3(value.Point.x, value.HeightSample.y + appliedOffset, value.Point.z),
-                    m_HitPosition = value.Point,
-                    m_HitDirection = value.Normal,
-                    m_Rotation = quaternion.identity,
-                    m_ElementIndex = new int2(-1)
-                };
+                return value;
             }
-
             throw new Rejection("GROUND_SITE_TILE_TRIANGLE_CHANGED");
         }
 
@@ -312,7 +325,8 @@ namespace SkylinesLink.Mod.Native
             ["waterDepth"] = observed.Depth,
             ["maxSampledDepth"] = observed.MaxDepth,
             ["maxSampledGrade"] = observed.MaxGrade,
-            ["ownedTiles"] = ownedTiles, ["candidates"] = candidates, ["surfaceSamples"] = surfaceSamples,
+            ["ownedTiles"] = anchorOnly ? null : new JValue(ownedTiles), ["anchorOnly"] = anchorOnly,
+            ["candidates"] = candidates, ["surfaceSamples"] = surfaceSamples,
             ["freshAttempts"] = freshAttempts, ["freshConfirmed"] = freshConfirmed
         };
 
@@ -346,10 +360,12 @@ namespace SkylinesLink.Mod.Native
             }
         }
 
-        internal sealed class Rejection : InvalidOperationException
+        internal sealed class Rejection : InvalidOperationException, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code) : base(code) { Code = code; }
+            internal Rejection(string code) : base(code)
+            { Code = code; }
         }
     }
 }

@@ -150,8 +150,13 @@ namespace SkylinesLink.Mod.Native
         { string name = error.GetType().FullName ?? error.GetType().Name; return name.Length <= 128 ? name : name.Substring(0, 128); }
         private static void RequireMainThread() => Require(MainThreadDispatcher.isMainThread, "NATIVE_SYSTEM_MAIN_THREAD_REQUIRED");
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
-        private sealed class Rejection : InvalidOperationException
-        { internal readonly string Code; internal Rejection(string code) : base(code) { Code = code; } }
+        private sealed class Rejection : InvalidOperationException, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal Rejection(string code) : base(code)
+            { Code = code; }
+        }
     }
 }
 #endif

@@ -138,10 +138,9 @@ namespace SkylinesLink.Mod.Native
 
             internal Bindings()
             {
-                const string gameMvid = "e15551e93dea48558dde1da3cea7d7ef";
-                Require(typeof(AudioManager).Module.ModuleVersionId.ToString("N") == gameMvid
+                Require(NativeConstructionBuild.Game(typeof(AudioManager).Module)
                     && typeof(SourceUpdateData).Module == typeof(AudioManager).Module
-                    && typeof(World).Module.ModuleVersionId.ToString("N") == "3d6b23aeb28144a6a5f4cbd5fd3d75e6",
+                    && NativeConstructionBuild.Entities(typeof(World).Module),
                     "PREVIEW_ROAD_SINK_NATIVE_BUILD_UNQUALIFIED");
                 AudioQueue = Field(typeof(AudioManager), "m_SourceUpdateQueue", typeof(NativeQueue<SourceUpdateInfo>));
                 AudioData = Field(typeof(AudioManager), "m_SourceUpdateData", typeof(SourceUpdateData));

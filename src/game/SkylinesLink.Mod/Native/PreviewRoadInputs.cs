@@ -18,11 +18,11 @@ using LiveSecondaryLane = Game.Net.SecondaryLane;
 
 namespace SkylinesLink.Mod.Native
 {
-    // Read the seven still-live, Disabled members of the caller's proven
+    // Read all still-live, Disabled members of the caller's proven
     // graph as if the native modification query included this isolated scope.
     internal static class PreviewRoadInputs
     {
-        private const int MemberCount = 7, LaneLimit = 64;
+        private const int LaneLimit = 64;
         [Flags]
         private enum Facts
         {
@@ -32,7 +32,7 @@ namespace SkylinesLink.Mod.Native
 
         internal static JObject Read(World source, Entity[] graph)
         {
-            if (source == null || !source.IsCreated || graph == null || graph.Length != MemberCount)
+            if (source == null || !source.IsCreated || graph == null || !PreviewCommitGraph.IsNewMemberCount(graph.Length))
                 throw new InvalidOperationException("PREVIEW_ROAD_GRAPH_UNAVAILABLE");
 
             EntityManager entities = source.EntityManager;
@@ -155,9 +155,10 @@ namespace SkylinesLink.Mod.Native
 
         private static int? ReadAffectedUtilityObjects(EntityManager entities, Entity[] graph, int? length)
         {
-            if (length != 4) return null;
+            int expected = graph.Length - 3;
+            if (length != expected) return null;
             var children = entities.GetBuffer<LiveSubObject>(graph[0], true);
-            if (children.Length != 4) return null;
+            if (children.Length != expected) return null;
             int seen = 0, count = 0;
             const UtilityTypes affected = UtilityTypes.LowVoltageLine | UtilityTypes.SewagePipe | UtilityTypes.WaterPipe;
             for (int index = 0; index < children.Length; index++)

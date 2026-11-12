@@ -206,10 +206,10 @@ namespace SkylinesLink.Mod.Native
                 Require(input.OldNode != Entity.Null && input.OldNode != input.Root && input.OldNode != input.Node,
                     "SUBOBJECT_GENERATION_OLD_NODE_MISMATCH");
             input.Run(scope); Guard(scope);
-            int createLimit = input.IsRelocation ? 6 : 5;
-            int commandLimit = input.IsRelocation ? 57 : 47;
-            Require(input.Passed && input.ResourcesReleased && input.CreateUpperBound == createLimit
-                && input.CommandUpperBound == commandLimit,
+            Require(input.Passed && input.ResourcesReleased
+                && (input.IsRelocation ? input.CreateUpperBound == 6 && input.CommandUpperBound == 57
+                    : input.CreateUpperBound > 0 && input.CreateUpperBound <= SubObjectGenerationPreflight.MaximumNormalCreates
+                        && input.CommandUpperBound > 0 && input.CommandUpperBound <= SubObjectGenerationPreflight.MaximumNormalCommands),
                 "SUBOBJECT_GENERATION_OUTPUT_BOUND_UNQUALIFIED");
             ObserveBindings(scope);
             int pending = PendingCount; Guard(scope);
@@ -386,16 +386,22 @@ namespace SkylinesLink.Mod.Native
         private static void RequireMainThread() => Require(MainThreadDispatcher.isMainThread, "SUBOBJECT_GENERATION_MAIN_THREAD_REQUIRED");
         private static void Require(bool condition, string code) { if (!condition) throw Failure(code); }
         private static Rejection Failure(string code) => new Rejection(code);
-        private sealed class Rejection : Exception { internal readonly string Code; internal Rejection(string code) : base(code) { Code = code; } }
+        private sealed class Rejection : Exception, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal Rejection(string code) : base(code)
+            { Code = code; }
+        }
 
         private sealed class Bindings
         {
             internal readonly FieldInfo Terrain, Water, Tools, City, Barrier, Updates, Temps, Containers, Buildings, Happiness, Applied, LoopErrors;
             internal Bindings()
             {
-                Require(typeof(NativeSubObjectSystem).Module.ModuleVersionId.ToString("N") == "e15551e93dea48558dde1da3cea7d7ef"
-                    && typeof(World).Module.ModuleVersionId.ToString("N") == "3d6b23aeb28144a6a5f4cbd5fd3d75e6"
-                    && typeof(NativeQueue<Entity>).Module.ModuleVersionId.ToString("N") == "f4ddbc30cb47406191074a184ca0481e",
+                Require(NativeConstructionBuild.Game(typeof(NativeSubObjectSystem).Module)
+                    && NativeConstructionBuild.Entities(typeof(World).Module)
+                    && NativeConstructionBuild.Collections(typeof(NativeQueue<Entity>).Module),
                     "SUBOBJECT_GENERATION_NATIVE_BUILD_UNQUALIFIED");
                 Terrain = Field("m_TerrainSystem", typeof(TerrainSystem)); Water = Field("m_WaterSystem", typeof(WaterSystem));
                 Tools = Field("m_ToolSystem", typeof(ToolSystem)); City = Field("m_CityConfigurationSystem", typeof(CityConfigurationSystem));

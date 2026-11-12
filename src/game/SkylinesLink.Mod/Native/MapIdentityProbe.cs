@@ -14,8 +14,6 @@ namespace SkylinesLink.Mod.Native
     // metadata/cache; neither Full nor registered validity proves map content.
     internal sealed class MapIdentityProbe
     {
-        private const string GameMvid = "e15551e93dea48558dde1da3cea7d7ef";
-        private const string EntitiesMvid = "3d6b23aeb28144a6a5f4cbd5fd3d75e6";
         private const int EntryLimit = 128, CandidateLimit = 4;
         private readonly object sync = new object();
         private readonly World? source;
@@ -41,8 +39,8 @@ namespace SkylinesLink.Mod.Native
                 ComponentSystemBase[]? beforeSystems = null;
                 try
                 {
-                    Check(typeof(MapMetadata).Assembly.ManifestModule.ModuleVersionId.ToString("N") == GameMvid
-                        && typeof(World).Assembly.ManifestModule.ModuleVersionId.ToString("N") == EntitiesMvid, "NATIVE_BUILD_UNQUALIFIED");
+                    Check(NativeConstructionBuild.Game(typeof(MapMetadata).Assembly.ManifestModule)
+                        && NativeConstructionBuild.Entities(typeof(World).Assembly.ManifestModule), "NATIVE_BUILD_UNQUALIFIED");
                     beforeWorlds = CaptureWorlds();
                     Check(source != null && source.IsCreated, "SOURCE_OBSERVATION_UNAVAILABLE");
                     beforeSystems = CaptureSystems(source!);

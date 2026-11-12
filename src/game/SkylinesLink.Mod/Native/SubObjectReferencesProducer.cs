@@ -104,9 +104,12 @@ namespace SkylinesLink.Mod.Native
             catch (Exception error) { RecordFailure(error); throw; }
         }
 
-        internal void BindParents(Entity root, Entity node, Action scope)
+        internal void BindParents(GeneratedSubObjectsPayload payload, Action scope)
         {
-            BindParents(new[] { new Parent(root, 4), new Parent(node, 1) }, scope);
+            Require(!payload.IsRelocation && ReferenceEquals(payload.Source, World) && payload.Actor == actor,
+                "SUBOBJECT_REFERENCES_PARENT_PAYLOAD_REJECTED");
+            BindParents(new[] { new Parent(payload.Root, payload.RootChildCount),
+                new Parent(payload.Node, payload.NodeChildCount) }, scope);
         }
 
         internal void BindRelocationParents(GeneratedSubObjectsPayload payload, Action scope)
@@ -140,7 +143,8 @@ namespace SkylinesLink.Mod.Native
             if (children == null) throw new ArgumentNullException(nameof(children));
             if (payload == null) throw new ArgumentNullException(nameof(payload));
             Require(parentsBound && !childrenBound && !linkRequested && !DestructionStarted && children.CreateReturned
-                && !children.UnknownCreation && children.Owns(payload) && children.TargetCount == (IsRelocation ? 6 : 5)
+                && !children.UnknownCreation && children.Owns(payload)
+                && children.TargetCount == (IsRelocation ? 6 : parents[RootRole].ChildCount + parents[NodeRole].ChildCount)
                 && ReferenceEquals(payload.Source, source) && payload.IsRelocation == IsRelocation && payload.Actor == actor
                 && payload.Root == parents[RootRole].Entity && payload.Node == parents[NodeRole].Entity
                 && (!IsRelocation || payload.OldNode == parents[OldNodeRole].Entity),
@@ -539,7 +543,13 @@ namespace SkylinesLink.Mod.Native
         private static void RequireMainThread() => Require(MainThreadDispatcher.isMainThread, "SUBOBJECT_REFERENCES_MAIN_THREAD_REQUIRED");
         private static void Require(bool condition, string code) { if (!condition) throw Failure(code); }
         private static Rejection Failure(string code) => new Rejection(code);
-        private sealed class Rejection : Exception { internal readonly string Code; internal Rejection(string code) : base(code) { Code = code; } }
+        private sealed class Rejection : Exception, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal Rejection(string code) : base(code)
+            { Code = code; }
+        }
 
         private sealed class Parent
         {
@@ -570,8 +580,8 @@ namespace SkylinesLink.Mod.Native
             internal readonly FieldInfo Objects;
             internal Bindings()
             {
-                Require(typeof(NativeReferencesSystem).Module.ModuleVersionId.ToString("N") == "e15551e93dea48558dde1da3cea7d7ef"
-                    && typeof(World).Module.ModuleVersionId.ToString("N") == "3d6b23aeb28144a6a5f4cbd5fd3d75e6",
+                Require(NativeConstructionBuild.Game(typeof(NativeReferencesSystem).Module)
+                    && NativeConstructionBuild.Entities(typeof(World).Module),
                     "SUBOBJECT_REFERENCES_NATIVE_BUILD_UNQUALIFIED");
                 FieldInfo? value = typeof(NativeReferencesSystem).GetField("m_ObjectQuery",
                     BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);

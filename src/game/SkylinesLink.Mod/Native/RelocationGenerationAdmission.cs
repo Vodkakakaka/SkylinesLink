@@ -214,10 +214,12 @@ namespace SkylinesLink.Mod.Native
 
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
 
-        internal sealed class Rejection : InvalidOperationException
+        internal sealed class Rejection : InvalidOperationException, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code) : base(code) { Code = code; }
+            internal Rejection(string code) : base(code)
+            { Code = code; }
         }
     }
 }

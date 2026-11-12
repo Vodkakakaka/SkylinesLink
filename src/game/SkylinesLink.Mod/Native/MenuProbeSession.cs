@@ -730,6 +730,8 @@ namespace SkylinesLink.Mod.Native
                 JToken? relocationPreview = roundTrip?["relocationPreview"];
                 JToken? relocationCommit = roundTrip?["relocationCommit"];
                 JToken? rebuild = roundTrip?["rebuild"];
+                JToken? rebuildChoice = roundTrip?["rebuildChoice"];
+                int rebuildChoiceBytes = rebuildChoice == null ? 0 : encoding.GetByteCount(rebuildChoice.ToString(Formatting.None));
                 int relocationCommitBytes = relocationCommit == null ? 0 : encoding.GetByteCount(relocationCommit.ToString(Formatting.None));
                 int rebuildBytes = rebuild == null ? 0 : encoding.GetByteCount(rebuild.ToString(Formatting.None));
                 var relocationSuccessors = (relocationPreview as JObject)?["successors"] as JObject;
@@ -786,16 +788,18 @@ namespace SkylinesLink.Mod.Native
                 if (relocationPreview != null) otherBytes = otherBytes - relocationPreviewBytes + 4;
                 if (relocationCommit != null) otherBytes = otherBytes - relocationCommitBytes + 4;
                 if (rebuild != null) otherBytes = otherBytes - rebuildBytes + 4;
+                if (rebuildChoice != null) otherBytes = otherBytes - rebuildChoiceBytes + 4;
                 // The first-layer survey has two exact owners and a finite row
                 // budget. Its 16KiB profile keeps the full file below 512KiB
                 // even with the maximum geometry and post-generation profiles.
                 int sharedBytes = geometryBytes + subObjectBytes + subNetBytes + compositionBytes
                     + rootReceiptBytes + nodeReceiptBytes + siteBytes + followupBytes + commitBytes + relocationBytes
-                    + relocationGenerationBytes + relocationPreviewBytes + relocationCommitBytes + rebuildBytes;
+                    + relocationGenerationBytes + relocationPreviewBytes + relocationCommitBytes + rebuildBytes + rebuildChoiceBytes;
                 if ((geometry?.Count ?? 0) > 256 || sharedBytes > 465409 ||
                     rootReceiptBytes > 4096 || nodeReceiptBytes > 8192 || siteBytes > 2048 || followupBytes > 12288 || commitBytes > 8192 ||
                     relocationCommitBytes > 4096 || relocationCommit != null && relocationCommit.Type != JTokenType.Null && !(relocationCommit is JObject) ||
                     rebuildBytes > 8192 || rebuild != null && rebuild.Type != JTokenType.Null && !(rebuild is JObject) ||
+                    rebuildChoiceBytes > 2048 || rebuildChoice != null && rebuildChoice.Type != JTokenType.Null && !(rebuildChoice is JObject) ||
                     relocationBytes > 2048 || relocation != null && relocation.Type != JTokenType.Null && !(relocation is JObject) ||
                     relocationGenerationBytes > 2048 || relocationGeneration != null && relocationGeneration.Type != JTokenType.Null
                         && !(relocationGeneration is JObject) ||

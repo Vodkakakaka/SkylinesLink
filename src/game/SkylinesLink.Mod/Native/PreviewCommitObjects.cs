@@ -135,19 +135,20 @@ namespace SkylinesLink.Mod.Native
             if (!condition) throw new Rejection(code);
         }
 
-        internal sealed class Rejection : InvalidOperationException
+        internal sealed class Rejection : InvalidOperationException, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code, Exception? inner = null) : base(code, inner) { Code = code; }
+            internal Rejection(string code, Exception? inner = null) : base(code, inner)
+            { Code = code; }
         }
     }
 
     [DisableAutoCreation]
     public sealed partial class PreviewCommitObjectProducer : ApplyObjectsSystem
     {
-        private const int ObjectCount = 6;
         private int actor;
-        private int TargetCount => relocationTemps == null ? ObjectCount : 7;
+        private int TargetCount => cohort!.Length - (relocationTemps == null ? 1 : 2);
         private static readonly string[] FieldNames = { "m_ToolOutputBarrier", "m_ToolSystem", "m_SimulationSystem",
             "m_TriggerSystem", "m_InstanceCountSystem", "m_TempQuery", "m_EconomyParameterQuery", "m_PathTargetEventArchetype",
             "m_AppliedTypes", "m_TempAnimationTypes" };
@@ -231,7 +232,7 @@ namespace SkylinesLink.Mod.Native
         internal void Prepare(Entity[] graph, Action scope, Action liveGraph)
         {
             Require(creationReturned && cohort == null && (relocationTemps == null
-                ? graph.Length == ObjectCount + 1 : graph.Length == 9 && relocationTemps.Length == graph.Length),
+                ? PreviewCommitGraph.IsNewMemberCount(graph.Length) : graph.Length == 9 && relocationTemps.Length == graph.Length),
                 "PREVIEW_COMMIT_OBJECT_COHORT_REJECTED");
             cohort = (Entity[])graph.Clone();
             requireScope = scope;
@@ -261,13 +262,14 @@ namespace SkylinesLink.Mod.Native
             methodsChecked = patch.MethodsChecked;
             Require(patch.Qualified, "PREVIEW_COMMIT_OBJECT_PATCH_UNQUALIFIED");
             RequireBindings();
+            int objectCount = TargetCount;
             count = objects.CalculateEntityCount();
             chunkCount = objects.CalculateChunkCount();
-            Require(count == TargetCount && chunkCount > 0 && chunkCount <= TargetCount && economy.CalculateEntityCount() == 1
+            Require(count == objectCount && chunkCount > 0 && chunkCount <= objectCount && economy.CalculateEntityCount() == 1
                 && output!.PendingCount == PreviewCommitBarrier.ObjectBufferIndex, "PREVIEW_COMMIT_OBJECT_QUERY_OR_BARRIER_BOUND");
             using (var entities = objects.ToEntityArray(Allocator.Temp))
             {
-                Require(entities.Length == TargetCount, "PREVIEW_COMMIT_OBJECT_QUERY_SET");
+                Require(entities.Length == objectCount, "PREVIEW_COMMIT_OBJECT_QUERY_SET");
                 int seen = 0;
                 foreach (Entity entity in entities)
                 {
@@ -319,8 +321,8 @@ namespace SkylinesLink.Mod.Native
             object view = abi.Constructor.Invoke(new object[] { buffer });
             var commands = (Array)abi.Commands.GetValue(view)!;
             Require(commands.Length == expectedCommands!.Value, "PREVIEW_COMMIT_OBJECT_COMMAND_COUNT");
-            var stages = new int[ObjectCount];
-            var sortKeys = new int[ObjectCount];
+            var stages = new int[current.Length];
+            var sortKeys = new int[current.Length];
             foreach (object command in commands)
             {
                 Entity entity = (Entity)abi.Value(command, "Entity", typeof(Entity));
@@ -387,6 +389,7 @@ namespace SkylinesLink.Mod.Native
         private ObjectInput[] ReadMatchingInputs(EntityManager manager, Entity[] graph)
         {
             var current = ReadInputs(manager, graph);
+            Require(expected != null && current.Length == expected.Length, "PREVIEW_COMMIT_OBJECT_SOURCE_CHANGED");
             for (int i = 0; i < current.Length; i++)
                 Require(current[i].Matches(expected![i]), "PREVIEW_COMMIT_OBJECT_SOURCE_CHANGED");
             return current;
@@ -394,7 +397,8 @@ namespace SkylinesLink.Mod.Native
 
         private ObjectInput[] ReadInputs(EntityManager manager, Entity[] graph)
         {
-            var result = new ObjectInput[ObjectCount];
+            Require(PreviewCommitGraph.IsNewMemberCount(graph.Length), "PREVIEW_COMMIT_OBJECT_COHORT_REJECTED");
+            var result = new ObjectInput[graph.Length - 1];
             for (int i = 0; i < graph.Length; i++)
             {
                 if (i == 1) continue;
@@ -421,7 +425,7 @@ namespace SkylinesLink.Mod.Native
                 bool hasOwner = manager.HasComponent<Owner>(entity);
                 Entity owner = hasOwner ? manager.GetComponentData<Owner>(entity).m_Owner : Entity.Null;
                 Require(i == 0 ? !hasOwner && manager.HasComponent<Building>(entity)
-                    : hasOwner && owner == (i == graph.Length - 1 ? graph[1] : graph[0])
+                    : hasOwner && (owner == graph[0] || owner == graph[1])
                         && !manager.HasComponent<Building>(entity) && !manager.HasComponent<Game.Buildings.ServiceUpgrade>(entity),
                     "PREVIEW_COMMIT_OBJECT_OWNER_UNQUALIFIED");
 
@@ -522,8 +526,8 @@ namespace SkylinesLink.Mod.Native
             try
             {
                 Type owner = typeof(ApplyObjectsSystem);
-                if (owner.Module.ModuleVersionId.ToString("N") != "e15551e93dea48558dde1da3cea7d7ef"
-                    || typeof(EntityCommandBuffer).Module.ModuleVersionId.ToString("N") != "3d6b23aeb28144a6a5f4cbd5fd3d75e6") return failure;
+                if (!NativeConstructionBuild.Game(owner.Module)
+                    || !NativeConstructionBuild.Entities(typeof(EntityCommandBuffer).Module)) return failure;
                 var methods = new List<MethodBase>();
                 AddDeclared(methods, owner);
                 foreach (string name in new[] { "PatchTempReferencesJob", "HandleTempEntitiesJob", "TypeHandle" })

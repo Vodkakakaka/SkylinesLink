@@ -23,6 +23,12 @@ The declared MCP surface has nine tools. Three Host-local tools discover/read pu
 
 The operation and history components exercise identity, durable intent, bounded work, recovery and truthful unknown outcomes. The native construction probes are separate development experiments behind an explicit compile symbol; they are not public building tools or a general construction engine.
 
+### Native experiment update
+
+The latest development source records optional generated members, bounded typed rejection details, and value-based checks of a cancelled preview against the candidate rebuilt before payment. A limited building experiment on game 1.6.4 completed normal preview/cancel/build, relocation, and a different-prefab build at the old site. The runtime-qualified internal source and the later wording-only revision are recorded separately; subsequent source changes are not automatically game-qualified.
+
+These checks do not establish a public construction API, general asset support, dynamic player/AI coexistence or actual service operation. A separate menu-only exit control without the product assemblies also ended with a native access violation. This narrows the observed preconditions; it does not identify the cause or prove that the process-local background policy is unrelated.
+
 ### Build and verify
 
 Use Windows, PowerShell 7 and stable tools meeting the minimum versions in the [toolchain guide](toolchain.md). VS Code is sufficient as an editor. From a checkout:
@@ -75,6 +81,12 @@ Player installation and updates, the game UI, full city information and actions,
 当前 MCP 声明九个工具。其中三个 Host 本地工具检索和读取公共指南、描述能力 schema；其余工具提供上下文、操作查询、Task 停止及决定查询、模组观察和城市概览。声明和离线检查不代表游戏可用性验收。生产 Task 创建和施工工具尚未启用。
 
 操作与历史组件覆盖身份、持久意图、有界工作、恢复及真实未知结果。原生施工探针是由显式编译符号隔离的开发实验，不是公开建筑工具或通用施工引擎。
+
+### 原生实验更新
+
+最新开发源码增加实际可选生成成员、有界的类型化拒绝诊断，以及取消预览与付款前重建候选的逐值比对。游戏1.6.4的有限建筑实验完成了正常预览／取消／建造、迁移和原址不同资产新建。实机合格的内部源码与后续仅说明文字的修订分别记录，不能将源码更新自动视为重新通过实机。
+
+这些结果不代表公开施工接口、通用资产支持、动态玩家并行或实际服务运营已完成。另一个不加载产品程序集的纯菜单退出对照也发生原生访问冲突；这缩小了已观察前提，尚未定位根因，也未证明本进程后台策略与崩溃无关。
 
 ### 构建与验证
 

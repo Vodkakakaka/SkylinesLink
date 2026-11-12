@@ -17,8 +17,6 @@ namespace SkylinesLink.Mod.Native
     // retries, persistent scheduler, or inference about city construction.
     internal sealed class ObjectDefinitionExecutionProbe
     {
-        private const string GameMvid = "e15551e93dea48558dde1da3cea7d7ef";
-        private const string EntitiesMvid = "3d6b23aeb28144a6a5f4cbd5fd3d75e6";
         private World? source;
         private NativeProbeSourceProtection? protection;
         private ObjectDefinitionBarrier? barrier;
@@ -66,8 +64,8 @@ namespace SkylinesLink.Mod.Native
                 if (input == null) throw new CheckFailure("OBJECT_EXECUTION_INPUT_UNQUALIFIED");
                 source = input.Source;
                 var selected = ObserveInput(input);
-                nativeBuildQualified = typeof(ObjectToolBaseSystem).Module.ModuleVersionId.ToString("N") == GameMvid
-                    && typeof(World).Module.ModuleVersionId.ToString("N") == EntitiesMvid;
+                nativeBuildQualified = NativeConstructionBuild.Game(typeof(ObjectToolBaseSystem).Module)
+                    && NativeConstructionBuild.Entities(typeof(World).Module);
                 Check(nativeBuildQualified, "OBJECT_EXECUTION_NATIVE_BUILD_UNQUALIFIED");
                 patch = ObjectDefinitionPatchProbe.Observe(); Check(patch.Qualified, patch.Reason);
                 requireCurrentScope();
@@ -97,7 +95,8 @@ namespace SkylinesLink.Mod.Native
                 var configuration = source.GetExistingSystemManaged<Game.City.CityConfigurationSystem>();
                 Check(prefabs != null && configuration != null, "OBJECT_EXECUTION_DEPENDENCY_CHANGED");
                 Entity expectedRoot = input.Root;
-                input = ObjectDefinitionInputProbe.Select(source, prefabs!, configuration!, ObjectDefinitionInputProbe.Purpose.WindPower);
+                input = ObjectDefinitionInputProbe.Select(source, prefabs!, configuration!, ObjectDefinitionInputProbe.Purpose.WindPower,
+                    row => row.RootIndex == expectedRoot.Index && row.RootVersion == expectedRoot.Version);
                 Check(input.Complete && input.Root == expectedRoot, "OBJECT_EXECUTION_INPUT_SELECTION_CHANGED");
                 selected = ObserveInput(input);
                 inputRevalidated = true;
@@ -366,8 +365,13 @@ namespace SkylinesLink.Mod.Native
         private static string ShortType(Exception error)
         { string value = error.GetType().FullName ?? error.GetType().Name; return value.Length <= 128 ? value : value.Substring(0, 128); }
         private static void Check(bool condition, string code) { if (!condition) throw new CheckFailure(code); }
-        private sealed class CheckFailure : Exception
-        { internal readonly string Code; internal CheckFailure(string code) { Code = code; } }
+        private sealed class CheckFailure : Exception, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal CheckFailure(string code)
+            { Code = code; }
+        }
     }
 }
 #endif

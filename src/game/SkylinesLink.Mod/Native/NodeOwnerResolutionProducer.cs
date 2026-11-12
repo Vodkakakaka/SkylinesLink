@@ -403,15 +403,21 @@ namespace SkylinesLink.Mod.Native
         private static void RequireMainThread() => Require(MainThreadDispatcher.isMainThread, "NODE_OWNER_MAIN_THREAD_REQUIRED");
         private static void Require(bool condition, string code) { if (!condition) throw Failure(code); }
         private static Rejection Failure(string code) => new Rejection(code);
-        private sealed class Rejection : Exception { internal readonly string Code; internal Rejection(string code) : base(code) { Code = code; } }
+        private sealed class Rejection : Exception, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal Rejection(string code) : base(code)
+            { Code = code; }
+        }
 
         private sealed class Bindings
         {
             internal readonly FieldInfo Barrier, Owners, Subs;
             internal Bindings()
             {
-                Require(typeof(FindOwnersSystem2).Module.ModuleVersionId.ToString("N") == "e15551e93dea48558dde1da3cea7d7ef"
-                    && typeof(World).Module.ModuleVersionId.ToString("N") == "3d6b23aeb28144a6a5f4cbd5fd3d75e6", "NODE_OWNER_NATIVE_BUILD_UNQUALIFIED");
+                Require(NativeConstructionBuild.Game(typeof(FindOwnersSystem2).Module)
+                    && NativeConstructionBuild.Entities(typeof(World).Module), "NODE_OWNER_NATIVE_BUILD_UNQUALIFIED");
                 Barrier = Field("m_ModificationBarrier", typeof(ModificationBarrier2B));
                 Owners = Field("m_OwnersQuery", typeof(EntityQuery)); Subs = Field("m_SubEntityQuery", typeof(EntityQuery));
             }

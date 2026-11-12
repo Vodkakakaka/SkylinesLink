@@ -72,7 +72,7 @@ namespace SkylinesLink.Mod.Native
         {
             creationStarted = true;
             if (!MainThreadDispatcher.isMainThread ||
-                typeof(TriggerSystem).Module.ModuleVersionId.ToString("N") != "e15551e93dea48558dde1da3cea7d7ef")
+                !NativeConstructionBuild.Game(typeof(TriggerSystem).Module))
                 throw new InvalidOperationException("PREVIEW_COMMIT_TRIGGER_ABI_UNQUALIFIED");
             queuesField = Field("m_Queues", typeof(List<NativeQueue<TriggerAction>>));
             dependenciesField = Field("m_Dependencies", typeof(JobHandle));
@@ -85,18 +85,19 @@ namespace SkylinesLink.Mod.Native
         protected override void OnStopRunning() { }
         protected override void OnUpdate() => throw new InvalidOperationException("PREVIEW_COMMIT_TRIGGER_UNSCHEDULED_ONLY");
 
-        internal TriggerAction[] CaptureJoined(JobHandle objects, JobHandle net)
+        internal TriggerAction[] CaptureJoined(JobHandle objects, JobHandle net, int memberCount)
         {
-            if (captureAttempted || !CreationReturned || !Enabled || queues.Count != 2
+            if (!PreviewCommitGraph.IsNewMemberCount(memberCount) || captureAttempted || !CreationReturned || !Enabled || queues.Count != 2
                 || !queues[0].IsCreated || !queues[1].IsCreated || !ReferenceEquals(queuesField!.GetValue(this), queues)
                 || objects.Equals(default(JobHandle)) || !objects.IsCompleted || net.Equals(default(JobHandle)) || !net.IsCompleted)
                 throw new InvalidOperationException("PREVIEW_COMMIT_TRIGGER_INPUT_UNCONFIRMED");
             captureAttempted = true;
             JoinRegisteredWriter(requireWriter: true);
-            if (queues[0].Count != 6 || queues[1].Count != 0)
+            int objectCount = memberCount - 1;
+            if (queues[0].Count != objectCount || queues[1].Count != 0)
                 throw new InvalidOperationException("PREVIEW_COMMIT_TRIGGER_COUNT_CHANGED");
             using var actions = queues[0].ToArray(Allocator.Temp);
-            if (actions.Length != 6) throw new InvalidOperationException("PREVIEW_COMMIT_TRIGGER_COUNT_CHANGED");
+            if (actions.Length != objectCount) throw new InvalidOperationException("PREVIEW_COMMIT_TRIGGER_COUNT_CHANGED");
             return actions.ToArray();
         }
 

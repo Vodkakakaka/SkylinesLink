@@ -22,7 +22,7 @@ namespace SkylinesLink.Mod.Native
                 var parent = typeof(CostSystem);
                 var handles = parent.GetNestedType("TypeHandle", BindingFlags.NonPublic);
                 var job = parent.GetNestedType("CalculateCostJob", BindingFlags.NonPublic);
-                if (parent.Module.ModuleVersionId.ToString("N") != "e15551e93dea48558dde1da3cea7d7ef"
+                if (!NativeConstructionBuild.Game(parent.Module)
                     || handles == null || job == null || !handles.IsValueType || !job.IsValueType
                     || !typeof(IJobChunk).IsAssignableFrom(job)) return Unqualified();
 

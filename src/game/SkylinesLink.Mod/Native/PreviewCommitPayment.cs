@@ -39,7 +39,7 @@ namespace SkylinesLink.Mod.Native
             attempted = true;
             try
             {
-                Require(MainThreadDispatcher.isMainThread && graph.Length == PreviewCommitPaymentProducer.MemberCount,
+                Require(MainThreadDispatcher.isMainThread && PreviewCommitGraph.IsNewMemberCount(graph.Length),
                     "PREVIEW_COMMIT_PAYMENT_CONTEXT_INVALID");
                 requireScope();
                 guardPreparedInputs();
@@ -146,20 +146,20 @@ namespace SkylinesLink.Mod.Native
         internal static void Require(bool condition, string code)
         { if (!condition) throw new Rejection(code); }
 
-        internal sealed class Rejection : InvalidOperationException
+        internal sealed class Rejection : InvalidOperationException, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal readonly string Code;
-            internal Rejection(string code, Exception? inner = null) : base(code, inner) { Code = code; }
+            internal Rejection(string code, Exception? inner = null) : base(code, inner)
+            { Code = code; }
         }
     }
 
     [DisableAutoCreation]
     public sealed partial class PreviewCommitPaymentProducer : ToolApplySystem
     {
-        internal const int MemberCount = 7;
         private int actor;
         private Temp[]? relocation;
-        private int TargetCount => relocation?.Length ?? MemberCount;
         private int ExpectedOutputSlot => relocation == null
             ? PreviewCommitBarrier.PaymentBufferIndex : PreviewCommitBarrier.RelocationPaymentBufferIndex;
         private const BindingFlags Fields = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
@@ -232,7 +232,7 @@ namespace SkylinesLink.Mod.Native
         internal int AdmitRelocation(Entity[] graph)
         {
             Require(creationReturned && !destructionStarted && !attempted && relocation != null && !Enabled
-                && graph.Length == TargetCount && ShouldRunSystem(), "PREVIEW_COMMIT_PAYMENT_RELOCATION_NOT_READY");
+                && graph.Length == relocation.Length && ShouldRunSystem(), "PREVIEW_COMMIT_PAYMENT_RELOCATION_NOT_READY");
             RequireUnpatched();
             RequireBindings();
             Require(output!.PendingCount == ExpectedOutputSlot, "PREVIEW_COMMIT_PAYMENT_OUTPUT_SLOT_CHANGED");
@@ -244,7 +244,8 @@ namespace SkylinesLink.Mod.Native
 
         internal void Pay(Entity[] graph, Action requireScope, Action before, Action after)
         {
-            Require(creationReturned && !destructionStarted && !attempted && graph.Length == TargetCount,
+            Require(creationReturned && !destructionStarted && !attempted
+                && (relocation == null ? PreviewCommitGraph.IsNewMemberCount(graph.Length) : graph.Length == relocation.Length),
                 "PREVIEW_COMMIT_PAYMENT_PRODUCTION_REJECTED");
             attempted = true;
             members = graph;
@@ -321,10 +322,10 @@ namespace SkylinesLink.Mod.Native
         {
             queryCount = query.CalculateEntityCount();
             chunkCount = query.CalculateChunkCount();
-            Require(queryCount == TargetCount && chunkCount >= 1 && chunkCount <= TargetCount,
+            Require(queryCount == graph.Length && chunkCount >= 1 && chunkCount <= graph.Length,
                 "PREVIEW_COMMIT_PAYMENT_QUERY_BOUND");
             using var values = query.ToEntityArray(Allocator.Temp);
-            Require(values.Length == TargetCount, "PREVIEW_COMMIT_PAYMENT_QUERY_CHANGED");
+            Require(values.Length == graph.Length, "PREVIEW_COMMIT_PAYMENT_QUERY_CHANGED");
             foreach (Entity entity in values)
                 Require(Array.IndexOf(graph, entity) >= 0, "PREVIEW_COMMIT_PAYMENT_FOREIGN_QUERY_MEMBER");
         }

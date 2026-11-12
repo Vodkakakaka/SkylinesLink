@@ -106,7 +106,7 @@ namespace SkylinesLink.Mod.Native
                 {
                     before = PreviewRoadInputs.Read(source, newGraph!);
                     costs = new PreviewCostObservation(source, newGraph!);
-                    instance.SearchOnce(root, requireScope, () => bounds.RequireEmpty(source, root, requireScope));
+                    instance.SearchOnce(newGraph!, requireScope, () => bounds.RequireEmpty(source, root, requireScope));
                 }
                 else
                 {
@@ -210,10 +210,12 @@ namespace SkylinesLink.Mod.Native
         };
 
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
-        internal sealed class Rejection : InvalidOperationException
+        internal sealed class Rejection : InvalidOperationException, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code, Exception? inner = null) : base(code, inner) { Code = code; }
+            internal Rejection(string code, Exception? inner = null) : base(code, inner)
+            { Code = code; }
         }
     }
 }

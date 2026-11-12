@@ -63,7 +63,7 @@ namespace SkylinesLink.Mod.Native
         {
             RequireMainThread();
             Enabled = false;
-            if (typeof(LaneReferencesSystem).Module.ModuleVersionId.ToString("N") != "e15551e93dea48558dde1da3cea7d7ef")
+            if (!NativeConstructionBuild.Game(typeof(LaneReferencesSystem).Module))
                 throw new InvalidOperationException("PREVIEW_LANE_SINK_BUILD_UNQUALIFIED");
             queueField = Field("m_SkipLaneQueue", typeof(NativeQueue<Lane>));
             writerField = Field("m_SkipLaneDeps", typeof(JobHandle));

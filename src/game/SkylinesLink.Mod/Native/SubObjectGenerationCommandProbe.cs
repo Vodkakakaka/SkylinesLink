@@ -30,9 +30,9 @@ namespace SkylinesLink.Mod.Native
                 || !input.Source.IsCreated || !ReferenceEquals(producer.World, input.Source)
                 || !producer.CompletedFor(input) || producer.PendingCount != 2
                 || input.Root == Entity.Null || input.Node == Entity.Null || input.Root == input.Node || input.Actor <= 0
-                || input.CreateUpperBound < 0 || input.CreateUpperBound > 5
-                || input.CommandUpperBound < 0 || input.CommandUpperBound > 47
-                || input.Candidates.Count > 5 || input.CreateUpperBound > input.Candidates.Count
+                || input.CreateUpperBound <= 0 || input.CreateUpperBound > SubObjectGenerationPreflight.MaximumNormalCreates
+                || input.CommandUpperBound <= 0 || input.CommandUpperBound > SubObjectGenerationPreflight.MaximumNormalCommands
+                || input.CreateUpperBound != input.Candidates.Count
                 || producer.CreateUpperBound != input.CreateUpperBound
                 || producer.OutputCommandUpperBound != input.CommandUpperBound) throw Failure();
 
@@ -48,34 +48,42 @@ namespace SkylinesLink.Mod.Native
             List<Target> created = ReadTargets(abi, commands, input, maximumSortKey: 1, records, out long recordBytes);
 
             int alignedCount = 0, lightCount = 0, componentCount = 0;
-            bool sourceRowsUnique = true;
             var immutable = new List<GeneratedSubObjectTarget>(created.Count);
             var observations = new JArray();
-            var ownerPrefabCounts = new Dictionary<Entity, Dictionary<Entity, int>>();
+            var emittedRows = new HashSet<(Entity Owner, int Row)>();
             foreach (Target target in created)
             {
                 if (!target.Version.HasValue) throw Failure();
                 GeneratedSubObjectTarget copy = FinishTarget(input, target, out JObject observation);
                 if (copy.Has(GeneratedSubObjectWriteKind.Aligned)) alignedCount++;
                 if (copy.Has(GeneratedSubObjectWriteKind.StreetLight)) lightCount++;
-                if (!copy.SourceRowIndex.HasValue) sourceRowsUnique = false;
+                if (!copy.SourceRowIndex.HasValue || !emittedRows.Add((copy.Owner, copy.SourceRowIndex.Value)))
+                    throw Failure();
                 componentCount += copy.WriteCount;
-                if (!ownerPrefabCounts.TryGetValue(copy.Owner, out Dictionary<Entity, int> counts))
-                { counts = new Dictionary<Entity, int>(); ownerPrefabCounts.Add(copy.Owner, counts); }
-                counts.TryGetValue(copy.Prefab, out int old); counts[copy.Prefab] = old + 1;
-                if (counts[copy.Prefab] > MatchingRows(input, copy.Owner, copy.Prefab, null).Count) throw Failure();
                 // This preserves all actual targets, including two outputs from
                 // two rows sharing a prefab. No prefab-key deduplication occurs.
                 immutable.Add(copy); observations.Add(observation);
             }
-            if (alignedCount > 1 || lightCount > 1 || componentCount + created.Count != commands.Length) throw Failure();
+            int mandatoryRows = 0, optionalRows = 0, optionalCreated = 0;
+            foreach (var row in input.Candidates)
+            {
+                bool emitted = emittedRows.Contains((row.Owner, row.RowIndex));
+                if (row.Probability == 100) { mandatoryRows++; if (!emitted) throw Failure(); }
+                else { optionalRows++; if (emitted) optionalCreated++; }
+                if (row.Probability == 0 && emitted) throw Failure();
+            }
+            if (alignedCount != SubObjectGenerationPreflight.NormalNodeRows || lightCount > input.StreetLightRowCount
+                || componentCount + created.Count != commands.Length) throw Failure();
             var result = new JObject
             {
                 ["kind"] = "native-subobject-generation-scalar-commands", ["firstBufferCommandsObserved"] = first.Length,
                 ["commandUpperBound"] = input.CommandUpperBound, ["createUpperBound"] = input.CreateUpperBound,
                 ["commandsObserved"] = commands.Length, ["createCommands"] = created.Count,
                 ["componentWriteCommands"] = componentCount, ["alignedWrites"] = alignedCount, ["streetLightWrites"] = lightCount,
-                ["typedValuesCopied"] = true, ["sourceRowsUniquelyAssociated"] = sourceRowsUnique,
+                ["typedValuesCopied"] = true, ["sourceRowsUniquelyAssociated"] = true,
+                ["mandatoryRows"] = mandatoryRows, ["allMandatoryRowsPresent"] = true,
+                ["optionalRowsDeclared"] = optionalRows, ["optionalRowsCreated"] = optionalCreated,
+                ["probabilitySelectionOwnedByNative"] = true,
                 ["targets"] = observations, ["commands"] = records, ["recordBytes"] = recordBytes,
                 ["recordBytesAreHeapBytes"] = false, ["bufferCommands"] = 0, ["removeCommands"] = 0,
                 ["externalTargetCommands"] = 0, ["commandEntityReferencesClosed"] = true,
@@ -89,7 +97,7 @@ namespace SkylinesLink.Mod.Native
                 throw new InvalidOperationException("SUBOBJECT_GENERATION_COMMAND_OUTPUT_BUDGET");
             // Nothing from the debugger, its native memory, or the JSON is used
             // by this handoff. All admitted SDK structs have already been copied.
-            payload = new GeneratedSubObjectsPayload(input.Source, input.Root, input.Node, input.Actor, immutable, commands.Length);
+            payload = new GeneratedSubObjectsPayload(input.Source, input.Root, input.Node, input.Actor, immutable, commands.Length, input);
             return result;
         }
 
@@ -136,7 +144,8 @@ namespace SkylinesLink.Mod.Native
                     || sortKeys[role] >= 0 && sortKeys[role] != target.SortKey
                     || sortOwners[target.SortKey] != Entity.Null && sortOwners[target.SortKey] != owner) throw Failure();
                 sortKeys[role] = target.SortKey; sortOwners[target.SortKey] = owner;
-                List<int> candidates = RequireTargetWrites(input, target, owner, prefab, out int? aligned);
+                List<int> candidates = RequireTargetWrites(input, target, owner, prefab,
+                    Get<NativeTransform>(target, GeneratedSubObjectWriteKind.Transform), out int? aligned);
                 var key = (owner, prefab, aligned);
                 ownerPrefabCounts.TryGetValue(key, out int observed);
                 if (++observed > candidates.Count) throw Failure();
@@ -337,13 +346,13 @@ namespace SkylinesLink.Mod.Native
         {
             Owner owner = Get<Owner>(target, GeneratedSubObjectWriteKind.Owner);
             PrefabRef prefab = Get<PrefabRef>(target, GeneratedSubObjectWriteKind.Prefab);
-            List<int> candidates = RequireTargetWrites(input, target, owner.m_Owner, prefab.m_Prefab, out int? alignedIndex);
+            NativeTransform transform = Get<NativeTransform>(target, GeneratedSubObjectWriteKind.Transform);
+            List<int> candidates = RequireTargetWrites(input, target, owner.m_Owner, prefab.m_Prefab, transform, out int? alignedIndex);
             Temp actualTemp = Get<Temp>(target, GeneratedSubObjectWriteKind.Temp);
             bool light = target.Types.Contains(typeof(Game.Objects.StreetLight));
             var entity = new Entity { Index = target.Identity, Version = target.Version!.Value };
             var copy = new GeneratedSubObjectTarget(entity, owner.m_Owner, prefab.m_Prefab, target.Archetype,
                 target.CreateOrdinal, candidates, target.Writes);
-            NativeTransform transform = Get<NativeTransform>(target, GeneratedSubObjectWriteKind.Transform);
             NativeAnimation animation = Get<NativeAnimation>(target, GeneratedSubObjectWriteKind.Animation);
             InterpolatedTransform interpolated = Get<InterpolatedTransform>(target, GeneratedSubObjectWriteKind.Interpolated);
             ObjectElevation elevation = Get<ObjectElevation>(target, GeneratedSubObjectWriteKind.Elevation);
@@ -370,7 +379,7 @@ namespace SkylinesLink.Mod.Native
         }
 
         private static List<int> RequireTargetWrites(SubObjectGenerationPreflight input, Target target,
-            Entity owner, Entity prefab, out int? alignedIndex)
+            Entity owner, Entity prefab, NativeTransform transform, out int? alignedIndex)
         {
             const int required = (1 << 8) - 1;
             int mask = 0;
@@ -390,7 +399,7 @@ namespace SkylinesLink.Mod.Native
             if (aligned != (owner == input.Node || input.IsRelocation && owner == input.OldNode)
                 || light != leaf.StreetLight.HasValue) throw Failure();
             alignedIndex = aligned ? Get<Game.Objects.Aligned>(target, GeneratedSubObjectWriteKind.Aligned).m_SubObjectIndex : (int?)null;
-            List<int> candidates = MatchingRows(input, owner, prefab, alignedIndex);
+            List<int> candidates = MatchingRows(input, owner, prefab, alignedIndex, transform);
             if (candidates.Count == 0) throw Failure();
             return candidates;
         }
@@ -404,12 +413,24 @@ namespace SkylinesLink.Mod.Native
             return flags;
         }
 
-        private static List<int> MatchingRows(SubObjectGenerationPreflight input, Entity owner, Entity prefab, int? alignedIndex)
+        private static List<int> MatchingRows(SubObjectGenerationPreflight input, Entity owner, Entity prefab,
+            int? alignedIndex, NativeTransform actualTransform)
         {
             var result = new List<int>();
             foreach (var candidate in input.Candidates)
-                if (candidate.Owner == owner && candidate.Prefab == prefab
-                    && (!alignedIndex.HasValue || candidate.RowIndex == alignedIndex.Value)) result.Add(candidate.RowIndex);
+            {
+                if (candidate.Owner != owner || candidate.Prefab != prefab
+                    || alignedIndex.HasValue && candidate.RowIndex != alignedIndex.Value) continue;
+                if (!input.IsRelocation)
+                {
+                    NativeTransform parent = owner == input.Root ? input.RootTransform :
+                        new NativeTransform(input.NodeData.m_Position, input.NodeData.m_Rotation);
+                    NativeTransform expected = Game.Objects.ObjectUtils.LocalToWorld(parent,
+                        new NativeTransform(candidate.Position, candidate.Rotation));
+                    if (!expected.Equals(actualTransform)) continue;
+                }
+                result.Add(candidate.RowIndex);
+            }
             return result;
         }
 
@@ -452,7 +473,8 @@ namespace SkylinesLink.Mod.Native
             || Kind == GeneratedSubObjectWriteKind.RandomSeed || Kind == GeneratedSubObjectWriteKind.StreetLight;
         internal GeneratedSubObjectWrite(GeneratedSubObjectWriteKind kind, object value, int bytes, int ordinal, int commandUpperBound)
         {
-            if (bytes <= 0 || bytes > 1024 || commandUpperBound > 57 || ordinal < 0 || ordinal >= commandUpperBound)
+            if (bytes <= 0 || bytes > 1024 || commandUpperBound > SubObjectGenerationPreflight.MaximumNormalCommands
+                || ordinal < 0 || ordinal >= commandUpperBound)
                 throw new InvalidOperationException("GENERATED_SUBOBJECT_WRITE_INVALID");
             Kind = kind; ComponentBytes = bytes; Ordinal = ordinal;
             // Explicit unbox/rebox makes an independent unmanaged-value copy,
@@ -521,19 +543,25 @@ namespace SkylinesLink.Mod.Native
         private readonly GeneratedSubObjectTarget[] targets;
         internal bool IsRelocation => relocation != null;
         internal int TargetCount => targets.Length;
+        internal int RootChildCount { get; }
+        internal int NodeChildCount { get; }
         internal GeneratedSubObjectTarget TargetAt(int index) => targets[index];
+        internal int ChildCount(Entity owner) => owner == Root ? RootChildCount : owner == Node ? NodeChildCount
+            : IsRelocation && owner == OldNode ? TargetCount - RootChildCount - NodeChildCount
+            : throw new InvalidOperationException("GENERATED_SUBOBJECT_OWNER_UNAVAILABLE");
         internal GeneratedSubObjectsPayload(World source, Entity root, Entity node, int actor,
-            List<GeneratedSubObjectTarget> values, int commandCount, SubObjectGenerationPreflight? relocation = null)
+            List<GeneratedSubObjectTarget> values, int commandCount, SubObjectGenerationPreflight admission)
         {
             if (source == null || root == Entity.Null || node == Entity.Null || root == node || actor <= 0
-                || values == null || commandCount < 0
-                || (relocation == null ? values.Count > 5 || commandCount > 47
-                    : !relocation.Passed || !relocation.IsRelocation || !ReferenceEquals(source, relocation.Source)
-                        || relocation.Root != root || relocation.Node != node || relocation.Actor != actor
-                        || values.Count != relocation.CreateUpperBound || commandCount > relocation.CommandUpperBound))
+                || values == null || commandCount < 0 || !admission.Passed || !ReferenceEquals(source, admission.Source)
+                || admission.Root != root || admission.Node != node || admission.Actor != actor
+                || values.Count > admission.CreateUpperBound
+                || admission.IsRelocation && values.Count != admission.CreateUpperBound
+                || commandCount > admission.CommandUpperBound)
                 throw new InvalidOperationException("GENERATED_SUBOBJECT_PAYLOAD_INVALID");
+            relocation = admission.IsRelocation ? admission : null;
             Source = source; Root = root; Node = node; OldNode = relocation?.OldNode ?? Entity.Null;
-            Actor = actor; CommandCount = commandCount; this.relocation = relocation;
+            Actor = actor; CommandCount = commandCount;
             if (relocation != null)
             {
                 rootTemp = relocation.OwnerTemp(root);
@@ -541,6 +569,7 @@ namespace SkylinesLink.Mod.Native
                 oldNodeTemp = relocation.OwnerTemp(OldNode);
             }
             var identities = new HashSet<Entity>(); var ordinals = new HashSet<int>(); int commands = values.Count;
+            int rootChildren = 0, nodeChildren = 0;
             foreach (GeneratedSubObjectTarget target in values)
             {
                 if (!IsParent(target.Owner) || !identities.Add(target.DeferredEntity)
@@ -552,9 +581,14 @@ namespace SkylinesLink.Mod.Native
                     if (ordinal < 0 || ordinal >= commandCount || !ordinals.Add(ordinal))
                         throw new InvalidOperationException("GENERATED_SUBOBJECT_COMMAND_ORDER_INVALID");
                 }
+                if (target.Owner == Root) rootChildren++;
+                if (target.Owner == Node) nodeChildren++;
                 commands += target.WriteCount;
             }
             if (commands != commandCount || ordinals.Count != commandCount) throw new InvalidOperationException("GENERATED_SUBOBJECT_COMMANDS_INCOMPLETE");
+            if (!IsRelocation && nodeChildren != SubObjectGenerationPreflight.NormalNodeRows)
+                throw new InvalidOperationException("GENERATED_SUBOBJECT_NODE_CHILDREN_INCOMPLETE");
+            RootChildCount = rootChildren; NodeChildCount = nodeChildren;
             targets = values.ToArray();
         }
 

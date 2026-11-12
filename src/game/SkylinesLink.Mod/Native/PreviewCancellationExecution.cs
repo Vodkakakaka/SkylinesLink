@@ -37,7 +37,7 @@ namespace SkylinesLink.Mod.Native
             Action requireScope, Action guardLiveGraph, Action unlinkChildren, Action observeProtection,
             Action confirmGroupRemoval)
         {
-            Require(!attempted && MainThreadDispatcher.isMainThread && graph.Length == 7,
+            Require(!attempted && MainThreadDispatcher.isMainThread && PreviewCommitGraph.IsNewMemberCount(graph.Length),
                 "PREVIEW_CANCEL_EXECUTION_UNAVAILABLE");
             attempted = true;
             targets = (Entity[])graph.Clone();
@@ -159,10 +159,12 @@ namespace SkylinesLink.Mod.Native
         }
 
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
-        internal sealed class Rejection : InvalidOperationException
+        internal sealed class Rejection : InvalidOperationException, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code, Exception? inner = null) : base(code, inner) { Code = code; }
+            internal Rejection(string code, Exception? inner = null) : base(code, inner)
+            { Code = code; }
         }
     }
 }

@@ -30,7 +30,7 @@ namespace SkylinesLink.Mod.Native
     [DisableAutoCreation]
     public sealed partial class PreviewValidationProducer : ValidationSystem
     {
-        private const int MemberCount = 7, RelocationMemberCount = 9, ErrorTypeCount = 31, ErrorPrefabLimit = 64;
+        private const int RelocationMemberCount = 9, ErrorTypeCount = 31, ErrorPrefabLimit = 64;
         private Bindings? bindings;
         private PreviewValidationBarrier? barrier;
         private Components? result;
@@ -151,7 +151,8 @@ namespace SkylinesLink.Mod.Native
             if (requireScope == null) throw new ArgumentNullException(nameof(requireScope));
             if (guardLiveGraph == null) throw new ArgumentNullException(nameof(guardLiveGraph));
             if (markOutputEntered == null) throw new ArgumentNullException(nameof(markOutputEntered));
-            Require(CreationReturned && !destructionStarted && !requested && graph.Length == (original == null ? MemberCount : RelocationMemberCount),
+            Require(CreationReturned && !destructionStarted && !requested
+                && (original == null ? PreviewCommitGraph.IsNewMemberCount(graph.Length) : graph.Length == RelocationMemberCount),
                 "PREVIEW_VALIDATION_RUN_REJECTED");
             requested = true;
             members = (Entity[])graph.Clone();
@@ -480,10 +481,12 @@ namespace SkylinesLink.Mod.Native
         private static void RequireMainThread() => Require(MainThreadDispatcher.isMainThread, "PREVIEW_VALIDATION_MAIN_THREAD_REQUIRED");
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
 
-        internal sealed class Rejection : InvalidOperationException
+        internal sealed class Rejection : InvalidOperationException, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code) : base(code) { Code = code; }
+            internal Rejection(string code) : base(code)
+            { Code = code; }
         }
 
         private sealed class Bindings

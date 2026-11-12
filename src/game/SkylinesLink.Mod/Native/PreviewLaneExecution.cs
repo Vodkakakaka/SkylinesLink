@@ -23,12 +23,13 @@ namespace SkylinesLink.Mod.Native
         internal bool Passed => commands != null && skipCount == 0 && ResourcesReleased && failureCode == null;
         internal bool NoLaneEntitiesRequired => Passed && (int?)commands?["lanesCreated"] == 0;
 
-        internal void RunOnce(World source, Entity root, Entity node, List<ComponentSystemBase> appended,
+        internal void RunOnce(GeneratedSubObjectsPayload cohort, List<ComponentSystemBase> appended,
             Action requireScope, Action guardLiveGraph, Action observeProtection)
         {
-            Run(source, 1, appended, requireScope, guardLiveGraph, observeProtection,
-                instance => instance.GenerateOnce(root, node, requireScope),
-                (buffer, instance) => PreviewLaneCommandProbe.Capture(buffer, source, node, instance.CopyAdmittedLanePrefabs()));
+            Run(cohort.Source, cohort.Actor, appended, requireScope, guardLiveGraph, observeProtection,
+                instance => instance.GenerateOnce(cohort, requireScope),
+                (buffer, instance) => PreviewLaneCommandProbe.Capture(buffer, cohort.Source, cohort.Node,
+                    instance.CopyAdmittedLanePrefabs()));
         }
 
         internal void RunRelocationOnce(World source, GeneratedSubObjectsPayload cohort, CompositionSelectionReceipt oldNode,
@@ -124,6 +125,8 @@ namespace SkylinesLink.Mod.Native
             }
         }
 
+        internal JObject? InputSnapshot() => producer?.Instance.InputSnapshot();
+
         internal JObject Snapshot() => new JObject {
             ["passed"] = Passed, ["producer"] = (JToken?)producer?.Instance.Snapshot() ?? JValue.CreateNull(),
             ["commands"] = (JToken?)commands?.DeepClone() ?? JValue.CreateNull(),
@@ -141,10 +144,12 @@ namespace SkylinesLink.Mod.Native
         };
 
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
-        internal sealed class Rejection : InvalidOperationException
+        internal sealed class Rejection : InvalidOperationException, INativeProbeFailure
         {
+            string INativeProbeFailure.Code => Code;
             internal string Code { get; }
-            internal Rejection(string code) : base(code) { Code = code; }
+            internal Rejection(string code) : base(code)
+            { Code = code; }
         }
     }
 }

@@ -20,7 +20,7 @@ namespace SkylinesLink.Mod.Native
             try
             {
                 var parent = typeof(GeometrySystem);
-                if (parent.Module.ModuleVersionId.ToString("N") != "e15551e93dea48558dde1da3cea7d7ef")
+                if (!NativeConstructionBuild.Game(parent.Module))
                     return Unqualified();
 
                 var methods = new List<MethodBase>();

@@ -281,10 +281,8 @@ namespace SkylinesLink.Mod.Native
             Require(!NativeWorkMayReadSource && attachmentCohort != null, "RELOCATION_PREVIEW_COMPOSITION_INPUTS_UNAVAILABLE");
             var cohort = attachmentCohort!;
             Action requireChildren = attachmentReferences!.Instance.RequireLiveLinkedGraph;
-            var oldNode = new CompositionSelectionPreflight(source, cohort.Root, cohort.OldNode, actor,
-                requireScope, requireChildren, cohort);
-            var newNode = new CompositionSelectionPreflight(source, cohort.Root, cohort.Node, actor,
-                requireScope, requireChildren, cohort);
+            var oldNode = new CompositionSelectionPreflight(cohort, cohort.OldNode, requireScope, requireChildren);
+            var newNode = new CompositionSelectionPreflight(cohort, cohort.Node, requireScope, requireChildren);
             oldNode.RunOnce();
             newNode.RunOnce();
             Require(CompositionSelectionPatchProbe.Observe().Qualified, "RELOCATION_PREVIEW_COMPOSITION_KERNEL_PATCHED");

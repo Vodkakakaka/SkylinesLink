@@ -22,6 +22,10 @@ namespace SkylinesLink.Mod.Native
     internal sealed class SubObjectGenerationPreflight
     {
         private const int TypeLimit = 256, TotalTypeLimit = 1024;
+        private const int MinimumRootRows = 4, MaximumNormalRootRows = 5;
+        internal const int NormalNodeRows = 1;
+        internal const int MaximumNormalCreates = MaximumNormalRootRows + NormalNodeRows;
+        internal const int MaximumNormalCommands = MaximumNormalCreates * 9 + NormalNodeRows + MaximumNormalRootRows;
         private readonly NativeEntityArchetypes archetypes = new NativeEntityArchetypes();
         private readonly RelocationDefinitionSource? original;
         private readonly Temp expectedRootTemp, expectedOldNodeTemp, expectedNodeTemp;
@@ -36,7 +40,7 @@ namespace SkylinesLink.Mod.Native
         private Temp rootTemp, oldNodeTemp, nodeTemp;
         private PseudoRandomSeed rootSeed, oldNodeSeed, nodeSeed;
         private Game.Buildings.Building rootBuilding;
-        private int commandUpperBound, relocationWitnessChecks;
+        private int commandUpperBound, streetLightRows, relocationWitnessChecks;
 
         internal SubObjectGenerationPreflight(World source, Entity root, Entity node, int actor)
         {
@@ -73,6 +77,7 @@ namespace SkylinesLink.Mod.Native
             && queryAttempts == queriesAcquired && queriesAcquired == queriesDisposed;
         internal int CreateUpperBound => passed ? candidates.Count : 0;
         internal int CommandUpperBound => passed ? commandUpperBound : 0;
+        internal int StreetLightRowCount => passed ? streetLightRows : 0;
         internal IReadOnlyList<Candidate> Candidates => passed ? candidates : Array.Empty<Candidate>();
         internal IReadOnlyList<OriginalChild> OriginalChildren => passed ? originalChildren : Array.Empty<OriginalChild>();
         internal NativeTransform RootTransform { get; private set; }
@@ -178,7 +183,10 @@ namespace SkylinesLink.Mod.Native
                 NativeNode oldNodeData = default;
                 Temp freshOldNodeTemp = default;
                 float oldNodeHeight = 0f;
-                PseudoRandomSeed freshRootSeed = default, freshOldNodeSeed = default, freshNodeSeed = default;
+                // Native selection must use these owners' deterministic streams,
+                // rather than falling back to the world's advancing random seed.
+                PseudoRandomSeed freshRootSeed = ReadSeed(entities, Root), freshOldNodeSeed = default,
+                    freshNodeSeed = ReadSeed(entities, Node);
                 Game.Buildings.Building freshRootBuilding = default;
                 if (original != null)
                 {
@@ -201,8 +209,7 @@ namespace SkylinesLink.Mod.Native
                     oldNodeData = entities.GetComponentData<NativeNode>(OldNode);
                     Require(oldNodeData.Equals(original.NodePose), "SUBOBJECT_PREFLIGHT_RELOCATION_OLD_NODE_CHANGED");
                     oldNodeHeight = ReadElevation(entities, OldNode);
-                    freshRootSeed = ReadSeed(entities, Root); freshOldNodeSeed = ReadSeed(entities, OldNode);
-                    freshNodeSeed = ReadSeed(entities, Node);
+                    freshOldNodeSeed = ReadSeed(entities, OldNode);
                     Require(entities.HasComponent<Game.Buildings.Building>(Root), "SUBOBJECT_PREFLIGHT_RELOCATION_BUILDING_MISSING");
                     freshRootBuilding = entities.GetComponentData<Game.Buildings.Building>(Root);
                     Require(freshRootBuilding.m_RoadEdge == Entity.Null, "SUBOBJECT_PREFLIGHT_RELOCATION_ROAD_CHANGED");
@@ -223,16 +230,21 @@ namespace SkylinesLink.Mod.Native
                 Guard(requireCurrentScope);
                 var freshLeaves = new Dictionary<Entity, Leaf>();
                 int ownerCount = IsRelocation ? 3 : 2;
-                var freshCandidates = new List<Candidate>(ownerCount + 3);
-                ReadRows(entities, prefabs!, Root, rootPrefab, 4, freshCandidates, freshLeaves, requireCurrentScope);
+                var freshCandidates = new List<Candidate>(MaximumNormalCreates);
+                ReadRows(entities, prefabs!, Root, rootPrefab, MinimumRootRows,
+                    IsRelocation ? MinimumRootRows : MaximumNormalRootRows, freshCandidates, freshLeaves, requireCurrentScope);
                 if (IsRelocation)
-                    ReadRows(entities, prefabs!, OldNode, nodePrefab, 1, freshCandidates, freshLeaves, requireCurrentScope);
-                ReadRows(entities, prefabs!, Node, nodePrefab, 1, freshCandidates, freshLeaves, requireCurrentScope);
-                Require(freshCandidates.Count == ownerCount + 3 && freshLeaves.Count == 4, "SUBOBJECT_PREFLIGHT_COHORT_CHANGED");
+                    ReadRows(entities, prefabs!, OldNode, nodePrefab, NormalNodeRows, NormalNodeRows,
+                        freshCandidates, freshLeaves, requireCurrentScope);
+                ReadRows(entities, prefabs!, Node, nodePrefab, NormalNodeRows, NormalNodeRows,
+                    freshCandidates, freshLeaves, requireCurrentScope);
+                if (IsRelocation)
+                    Require(freshCandidates.Count == 6 && freshLeaves.Count == 4, "SUBOBJECT_PREFLIGHT_COHORT_CHANGED");
                 int lights = 0;
                 foreach (Candidate candidate in freshCandidates)
                     if (freshLeaves[candidate.Prefab].StreetLight.HasValue) lights++;
-                Require(lights == 1, "SUBOBJECT_PREFLIGHT_STREET_LIGHT_COHORT_CHANGED");
+                if (IsRelocation)
+                    Require(lights == 1, "SUBOBJECT_PREFLIGHT_STREET_LIGHT_COHORT_CHANGED");
                 Require(entities.HasComponent<Game.Buildings.Building>(Root)
                     && !entities.HasComponent<Game.Vehicles.Watercraft>(Root)
                     && !entities.HasComponent<Game.Vehicles.Watercraft>(Node),
@@ -268,9 +280,10 @@ namespace SkylinesLink.Mod.Native
                 {
                     candidates = freshCandidates.AsReadOnly(); leaves = freshLeaves;
                     if (IsRelocation) originalChildren = Array.AsReadOnly(freshOriginals);
-                    // One Create and eight fixed scalar writes per row, plus
-                    // one Aligned per node row and the one root StreetLight.
-                    commandUpperBound = freshCandidates.Count * 9 + (ownerCount - 1) + lights;
+                    // Each admitted row produces at most one Create and eight scalar writes.
+                    // Each node has one Aligned row, and each declared light row can write StreetLight.
+                    commandUpperBound = freshCandidates.Count * 9 + (ownerCount - 1) * NormalNodeRows + lights;
+                    streetLightRows = lights;
                     RootTransform = transform; NodeData = nodeData; OldNodeData = oldNodeData;
                     RootElevation = rootHeight; NodeElevation = nodeHeight; OldNodeElevation = oldNodeHeight;
                     rootTemp = freshRootTemp; oldNodeTemp = freshOldNodeTemp; nodeTemp = freshNodeTemp;
@@ -396,26 +409,28 @@ namespace SkylinesLink.Mod.Native
         private static T? ReadOptional<T>(EntityManager entities, Entity value) where T : unmanaged, IComponentData =>
             entities.HasComponent<T>(value) ? entities.GetComponentData<T>(value) : (T?)null;
 
-        private void ReadRows(EntityManager entities, PrefabSystem prefabs, Entity owner, Entity prefab, int expected,
+        private void ReadRows(EntityManager entities, PrefabSystem prefabs, Entity owner, Entity prefab, int minimum, int maximum,
             List<Candidate> result, Dictionary<Entity, Leaf> leafSet, Action scope)
         {
             Empty<PlaceholderObjectElement>(entities, prefab); Empty<ObjectRequirementElement>(entities, prefab);
             Require(!entities.HasComponent<PlaceholderObjectData>(prefab) && entities.HasBuffer<PrefabSubObject>(prefab),
                 "SUBOBJECT_PREFLIGHT_OWNER_PREFAB_BRANCH_UNSUPPORTED");
             var buffer = entities.GetBuffer<PrefabSubObject>(prefab, true);
-            Require(buffer.Length == expected, "SUBOBJECT_PREFLIGHT_DECLARED_ROWS_CHANGED");
-            var rows = new PrefabSubObject[expected];
-            for (int index = 0; index < expected; index++) rows[index] = buffer[index];
+            int length = buffer.Length;
+            Require(length >= minimum && length <= maximum, "SUBOBJECT_PREFLIGHT_DECLARED_ROWS_CHANGED");
+            var rows = new PrefabSubObject[length];
+            for (int index = 0; index < length; index++) rows[index] = buffer[index];
             Guard(scope);
             for (int index = 0; index < rows.Length; index++)
             {
                 PrefabSubObject row = rows[index];
                 Require(row.m_Prefab != Entity.Null && (uint)row.m_Flags == 0 && row.m_ParentIndex == 0
-                    && row.m_GroupIndex == 0 && row.m_Probability == 100
+                    && row.m_GroupIndex == 0 && row.m_Probability >= 0 && row.m_Probability <= 100
+                    && (!IsRelocation && owner == Root || row.m_Probability == 100)
                     && Finite(row.m_Position) && Finite(row.m_Rotation.value), "SUBOBJECT_PREFLIGHT_ROW_BRANCH_UNSUPPORTED");
                 if (!leafSet.TryGetValue(row.m_Prefab, out Leaf leaf))
                 {
-                    Require(leafSet.Count < 4, "SUBOBJECT_PREFLIGHT_LEAF_COUNT_BUDGET");
+                    Require(leafSet.Count < (IsRelocation ? 4 : MaximumNormalCreates), "SUBOBJECT_PREFLIGHT_LEAF_COUNT_BUDGET");
                     leaf = ReadLeaf(entities, prefabs, row.m_Prefab, scope); leafSet.Add(row.m_Prefab, leaf);
                 }
                 result.Add(new Candidate(owner, index, row, leaf.Archetype));
@@ -543,6 +558,8 @@ namespace SkylinesLink.Mod.Native
             ["rootServiceUpkeepCount"] = rootServiceUpkeepCount, ["nodeServiceUpkeepCount"] = nodeServiceUpkeepCount,
             ["passed"] = passed, ["runs"] = runs, ["candidateRows"] = passed ? candidates.Count : 0,
             ["uniqueLeaves"] = passed ? leaves.Count : 0, ["createUpperBound"] = CreateUpperBound,
+            ["rootSeed"] = passed ? new JValue(rootSeed.m_Seed) : JValue.CreateNull(),
+            ["nodeSeed"] = passed ? new JValue(nodeSeed.m_Seed) : JValue.CreateNull(),
             ["commandUpperBound"] = CommandUpperBound, ["typesRead"] = typesRead,
             ["typeArrays"] = archetypes.Snapshot(), ["queryAttempts"] = queryAttempts,
             ["queriesAcquired"] = queriesAcquired, ["queriesDisposed"] = queriesDisposed,
@@ -630,8 +647,13 @@ namespace SkylinesLink.Mod.Native
         private static bool Finite(float4 value) => Finite(value.x) && Finite(value.y) && Finite(value.z) && Finite(value.w);
         private static JToken Text(string? value) => value == null ? JValue.CreateNull() : new JValue(value);
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
-        private sealed class Rejection : InvalidOperationException
-        { internal readonly string Code; internal Rejection(string code) : base(code) { Code = code; } }
+        internal sealed class Rejection : InvalidOperationException, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal Rejection(string code) : base(code)
+            { Code = code; }
+        }
     }
 }
 #endif

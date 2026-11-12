@@ -419,7 +419,13 @@ namespace SkylinesLink.Mod.Native
         { passed = false; failureCode ??= error is Rejection rejection ? rejection.Code : "COMPOSITION_INITIALIZATION_READ_FAILED"; }
         private static JToken Text(string? value) => value == null ? JValue.CreateNull() : new JValue(value);
         private static void Require(bool condition, string code) { if (!condition) throw new Rejection(code); }
-        private sealed class Rejection : Exception { internal readonly string Code; internal Rejection(string code) : base(code) { Code = code; } }
+        private sealed class Rejection : Exception, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal Rejection(string code) : base(code)
+            { Code = code; }
+        }
     }
 }
 #endif

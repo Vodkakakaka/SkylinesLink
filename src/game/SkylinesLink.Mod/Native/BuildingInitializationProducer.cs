@@ -420,7 +420,13 @@ namespace SkylinesLink.Mod.Native
         private static void RequireMainThread() => Require(MainThreadDispatcher.isMainThread, "BUILDING_INIT_MAIN_THREAD_REQUIRED");
         private static void Require(bool condition, string code) { if (!condition) throw Failure(code); }
         private static Rejection Failure(string code) => new Rejection(code);
-        private sealed class Rejection : Exception { internal readonly string Code; internal Rejection(string code) : base(code) { Code = code; } }
+        private sealed class Rejection : Exception, INativeProbeFailure
+        {
+            string INativeProbeFailure.Code => Code;
+            internal readonly string Code;
+            internal Rejection(string code) : base(code)
+            { Code = code; }
+        }
 
         private struct InputWitness : IEquatable<InputWitness>
         {
@@ -443,8 +449,8 @@ namespace SkylinesLink.Mod.Native
             internal readonly FieldInfo Barrier, Electricity, Water, Coverage, Buildings, DestroyedTypes;
             internal Bindings()
             {
-                Require(typeof(NativeInitializeSystem).Module.ModuleVersionId.ToString("N") == "e15551e93dea48558dde1da3cea7d7ef"
-                    && typeof(World).Module.ModuleVersionId.ToString("N") == "3d6b23aeb28144a6a5f4cbd5fd3d75e6",
+                Require(NativeConstructionBuild.Game(typeof(NativeInitializeSystem).Module)
+                    && NativeConstructionBuild.Entities(typeof(World).Module),
                     "BUILDING_INIT_NATIVE_BUILD_UNQUALIFIED");
                 Barrier = Field("m_ModificationBarrier", typeof(ModificationBarrier2));
                 Electricity = Field("m_ElectricityRoadConnectionGraphSystem", typeof(ElectricityRoadConnectionGraphSystem));

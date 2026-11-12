@@ -30,8 +30,8 @@ namespace SkylinesLink.Mod.Native
             {
                 Type parent = subNets ? typeof(Game.Net.SubNetReferencesSystem) : typeof(Game.Objects.SubObjectReferencesSystem);
                 Type element = subNets ? typeof(Game.Net.SubNet) : typeof(Game.Objects.SubObject);
-                if (parent.Module.ModuleVersionId.ToString("N") != "e15551e93dea48558dde1da3cea7d7ef"
-                    || typeof(World).Module.ModuleVersionId.ToString("N") != "3d6b23aeb28144a6a5f4cbd5fd3d75e6") return Unqualified(kind);
+                if (!NativeConstructionBuild.Game(parent.Module)
+                    || !NativeConstructionBuild.Entities(typeof(World).Module)) return Unqualified(kind);
                 Type? handles = parent.GetNestedType("TypeHandle", BindingFlags.NonPublic);
                 Type? job = parent.GetNestedType(subNets ? "UpdateSubNetReferencesJob" : "UpdateSubObjectReferencesJob", BindingFlags.NonPublic);
                 if (handles == null || job == null || !handles.IsValueType || !job.IsValueType
@@ -79,7 +79,7 @@ namespace SkylinesLink.Mod.Native
         {
             if (element != typeof(Game.Objects.SubObject) && element != typeof(Game.Net.SubNet)) return false;
             Type collection = typeof(Colossal.Collections.CollectionUtils);
-            if (collection.Module.ModuleVersionId.ToString("N") != "0e5688e687474130b7127b3c25780e8b") return false;
+            if (!NativeConstructionBuild.ColossalCollections(collection.Module)) return false;
             MethodInfo? definition = null;
             // Query only these named public members. The NativeList overload
             // has a different first parameter and is outside this buffer path.

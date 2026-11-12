@@ -20,6 +20,8 @@ The module-runtime read port shares one bounded native capture and publishes sep
 
 The current city overview revision adds native simulation-speed settings and game-clock facts to the same on-demand read path. Groups keep unavailable values and unknown refresh times explicit. Selected speed is not measured throughput or a pause cause; native calendar values are not a real-world timestamp. The clock comes from current ECS components and public time functions, without cross-load caches. Runtime qualification of this revision is tracked separately from its implementation and offline checks.
 
+Planned city blueprints can keep a coarse overall structure and refine only the area needed next. Detail levels are not fixed. Blueprint revisions, accepted execution segments, built facts and current suitability have separate meanings within the existing task/operation model. Reviewing an obsolete temporary facility or whole district must use current evidence and honor the task’s continuity requirements, including disclosed interruption and recovery steps when rebuilding on the same site; opening or closing a view does not start, cancel or retain native work by itself. These planning and UI capabilities remain unfinished.
+
 ## 简体中文
 
 SkylinesLink把有用的游戏信息、正常游玩能力、用户意图、规划和可核结果链接起来。C#模组负责游戏访问与操作事实；独立TypeScript/Node.js Host通过stdio和Streamable HTTP提供MCP，组件间使用认证Windows命名管道。稳定Launcher是stdio接入入口。
@@ -37,3 +39,5 @@ SkylinesLink把有用的游戏信息、正常游玩能力、用户意图、规�
 运行模组读取端口共享一次有界原生采样，按当前配置身份保留观察并返回独立小页。纯值中不保原生对象，完整集合、已观察前缀和缺失字段分开表达；消费者取消、实际采样结束、观察保留与输出持有分别管理寿命。普通连接装配已在原生新城开发实验中经两种MCP协议完成有界模块读取及人口/资金概览。未配置运行时仍返回不可用；完整安装目录、Provider适配、普通权限与全面性能继续待验收。
 
 当前城市概览修订在同一个按需读取链加入原生模拟速度设置与游戏时钟，各组保留不可用值和未知刷新时点。选定速度不代表实测吞吐或暂停原因，原生日历也不是真实世界时间戳。时钟来自本次ECS组件和公开时间函数，不读跨加载缓存；本修订的实机资格与源码、离线检查分开记录。
+
+规划中的城市蓝图可保留粗略整体结构，按近期需要逐层细化，不固定层数。沿现有任务／操作模型区分蓝图修订、已受理执行分段、已建事实与当前适用性。过渡设施或整区过时后的复评使用新鲜证据并遵守任务的连续性要求；已受理的同址重建保留停服影响和恢复步骤；打开或关闭页面本身不启动、取消或持有原生工作。这些规划及界面能力仍未实现完成。

@@ -25,8 +25,6 @@ namespace SkylinesLink.Mod.Native
 {
     internal static class PreviewValidationPatchProbe
     {
-        private const string GameMvid = "e15551e93dea48558dde1da3cea7d7ef";
-        private const string EntitiesMvid = "3d6b23aeb28144a6a5f4cbd5fd3d75e6";
         private const BindingFlags Declared = BindingFlags.Public | BindingFlags.NonPublic |
             BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
 
@@ -35,8 +33,8 @@ namespace SkylinesLink.Mod.Native
             try
             {
                 Type parent = typeof(ValidationSystem);
-                if (parent.Module.ModuleVersionId.ToString("N") != GameMvid
-                    || typeof(EntityCommandBufferSystem).Module.ModuleVersionId.ToString("N") != EntitiesMvid)
+                if (!NativeConstructionBuild.Game(parent.Module)
+                    || !NativeConstructionBuild.Entities(typeof(EntityCommandBufferSystem).Module))
                     return Unqualified("PREVIEW_VALIDATION_METADATA_UNQUALIFIED");
 
                 var methods = new List<MethodBase>();
