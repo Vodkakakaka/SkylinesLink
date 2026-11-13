@@ -10,6 +10,8 @@ import { copyStopSelector, requireStopResult, requireStopDecisionLookup } from '
 import type { TaskStopDecisionQuery } from '@skylineslink/contracts';
 import type { ModuleRuntimeQuery } from '@skylineslink/contracts';
 import { copyModuleRuntimeQuery, requireModuleRuntimePage } from './module-runtime-result.ts';
+import { copyBuildingInspectionQuery, requireBuildingInspection } from './building-inspection-result.ts';
+import type { BuildingInspectionQuery } from '@skylineslink/contracts';
 
 export interface PipeConnection {
   pipeName: string;
@@ -36,6 +38,7 @@ interface Pending {
   release(): void;
   query?: TaskStopDecisionQuery;
   moduleQuery?: ModuleRuntimeQuery;
+  buildingQuery?: BuildingInspectionQuery;
 }
 
 interface Sending { json: string; reservation: number; control: boolean; onWriteStart?: () => void; onWriteDone?: () => void }
@@ -170,6 +173,8 @@ export class NamedPipeGameClient implements GameClient {
   }
 
   async call(capabilityId: string, schemaRevision: string, args: unknown, signal: AbortSignal): Promise<unknown> {
+    const buildingQuery = capabilityId === 'buildings.inspect' && schemaRevision === '1' ? copyBuildingInspectionQuery(args) : undefined;
+    if (buildingQuery) args = copyBuildingInspectionQuery(buildingQuery);
     const moduleQuery = capabilityId === 'system.modules.get' && schemaRevision === '1'
       ? (requireContract(schemaIds.ModuleRuntimeQuery, args), copyModuleRuntimeQuery(args as ModuleRuntimeQuery)) : undefined;
     if (moduleQuery) args = copyModuleRuntimeQuery(moduleQuery);
@@ -183,11 +188,11 @@ export class NamedPipeGameClient implements GameClient {
     const request = { kind: 'request', requestId, capabilityId, schemaRevision, arguments: args };
     requireContract(schemaIds.WireRequest, request);
     const capability = capabilities.find(c => c.id === capabilityId && c.schemaRevision === schemaRevision);
-    const reply = await this.#send(requestId, request, { capabilityId, schemaRevision }, signal, capability?.effect === 'write', query, moduleQuery) as WireResult;
+    const reply = await this.#send(requestId, request, { capabilityId, schemaRevision }, signal, capability?.effect === 'write', query, moduleQuery, buildingQuery) as WireResult;
     return reply.result;
   }
 
-  #send(requestId: string, value: unknown, binding: RegisteredBinding | undefined, signal: AbortSignal, mayHaveApplied: boolean, query?: TaskStopDecisionQuery, moduleQuery?: ModuleRuntimeQuery): Promise<unknown> {
+  #send(requestId: string, value: unknown, binding: RegisteredBinding | undefined, signal: AbortSignal, mayHaveApplied: boolean, query?: TaskStopDecisionQuery, moduleQuery?: ModuleRuntimeQuery, buildingQuery?: BuildingInspectionQuery): Promise<unknown> {
     if (signal.aborted) return Promise.reject(new GameClientError('CANCELLED', '本次等待已取消。'));
     if (this.#closed) return Promise.reject(new GameClientError('GAME_UNAVAILABLE', '内部连接已经关闭。'));
     const controlKey = binding ? this.#classifier.capability(binding.capabilityId, binding.schemaRevision, query) : undefined;
@@ -202,6 +207,7 @@ export class NamedPipeGameClient implements GameClient {
       const entry: Pending = { resolve, reject, timer, mayHaveApplied, cancelled: false, release,
         ...(query ? { query } : {}),
         ...(moduleQuery ? { moduleQuery } : {}),
+        ...(buildingQuery ? { buildingQuery } : {}),
         ...(binding ? { binding } : {}), stopAbort: () => signal.removeEventListener('abort', abort) };
       this.#pending.set(requestId, entry);
       signal.addEventListener('abort', abort, { once: true });
@@ -316,6 +322,8 @@ export class NamedPipeGameClient implements GameClient {
     }
     if (kind === 'result' && pending.moduleQuery)
       requireModuleRuntimePage(pending.moduleQuery, (value as WireResult).result, this.connection.instanceId);
+    if (kind === 'result' && pending.buildingQuery)
+      requireBuildingInspection(pending.buildingQuery, (value as WireResult).result, this.connection.instanceId);
     this.#pending.delete(value.requestId);
     clearTimeout(pending.timer); pending.stopAbort?.();
     pending.release();

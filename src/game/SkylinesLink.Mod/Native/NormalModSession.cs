@@ -8,6 +8,7 @@ using Game.Modding;
 using Game.SceneFlow;
 using SkylinesLink.Application.Modules;
 using SkylinesLink.Application.Observation;
+using SkylinesLink.Application.Buildings;
 using SkylinesLink.Application.Operations;
 using SkylinesLink.Application.Simulation;
 using SkylinesLink.Contracts;
@@ -31,6 +32,7 @@ namespace SkylinesLink.Mod.Native
         private readonly LoadedManagedComponent[] components;
         private readonly NativeModuleRuntimeCollector collector = new NativeModuleRuntimeCollector();
         private NativeCityOverviewCollector? cityOverviewCollector;
+        private NativeBuildingInspectionCollector? buildingCollector;
         private readonly List<ConnectionLocaleSource> sources = new List<ConnectionLocaleSource>();
         private InstalledGameConnection? connection;
         private NativeWorldContextObserver? observer;
@@ -200,8 +202,10 @@ namespace SkylinesLink.Mod.Native
                 request?.CityChanges ?? false, bundledOrigin);
             connection = created;
             cityOverviewCollector = new NativeCityOverviewCollector(updateSystem, created.Context);
+            buildingCollector = new NativeBuildingInspectionCollector(updateSystem, created.Context);
+            buildingCollector.ObserveSelectionScope(created.Context.Read());
             lock (sync) if (stopping) { created.RequestStop(); return; }
-            observer = new NativeWorldContextObserver(updateSystem, created.Context, report);
+            observer = new NativeWorldContextObserver(updateSystem, created.Context, report, buildingCollector.ObserveSelectionScope);
             try { observer.Start(); }
             catch { created.RequestStop(); throw; }
             configuring = false;
@@ -219,6 +223,9 @@ namespace SkylinesLink.Mod.Native
                 if (stopped)
                 {
                     if (!cleanupFailed) ReleaseNative();
+                    // Preserve the old failure policy for other native cleanup,
+                    // but keep retrying this newly owned selection detach.
+                    else ReleaseBuildingSelection();
                     // ReleaseNative already confirms removal of our exact Guid.
                     // Returning true would request a redundant native removal.
                     return false;
@@ -231,6 +238,7 @@ namespace SkylinesLink.Mod.Native
                 if (request != null) ApplyOnMainThread(request);
                 CaptureModules();
                 CaptureCityOverview();
+                CaptureBuilding();
             }
             catch (Exception error)
             {
@@ -290,9 +298,18 @@ namespace SkylinesLink.Mod.Native
             if (drain == null || !drain.IsCompleted) return;
             bool released = drain.Status == TaskStatus.RanToCompletion && drain.Result;
             if (drain.IsFaulted) _ = drain.Exception;
+            if (!released)
+            {
+                // Existing close-failure behavior is unchanged. Only a
+                // successful drain can wait for the new selection obligation.
+                drain = null; replacement = null;
+                SetStatus(ConnectionNotice.CleanupIncomplete); return;
+            }
+            if (!ReleaseBuildingSelection()) { SetStatus(ConnectionNotice.CleanupIncomplete, true); return; }
+            // Consume the accepted replacement only after its old listener is
+            // physically detached. A failed detach keeps this completed drain.
             drain = null;
             var request = replacement; replacement = null;
-            if (!released) { SetStatus(ConnectionNotice.CleanupIncomplete); return; }
             connection = null;
             if (request != null) StartLifetime(request);
         }
@@ -323,6 +340,17 @@ namespace SkylinesLink.Mod.Native
             source.CityOverview.Complete(work!, capture);
         }
 
+        private void CaptureBuilding()
+        {
+            var source = connection;
+            if (source == null || source.Context.IsStopped || !source.Buildings.TryClaim(out var work)) return;
+            BuildingInspectionCapture capture;
+            try { capture = buildingCollector!.Capture(work!.Scope, work.Query); }
+            catch (BuildingInspectionReadFailure error) { source.Buildings.Fail(work!, error.Code); return; }
+            catch (Exception) { source.Buildings.Fail(work!, "CAPTURE_FAILED"); return; }
+            source.Buildings.Complete(work!, capture);
+        }
+
         public void RequestStop()
         {
             lock (sync)
@@ -332,6 +360,7 @@ namespace SkylinesLink.Mod.Native
                 foreach (var source in sources) source.Deactivate();
             }
             connection?.RequestStop();
+            buildingCollector?.StopSelectionSource();
             // Off-thread disposal only invalidates ordinary state. The owned
             // updater performs SDK cleanup on its next main-thread invocation.
             if (MainThreadDispatcher.isMainThread) { cleanupFailed = false; ReleaseNative(); }
@@ -341,6 +370,9 @@ namespace SkylinesLink.Mod.Native
         {
             RequireMainThread();
             var failures = new List<Exception>();
+            // Always continue releasing the root's other native resources. A
+            // failed optional detach stays visible as its own retained owner.
+            bool selectionReleased = ReleaseBuildingSelection();
             try { observer?.Dispose(); observer = null; } catch (Exception error) { failures.Add(error); }
             settings?.Detach();
             if (settingsMayBeHeld)
@@ -355,7 +387,7 @@ namespace SkylinesLink.Mod.Native
                 }
                 catch (Exception error) { failures.Add(error); }
             }
-            if (updaterMayBeHeld && failures.Count == 0)
+            if (updaterMayBeHeld && failures.Count == 0 && selectionReleased)
                 try
                 {
                     Guid owned = MainThreadDispatcher.GetUpdaterGuid(updater);
@@ -373,12 +405,21 @@ namespace SkylinesLink.Mod.Native
             if (cleanupFailed) throw new AggregateException("Native connection cleanup was not confirmed.", failures);
         }
 
+        private bool ReleaseBuildingSelection()
+        {
+            if (buildingCollector == null) return true;
+            if (!buildingCollector.ReleaseSelectionSource()) return false;
+            buildingCollector = null;
+            return true;
+        }
+
         public bool IsFullyReleased
         {
             get
             {
                 lock (sync) if (!stopping) return false;
-                if (updaterMayBeHeld || settingsMayBeHeld || observer != null || sources.Count != 0) return false;
+                if (updaterMayBeHeld || settingsMayBeHeld || observer != null || sources.Count != 0 ||
+                    buildingCollector != null && !buildingCollector.IsSelectionSourceReleased) return false;
                 if (connection == null) return true;
                 var closed = connection.CloseAsync();
                 return closed.Status == TaskStatus.RanToCompletion && closed.Result;

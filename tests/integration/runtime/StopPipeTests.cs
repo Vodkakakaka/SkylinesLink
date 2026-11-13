@@ -12,6 +12,7 @@ using SkylinesLink.Application.Operations;
 using SkylinesLink.Application.Simulation;
 using SkylinesLink.Application.Modules;
 using SkylinesLink.Application.Observation;
+using SkylinesLink.Application.Buildings;
 using SkylinesLink.Contracts;
 using SkylinesLink.Infrastructure.Connection;
 using SkylinesLink.Infrastructure.Operations;
@@ -37,6 +38,7 @@ namespace SkylinesLink.RuntimeProbe
             await CheckDeferredAbsoluteDeadline();
             await CheckModuleObservationPort();
             await CheckCityOverviewPort();
+            await CheckBuildingInspectionPort();
             return checks;
         }
 
@@ -73,6 +75,30 @@ namespace SkylinesLink.RuntimeProbe
                 await Send(client, f.Limits, "city-menu", "city.overview", new JObject());
                 Check((string?)(await Read(client, f.Limits, "city.overview"))["result"]?["reason"] == "MENU",
                     "menu reads report unavailable without waiting for or loading a city");
+            }
+        }
+
+        private static async Task CheckBuildingInspectionPort()
+        {
+            foreach (bool revoke in new[] { false, true })
+            using (var f = new Fixture(withBuildings: true))
+            using (var client = await f.Connect())
+            {
+                Program.Stage = "building inspection shares the authenticated deferred port and send-time Read guard";
+                var query = new JObject { ["target"] = new JObject { ["kind"] = "entityRef", ["ref"] = new JObject {
+                    ["instanceId"] = f.Identity.InstanceId, ["generation"] = f.Context.Read().Generation.ToString(), ["index"] = 42, ["version"] = 7 } } };
+                await Send(client, f.Limits, "inspect", "buildings.inspect", query);
+                BuildingInspectionReadBroker.CaptureWork? work = null;
+                await WaitUntil(() => f.Buildings!.TryClaim(out work));
+                await Send(client, f.Limits, "while-inspecting", "system.context", new JObject());
+                Check((string?)(await Read(client, f.Limits, "system.context"))["requestId"] == "while-inspecting", "one native building read does not block another ordinary read");
+                if (revoke) await f.Grants.UpdateAsync("probe", GrantScope.Control, f.Token, null);
+                f.Buildings!.Complete(work!, BuildingInspectionTests.Facts(work!.Scope, work.Query));
+                var response = await ReadAny(client, f.Limits);
+                Check(revoke ? (string?)response["kind"] == "error" && (string?)response["code"] == "UNAUTHORIZED" :
+                    (string?)response["kind"] == "result" && (int?)response["result"]?["object"]?["index"] == 42,
+                    "completed building data is delivered only under current Read authorization");
+                await Program.MustComplete(f.Buildings.WhenIdle);
             }
         }
 
@@ -522,10 +548,11 @@ namespace SkylinesLink.RuntimeProbe
             internal readonly EnvironmentDiscovery Identity;
             internal readonly ModuleRuntimeObservationBroker? Modules;
             internal readonly CityOverviewReadBroker? CityOverview;
+            internal readonly BuildingInspectionReadBroker? Buildings;
             internal readonly WorldContextTracker Context;
             internal GrantSnapshot Observer => Grants.Read("observer")!;
             internal Fixture(bool mixed = true, bool noAuthority = false, bool largeOrdinary = false,
-                bool deferOrdinary = false, int frameMilliseconds = 5000, bool withModules = false, bool withCityOverview = false)
+                bool deferOrdinary = false, int frameMilliseconds = 5000, bool withModules = false, bool withCityOverview = false, bool withBuildings = false)
             {
                 Limits = Program.Limits(frameMilliseconds);
                 Directory.CreateDirectory(root); boundary = new PrivateConnectionStorage(Path.Combine(root, "connection"));
@@ -546,7 +573,8 @@ namespace SkylinesLink.RuntimeProbe
                     ProductVersion = "0.1.0-dev.0", ContractVersion = "2", CoreManifestSha256 = new string('c', 64), ProcessId = Process.GetCurrentProcess().Id };
                 Modules = withModules ? new ModuleRuntimeObservationBroker(instance) : null;
                 CityOverview = withCityOverview ? new CityOverviewReadBroker(context) : null;
-                Dispatcher = new ObservedDispatcher(new SnapshotCapabilityDispatcher(context, Program.ProductVersion, noAuthority ? null : Ops, Modules, CityOverview), largeOrdinary, deferOrdinary);
+                Buildings = withBuildings ? new BuildingInspectionReadBroker(context) : null;
+                Dispatcher = new ObservedDispatcher(new SnapshotCapabilityDispatcher(context, Program.ProductVersion, noAuthority ? null : Ops, Modules, CityOverview, Buildings), largeOrdinary, deferOrdinary);
                 Server = new BoundedPipeServer(Identity, Limits, Grants, Dispatcher); Server.Start();
             }
             internal async Task<List<string>> CreateTasks(int count)
@@ -584,9 +612,10 @@ namespace SkylinesLink.RuntimeProbe
                 Server.ReplyUsage.OrdinaryCount == 0 && Server.ReplyUsage.ControlCount == 0);
             public void Dispose()
             {
-                Modules?.Stop(); CityOverview?.Stop(); Flush.Release.Set(); Server.Dispose(); Program.MustComplete(Server.Completion).GetAwaiter().GetResult();
+                Modules?.Stop(); CityOverview?.Stop(); Buildings?.Stop(); Flush.Release.Set(); Server.Dispose(); Program.MustComplete(Server.Completion).GetAwaiter().GetResult();
                 if (Modules != null) Program.MustComplete(Modules.WhenIdle).GetAwaiter().GetResult();
                 if (CityOverview != null) Program.MustComplete(CityOverview.WhenIdle).GetAwaiter().GetResult();
+                if (Buildings != null) Program.MustComplete(Buildings.WhenIdle).GetAwaiter().GetResult();
                 Program.MustComplete(Ops.CloseAsync()).GetAwaiter().GetResult(); Program.MustComplete(Grants.StopAsync()).GetAwaiter().GetResult(); lease.Dispose(); Flush.Dispose();
                 if (Path.GetDirectoryName(Path.GetFullPath(root)) != Path.GetFullPath("artifacts") || !Path.GetFileName(root).StartsWith("stop-pipe-", StringComparison.Ordinal))
                     throw new IOException("Stop pipe fixture containment failed.");
@@ -613,7 +642,9 @@ namespace SkylinesLink.RuntimeProbe
             { this.inner = inner; this.largeOrdinary = largeOrdinary; this.deferOrdinary = deferOrdinary; }
             public DeferredCapabilityRead BeginRead(string capability, string revision, JToken arguments, GrantSnapshot subject)
             {
-                if (capability == "system.modules.get" && revision == "1" || capability == "city.overview" && revision == "2")
+                // This wrapper controls only the synthetic context read. Every
+                // other read uses the production dispatcher's actual port.
+                if (capability != "system.context")
                     return inner.BeginRead(capability, revision, arguments, subject);
                 var result = Execute(capability, revision, arguments, subject);
                 if (!deferOrdinary || capability != "system.context")

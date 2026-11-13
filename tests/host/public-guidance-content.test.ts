@@ -9,15 +9,15 @@ const bounded = (value: string, maximum: number) => {
   assert.ok(scalarLength(value) >= 1 && scalarLength(value) <= maximum);
 };
 
-test('公共指引四主题成对中英文，稳定ID/修订/能力引用一致', () => {
-  assert.equal(guideTranslations.length, 8);
+test('公共指引五主题成对中英文，稳定ID/修订/能力引用一致', () => {
+  assert.equal(guideTranslations.length, 10);
   const groups = new Map<string, (typeof guideTranslations)[number][]>();
   for (const guide of guideTranslations) {
     const group = groups.get(guide.guideId) ?? [];
     assert.equal(group.some(item => item.language === guide.language), false);
     group.push(guide); groups.set(guide.guideId, group);
   }
-  assert.deepEqual([...groups.keys()].sort(), ['getting-started', 'module-runtime', 'operation-status', 'planning']);
+  assert.deepEqual([...groups.keys()].sort(), ['building-inspection', 'getting-started', 'module-runtime', 'operation-status', 'planning']);
   for (const group of groups.values()) {
     assert.deepEqual(group.map(item => item.language).sort(), ['en', 'zh-CN']);
     const english = group.find(item => item.language === 'en')!;
@@ -36,6 +36,7 @@ test('随包公共内容字段与标量长度有限，所有引用绑定当前�
     ['guidance.get', '1'], ['capabilities.describe', '1'], ['tasks.stop', '1'], ['tasks.stop.get', '1'],
     ['system.modules.get', '1'],
     ['city.overview', '2'],
+    ['buildings.inspect', '1'],
   ]);
   for (const guide of guideTranslations) {
     assert.deepEqual(Object.keys(guide).sort(), ['guideId', 'revision', 'language', 'title', 'summary', 'bodyMarkdown', 'capabilityRefs'].sort());

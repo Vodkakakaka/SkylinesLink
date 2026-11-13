@@ -51,5 +51,7 @@
   "urn:skylineslink:contract:context:2": "9cc0961b20e434984f9ee64993a6f3020eb4679cc0d6d60a200d86a86542224a",
   "urn:skylineslink:contract:managed-components:1": "c708e192b1e9eeb0f905592f192c3e8114550decaa9f143c4154c978721ee29b",
   "urn:skylineslink:contract:city-overview:1": "93e959021944a5b0b9951adb1fcc6cfb25ae19045db2a03b0f1ccd2fd4062ec8",
-  "urn:skylineslink:contract:city-overview:2": "3c0c7464b938f9f9b7eb0cf342db6c8a9462ea6e96863ca56283a4a95b93a2b1"
+  "urn:skylineslink:contract:city-overview:2": "3c0c7464b938f9f9b7eb0cf342db6c8a9462ea6e96863ca56283a4a95b93a2b1",
+  "urn:skylineslink:contract:building-inspection-query:1": "5556a42e4360ed44ace137c19329c1b9cce0d859201a5961d9a5dbc062603c34",
+  "urn:skylineslink:contract:building-inspection:1": "ccf8950268c6f54125452bd6e7c5d848a1b36351060c0cd3c0fdc7400e0fb651"
 }

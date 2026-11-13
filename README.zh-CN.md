@@ -16,9 +16,11 @@ SkylinesLink 是面向**《城市：天际线 II》**的独立 Model Context Pro
 
 ## 当前状态
 
-项目处于骨架开发与关键可行性验证阶段，已有模块化代码结构、有界连接、持久操作与历史查询实验，以及桌面入口。当前源码声明九个工具：`skylines_context`、`skylines_operation_get`、`skylines_guidance_search`、`skylines_guidance_get`、`skylines_capability_describe`、`skylines_task_stop`、`skylines_task_stop_decision_get`、`skylines_module_runtime_get` 和 `skylines_city_overview`。
+项目处于骨架开发与关键可行性验证阶段，已有模块化代码结构、有界连接、持久操作与历史查询实验，以及桌面入口。当前源码声明十个工具：`skylines_context`、`skylines_operation_get`、`skylines_guidance_search`、`skylines_guidance_get`、`skylines_capability_describe`、`skylines_task_stop`、`skylines_task_stop_decision_get`、`skylines_module_runtime_get`、`skylines_city_overview` 和 `skylines_building_inspect`。
 
 模组观察接口采集加载器事实，后续分页读取同一份不可变观察。原生适配器使用已配置的普通模组连接；未配置采集源的运行时明确返回不可用。它不等于全部安装或订阅清单，也不证明已启用、功能健康或已经适配；完整覆盖与帧成本仍待验收。
+
+建筑查询通过当前加载作用域中的准确引用，或原生信息面板已发布的选择，读取一座建筑的姿态、预制件元数据、资产局部包围盒，以及附属物、子网和已装升级的直接引用前缀。缺失字段与未完整返回的关系明确标记，不改变玩家选择或活动工具。基础成本、已存道路引用和局部包围盒不等于建造资格、可达证明或完整世界占地。原生选择源须在当前作用域发布过变化，旧缓存不能直接返回；实现、离线检查与实机资格分别记录。
 
 城市概览读取当前已加载城市的原生人口和玩家资金组件，附加载作用域、采样帧、单位、缺失原因及无限资金标志。来源更新时间仍未知，它不等于完整城市诊断。已通过普通模组连接、双 MCP 协议的有界新城加载／读取／返回循环；完整城市覆盖、玩家并行操作和性能仍待验收。
 

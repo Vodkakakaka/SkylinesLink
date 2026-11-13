@@ -29,7 +29,7 @@ function errorCode(result: CallToolResult): string | undefined {
 
 function listedSchema(source: Readonly<Record<string, unknown>>) {
   if (source.$id !== schemaIds.ModuleRuntimeQuery && source.$id !== schemaIds.ModuleRuntimePage
-    && source.$id !== schemaIds.CityOverviewV2) return source;
+    && source.$id !== schemaIds.CityOverviewV2 && source.$id !== schemaIds.BuildingInspection) return source;
   // SDK 2.4 adds the MCP object root. It is equivalent only because every
   // existing branch requires an object; retain and compare every source field.
   assert.equal(Object.hasOwn(source, 'type'), false);
@@ -48,6 +48,7 @@ async function exercise(client: Client) {
     ['tasks.stop', 'skylines_task_stop', 'write'], ['tasks.stop.get', 'skylines_task_stop_decision_get', 'read'],
     ['system.modules.get', 'skylines_module_runtime_get', 'read'],
     ['city.overview', 'skylines_city_overview', 'read'],
+    ['buildings.inspect', 'skylines_building_inspect', 'read'],
   ] as const;
   assert.deepEqual(listed.tools.map(tool => tool.name).sort(), bindings.map(binding => binding[1]).sort());
   for (const [id, name, effect] of bindings) {
@@ -66,7 +67,7 @@ async function exercise(client: Client) {
   requireContract(schemaIds.GuidanceSearchResult, browse.structuredContent);
   const search = browse.structuredContent as { sourceKind: string; language: string; query: string; truncated: boolean; results: { guideId: string; revision: string }[] };
   assert.equal(search.sourceKind, 'productGuide'); assert.equal(search.language, 'en');
-  assert.equal(search.query, ''); assert.equal(search.truncated, false); assert.equal(search.results.length, 4);
+  assert.equal(search.query, ''); assert.equal(search.truncated, false); assert.equal(search.results.length, 5);
   const limited = await call(client, 'skylines_guidance_search', { limit: 1 });
   assert.equal((limited.structuredContent as { truncated: boolean }).truncated, true);
   assert.equal((limited.structuredContent as { results: unknown[] }).results.length, 1);

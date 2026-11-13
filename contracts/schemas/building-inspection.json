@@ -1,0 +1,732 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:building-inspection:1",
+  "description": "One bounded native building observation. Relative entity references inherit scope; complete only describes each direct buffer prefix, never a transitive attachment graph. Lot cells and base prefab cost are metadata, not a footprint or placement quote. RoadEdge is a stored relation, not reachability or operation proof.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 11,
+          "maxLength": 11,
+          "const": "unavailable"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 26,
+          "enum": [
+            "MENU",
+            "LOADING",
+            "SOURCE_UNAVAILABLE",
+            "SCOPE_CHANGED",
+            "CONTEXT_MISMATCH",
+            "ENTITY_UNAVAILABLE",
+            "NO_SELECTION",
+            "SELECTION_CHANGED",
+            "BUSY",
+            "CAPTURE_FAILED",
+            "STOPPED",
+            "SELECTION_SOURCE_NOT_READY"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 11,
+          "maxLength": 11,
+          "const": "unsupported"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 7,
+          "maxLength": 17,
+          "enum": [
+            "PREVIEW",
+            "DELETED",
+            "NOT_BUILDING",
+            "MISSING_TRANSFORM",
+            "MISSING_PREFAB"
+          ]
+        },
+        "scope": {
+          "$ref": "#/$defs/CityScope"
+        },
+        "object": {
+          "$ref": "#/$defs/RelativeEntityRef"
+        }
+      },
+      "required": [
+        "kind",
+        "reason",
+        "scope",
+        "object"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 8,
+          "const": "observed"
+        },
+        "scope": {
+          "$ref": "#/$defs/CityScope"
+        },
+        "object": {
+          "$ref": "#/$defs/RelativeEntityRef"
+        },
+        "gameVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "source": {
+          "type": "string",
+          "minLength": 19,
+          "maxLength": 19,
+          "const": "native-ecs-building"
+        },
+        "selectionSource": {
+          "type": "string",
+          "minLength": 9,
+          "maxLength": 12,
+          "enum": [
+            "selectedInfo",
+            "entityRef"
+          ]
+        },
+        "selectionSourceUpdatedFrame": {
+          "type": "null",
+          "description": "The native panel cache exposes no verified last-refreshed frame. Capture frames only describe this read."
+        },
+        "capture": {
+          "type": "object",
+          "properties": {
+            "startedAtUnixMs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "endedAtUnixMs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "simulationFrameStart": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "simulationFrameEnd": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            }
+          },
+          "required": [
+            "startedAtUnixMs",
+            "endedAtUnixMs",
+            "simulationFrameStart",
+            "simulationFrameEnd"
+          ],
+          "additionalProperties": false
+        },
+        "relationLimit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "prefab": {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "$ref": "#/$defs/RelativeEntityRef"
+            },
+            "name": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 8,
+                      "maxLength": 17,
+                      "enum": [
+                        "MISSING_COMPONENT",
+                        "READ_FAILED",
+                        "INVALID_VALUE",
+                        "TOO_LONG",
+                        "MISSING_VALUE"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "value",
+                "reason"
+              ],
+              "additionalProperties": false
+            },
+            "nativeId": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 8,
+                      "maxLength": 17,
+                      "enum": [
+                        "MISSING_COMPONENT",
+                        "READ_FAILED",
+                        "INVALID_VALUE",
+                        "TOO_LONG",
+                        "MISSING_VALUE"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "value",
+                "reason"
+              ],
+              "additionalProperties": false
+            },
+            "lotCells": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 2147483647
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "depth": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 2147483647
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 8,
+                      "maxLength": 17,
+                      "enum": [
+                        "MISSING_COMPONENT",
+                        "READ_FAILED",
+                        "INVALID_VALUE",
+                        "TOO_LONG",
+                        "MISSING_VALUE"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "width",
+                "depth",
+                "reason"
+              ],
+              "additionalProperties": false
+            },
+            "baseConstructionCost": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 8,
+                      "maxLength": 17,
+                      "enum": [
+                        "MISSING_COMPONENT",
+                        "READ_FAILED",
+                        "INVALID_VALUE",
+                        "TOO_LONG",
+                        "MISSING_VALUE"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "value",
+                "reason"
+              ],
+              "additionalProperties": false
+            },
+            "locked": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 8,
+                      "maxLength": 17,
+                      "enum": [
+                        "MISSING_COMPONENT",
+                        "READ_FAILED",
+                        "INVALID_VALUE",
+                        "TOO_LONG",
+                        "MISSING_VALUE"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "value",
+                "reason"
+              ],
+              "additionalProperties": false
+            },
+            "prefabLocalBounds": {
+              "type": "object",
+              "properties": {
+                "coordinateSystem": {
+                  "type": "string",
+                  "minLength": 18,
+                  "maxLength": 18,
+                  "const": "asset-local-meters"
+                },
+                "min": {
+                  "anyOf": [
+                    {
+                      "type": "array",
+                      "minItems": 3,
+                      "maxItems": 3,
+                      "items": {
+                        "$ref": "#/$defs/NativeFloat"
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "max": {
+                  "anyOf": [
+                    {
+                      "type": "array",
+                      "minItems": 3,
+                      "maxItems": 3,
+                      "items": {
+                        "$ref": "#/$defs/NativeFloat"
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 11,
+                      "maxLength": 17,
+                      "enum": [
+                        "MISSING_COMPONENT",
+                        "READ_FAILED",
+                        "INVALID_VALUE"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "coordinateSystem",
+                "min",
+                "max",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ref",
+            "name",
+            "nativeId",
+            "lotCells",
+            "baseConstructionCost",
+            "locked",
+            "prefabLocalBounds"
+          ],
+          "additionalProperties": false
+        },
+        "transform": {
+          "type": "object",
+          "properties": {
+            "position": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "$ref": "#/$defs/NativeFloat"
+              }
+            },
+            "rotation": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": {
+                "$ref": "#/$defs/NativeFloat"
+              }
+            },
+            "positionUnit": {
+              "type": "string",
+              "minLength": 12,
+              "maxLength": 12,
+              "const": "world-meters"
+            },
+            "rotationConvention": {
+              "type": "string",
+              "minLength": 15,
+              "maxLength": 15,
+              "const": "quaternion-xyzw"
+            }
+          },
+          "required": [
+            "position",
+            "rotation",
+            "positionUnit",
+            "rotationConvention"
+          ],
+          "additionalProperties": false
+        },
+        "building": {
+          "type": "object",
+          "properties": {
+            "roadEdge": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/RelativeEntityRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "roadEdgeExists": {
+              "type": "boolean"
+            },
+            "curvePosition": {
+              "$ref": "#/$defs/NativeFloat"
+            },
+            "optionMask": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "flags": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          },
+          "required": [
+            "roadEdge",
+            "roadEdgeExists",
+            "curvePosition",
+            "optionMask",
+            "flags"
+          ],
+          "additionalProperties": false
+        },
+        "relations": {
+          "type": "object",
+          "properties": {
+            "subObjects": {
+              "$ref": "#/$defs/DirectRelations"
+            },
+            "subNets": {
+              "$ref": "#/$defs/DirectRelations"
+            },
+            "installedUpgrades": {
+              "$ref": "#/$defs/DirectRelations"
+            }
+          },
+          "required": [
+            "subObjects",
+            "subNets",
+            "installedUpgrades"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "kind",
+        "scope",
+        "object",
+        "gameVersion",
+        "source",
+        "selectionSource",
+        "selectionSourceUpdatedFrame",
+        "capture",
+        "relationLimit",
+        "prefab",
+        "transform",
+        "building",
+        "relations"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "CityScope": {
+      "type": "object",
+      "properties": {
+        "instanceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "generation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 19
+        },
+        "cityId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "instanceId",
+        "generation",
+        "cityId"
+      ],
+      "additionalProperties": false
+    },
+    "RelativeEntityRef": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "version": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "index",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "NativeFloat": {
+      "type": "number",
+      "minimum": -3.4028234663852886e+38,
+      "maximum": 3.4028234663852886e+38
+    },
+    "DirectRelations": {
+      "type": "object",
+      "properties": {
+        "present": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "length": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "returned": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/RelativeEntityRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "exists": {
+                "type": "boolean"
+              },
+              "optionMask": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ref",
+              "exists",
+              "optionMask"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 14,
+              "enum": [
+                "MISSING_BUFFER",
+                "READ_FAILED",
+                "LIMIT"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "present",
+        "length",
+        "returned",
+        "complete",
+        "entries",
+        "reason"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

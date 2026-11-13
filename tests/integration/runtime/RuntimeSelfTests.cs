@@ -54,6 +54,7 @@ namespace SkylinesLink.RuntimeProbe
             checks += await StopPipeTests.RunAsync();
             checks += await ModuleRuntimeObservationTests.RunAsync();
             checks += await CityOverviewTests.RunAsync();
+            checks += await BuildingInspectionTests.RunAsync();
             checks += await HistoryPublisherTests.RunAsync();
             checks += await MixedHistoryPublisherTests.RunAsync();
             checks += await ConnectionLifecycleTests.RunAsync();

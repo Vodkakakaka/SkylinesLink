@@ -1,6 +1,15 @@
 {
   "capabilities": [
     {
+      "id": "buildings.inspect",
+      "toolName": "skylines_building_inspect",
+      "schemaRevision": "1",
+      "description": "Inspect one current building by the native information panel's published selection or a full instance/generation/index/version reference. Returns real transform, prefab metadata and bounded direct relations; never changes selection, refreshes the panel, builds, or proves placement eligibility, reachability or operation.",
+      "effect": "read",
+      "input": "building-inspection-query",
+      "output": "building-inspection"
+    },
+    {
       "id": "system.context",
       "toolName": "skylines_context",
       "schemaRevision": "2",

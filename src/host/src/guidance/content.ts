@@ -301,4 +301,54 @@ If unavailable, preserve its fixed reason. \`BUSY\` means the bounded service ca
 
 不可用时保留固定原因：\`BUSY\` 表示有界服务暂不能受理；\`REGISTRY_CHANGED\` 表示捕获无法保住所枚举序列；\`SNAPSHOT_UNAVAILABLE\` 需要重新 capture；\`PAGE_OUT_OF_RANGE\` 应按同一观察核对 offset。取消等待不证明原生采集已经结束。读取不会启动游戏、改模组、加载存档或接管玩家输入。`,
   },
+  {
+    guideId: "building-inspection", revision: "1", language: "en",
+    title: "Inspect one selected or precisely referenced building",
+    summary: "Read native building, prefab and bounded direct relations while preserving scope, unknown cache age and the limits of metadata.",
+    capabilityRefs: [
+      { capabilityId: "buildings.inspect", schemaRevision: "1" },
+      { capabilityId: "system.context", schemaRevision: "2" },
+      { capabilityId: "capabilities.describe", schemaRevision: "1" },
+    ],
+    bodyMarkdown: `# Inspect one current building
+
+The source remains \`SELECTION_SOURCE_NOT_READY\` until a native selection change is observed after this load. If the object was already selected before connecting, or the selection stays unchanged, the player may need to select another object once and then select the intended building. This tool never does that for the player.
+
+Call \`buildings.inspect:1\` (\`skylines_building_inspect\`, Read permission) with \`{"target":{"kind":"selectedInfo"}}\` for the native information panel's last published selection cache. It does not refresh/filter/select, open the panel or take the active tool. Capture frames date this read; \`selectionSourceUpdatedFrame:null\` means the cache's last refresh is unknown, including after a load. The reply does not identify the instantaneous pointer target.
+
+For a known object use \`{"target":{"kind":"entityRef","ref":{"instanceId":"<scope instance>","generation":"<scope generation>","index":42,"version":7}}}\`. All four fields are required. Returned object/prefab/road-edge/relation refs inherit the common scope. Add that exact instanceId and generation before reusing a relative ref. Names, coordinates or indices alone cannot identify an object across loads. Unknown cityId does not prevent a scoped read.
+
+\`relationLimit\` defaults to 8, accepts 1 through 16 per group. subObjects/subNets/installedUpgrades report buffer presence, native length, returned prefix and completeness. Missing/failed is not empty. These direct buffers are not a complete facility or attachment tree: industry hubs may use other relationships. There is no retained snapshot or continuation; later calls are new observations.
+
+Transform uses world metres and quaternion xyzw. prefabLocalBounds is ObjectGeometryData metadata in asset-local metres, not complete facility footprint or runtime world bounds. lotCells is declared lot cells. baseConstructionCost is prefab metadata in game currency, not a placement quote, installed total or refund. locked only reads the active Locked marker. RoadEdge/exists is a stored relation/entity-presence check, not an entrance, reachability, dispatch or operation verdict. Raw flags/masks preserve native fields. None establishes ownership, collisions, funds or normal placement qualification; PrefabSystem.IsAvailable is never called.
+
+Preserve null and reason; oversized names/IDs are unavailable, never shortened. Native PrefabID does not prove installation or subscription. MENU/LOADING/NO_SELECTION/SELECTION_CHANGED/CONTEXT_MISMATCH/ENTITY_UNAVAILABLE/SCOPE_CHANGED remain distinct. ENTITY_UNAVAILABLE cannot distinguish disappearance from an old version. DELETED/PREVIEW/NOT_BUILDING describe observed unsupported targets. Under-construction is not automatically Temp. Never choose the nearest object or fall back to raw tool selection.
+
+Reading or cancelling a wait does not build or change simulation. Actual collector/publisher work remains owned until finished. Synthetic tests do not prove a normal-city selectedInfo positive sample or player/AI coexistence; keep their runtime evidence separate.`,
+  },
+  {
+    guideId: "building-inspection", revision: "1", language: "zh-CN",
+    title: "检查信息面板选择或精确引用的单个建筑",
+    summary: "按加载作用域读取原生建筑、资产和有界直接关系，保留缓存刷新时点、元数据口径与运营证据缺口。",
+    capabilityRefs: [
+      { capabilityId: "buildings.inspect", schemaRevision: "1" },
+      { capabilityId: "system.context", schemaRevision: "2" },
+      { capabilityId: "capabilities.describe", schemaRevision: "1" },
+    ],
+    bodyMarkdown: `# 检查本次加载中的一个建筑
+
+本次读档后，先观察到原生选择变更才可读取，否则返回 \`SELECTION_SOURCE_NOT_READY\`。接入前已经选中，或选中对象一直没变时，可能需要玩家改选一次再选回目标；工具不会代选。
+
+以 Read 权限，用 \`{"target":{"kind":"selectedInfo"}}\` 调用 \`buildings.inspect:1\`（\`skylines_building_inspect\`），读取原生信息面板最近发布的选择缓存。工具不刷新、过滤、选中、打开面板或接管活动工具。采样帧表示本次读取时刻；\`selectionSourceUpdatedFrame:null\` 表示缓存最后刷新时点未知，读档后也不能补造，不保证回复到达时光标下仍是该对象。
+
+已有对象时，用 \`{"target":{"kind":"entityRef","ref":{"instanceId":"<捕获实例>","generation":"<加载代次>","index":42,"version":7}}}\`，四项缺一不可。返回的建筑、Prefab、路边及直接关系引用都相对于公共 scope，后续输入须补回该次 instanceId/generation；不能仅凭名称、坐标或序号跨读档复用。cityId 未知不阻止本次作用域读取。
+
+\`relationLimit\` 默认 8，每组允许 1 至 16。subObjects/subNets/installedUpgrades 分别报告 buffer 是否存在、真实长度、返回前缀条数和完整性；缺失或失败不等于空。这三组不是完整设施或附属树，产业 Hub 可能通过其他关系连接。工具没有保留分页快照，再次调用是新观察。
+
+Transform 使用世界米及 xyzw 四元数。prefabLocalBounds 是 ObjectGeometryData 的资产局部米制包围盒，不是完整设施轮廓或运行时世界包围盒。lotCells 是声明的地块格数；baseConstructionCost 是游戏货币计的资产基础元数据，不是场址报价、已装总价或退款；locked 只读 Locked 标记。RoadEdge/exists 只说明存储关系和实体存在，不证明入口、可达、派遣或运营；flags/mask 保留原生字段。以上都不证明内容拥有权、碰撞、资金或正常放置资格，也不调用 PrefabSystem.IsAvailable。
+
+字段 null 与 reason 联合保留，超长名称/ID 不静默截断，原生 PrefabID 不等于安装/订阅结论。MENU/LOADING/NO_SELECTION/SELECTION_CHANGED/CONTEXT_MISMATCH/ENTITY_UNAVAILABLE/SCOPE_CHANGED 分别保留；ENTITY_UNAVAILABLE 不能区分消失和旧版本。DELETED/PREVIEW/NOT_BUILDING 是观察到的不适用目标；施工中的正式建筑不自动等于 Temp。不按最近坐标换对象，也不回退原始工具选择。
+
+读取或取消等待不会施工或改模拟，collector/publisher 真实结束前仍保有责任。合成测试不证明正常城市 selectedInfo 阳性或玩家与 AI 并行，二者须保留独立实机证据。`,
+  },
 ] as const satisfies readonly PublicGuideTranslation[]);

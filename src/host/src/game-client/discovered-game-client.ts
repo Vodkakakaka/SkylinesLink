@@ -8,6 +8,7 @@ import { copyStopSelector, requireStopResult, requireStopDecisionLookup, offline
 import { requireCaptureV3 } from './mixed-history-result.ts';
 import { copyModuleRuntimeQuery, requireModuleRuntimePage } from './module-runtime-result.ts';
 import { requireCityOverview } from './city-overview-result.ts';
+import { copyBuildingInspectionQuery, requireBuildingInspection } from './building-inspection-result.ts';
 
 export interface LiveGameConnection extends GameClient {
   readonly connection: Readonly<Omit<PipeConnection, 'token'>>;
@@ -38,6 +39,13 @@ export class DiscoveredGameClient implements GameClient {
   async call(id: string, revision: string, args: unknown, signal: AbortSignal): Promise<unknown> {
     const combined = AbortSignal.any([signal, this.#lifetime.signal]);
     this.#checkOpen(combined);
+    if (id === 'buildings.inspect' && revision === '1') {
+      const query = copyBuildingInspectionQuery(args);
+      const game = await this.#live(combined); this.#checkOpen(combined);
+      const result = await game.call(id, revision, copyBuildingInspectionQuery(query), combined);
+      this.#checkOpen(combined);
+      return requireBuildingInspection(query, result, game.connection.instanceId);
+    }
     if (id === 'city.overview' && revision === '2') {
       requireContract(schemaIds.Empty, args);
       const game = await this.#live(combined); this.#checkOpen(combined);

@@ -17,6 +17,8 @@ import { ControlClassifier, LaneBudget, type RequestLifecycle } from '../shared/
 import { copyStopSelector, requireStopResult, requireStopDecisionLookup } from '../game-client/task-stop-result.ts';
 import { copyModuleRuntimeQuery, requireModuleRuntimePage } from '../game-client/module-runtime-result.ts';
 import { requireCityOverview } from '../game-client/city-overview-result.ts';
+import { copyBuildingInspectionQuery, requireBuildingInspection } from '../game-client/building-inspection-result.ts';
+import type { BuildingInspectionQuery } from '@skylineslink/contracts';
 import type { ModuleRuntimeQuery } from '@skylineslink/contracts';
 
 export interface HostOptions {
@@ -115,7 +117,12 @@ export function createMcpServer(options: HostOptions): McpServer {
         if (capability.schemaRevision === '4' || capability.schemaRevision === '5') source = (args as OperationQueryV3).source ?? 'live';
       }
       const writeUncertainty = capability.effect === 'write' ? true : undefined;
+      let buildingQuery: BuildingInspectionQuery | undefined;
       try {
+        if (capability.id === 'buildings.inspect' && capability.schemaRevision === '1') {
+          buildingQuery = copyBuildingInspectionQuery(args);
+          args = copyBuildingInspectionQuery(buildingQuery) as Record<string, unknown>;
+        }
         if (isStop) context.mcpReq.signal.throwIfAborted();
         release = work.acquire(classifier.capability(capability.id, capability.schemaRevision, args));
         // 撤权与实际游戏资格仍由执行边界判断，tool annotations 不是权限。
@@ -134,6 +141,7 @@ export function createMcpServer(options: HostOptions): McpServer {
         if (isStopRead) requireStopDecisionLookup(args as { taskId: string; expectedControlVersion: number; source?: 'live' | 'history' }, result);
         if (moduleQuery) requireModuleRuntimePage(moduleQuery, result);
         if (capability.id === 'city.overview' && capability.schemaRevision === '2') requireCityOverview(result);
+        if (buildingQuery) requireBuildingInspection(buildingQuery, result);
         if (selector && (capability.schemaRevision === '4' || capability.schemaRevision === '5')) {
           const verify = capability.schemaRevision === '5' ? requireOperationLookupV4 : requireOperationLookup;
           const checked = verify(args as OperationQueryV3, result);

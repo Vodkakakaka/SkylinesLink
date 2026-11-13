@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skylineslink:contract:building-inspection-query:1",
+  "description": "Inspect one current building by the native information panel's last published selection, or a full loading-scoped entity reference. relationLimit defaults to 8; each direct relation prefix is bounded independently.",
+  "type": "object",
+  "properties": {
+    "target": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 12,
+              "maxLength": 12,
+              "const": "selectedInfo"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "minLength": 9,
+              "maxLength": 9,
+              "const": "entityRef"
+            },
+            "ref": {
+              "type": "object",
+              "properties": {
+                "instanceId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "generation": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 19
+                },
+                "index": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2147483647
+                },
+                "version": {
+                  "type": "integer",
+                  "minimum": -2147483648,
+                  "maximum": 2147483647
+                }
+              },
+              "required": [
+                "instanceId",
+                "generation",
+                "index",
+                "version"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "kind",
+            "ref"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "relationLimit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16
+    }
+  },
+  "required": [
+    "target"
+  ],
+  "additionalProperties": false
+}

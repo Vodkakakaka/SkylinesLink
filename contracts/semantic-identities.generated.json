@@ -53,7 +53,9 @@
     "urn:skylineslink:contract:context:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
     "urn:skylineslink:contract:managed-components:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
     "urn:skylineslink:contract:city-overview:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
-    "urn:skylineslink:contract:city-overview:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002"
+    "urn:skylineslink:contract:city-overview:2": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:building-inspection-query:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002",
+    "urn:skylineslink:contract:building-inspection:1": "1d2c58d54cc9a01470eee2955f281431b2ca31fc439d1306f34f10191cab5002"
   },
   "capabilityBindings": {
     "system.context": {
@@ -86,6 +88,9 @@
     "city.overview": {
       "1": "ba13f252e8cc74d89cc6cbb4092459d23d3d745f19f1756e2b90c1a70f4b978b",
       "2": "a09a49891c826b2759b5eda767070b69f9bebad46565510447f819bd9e9aec07"
+    },
+    "buildings.inspect": {
+      "1": "fe78f852fa20d26c78b922289b2a936ffa3ab607e2fb1155eaf79adb7b871d7d"
     }
   }
 }

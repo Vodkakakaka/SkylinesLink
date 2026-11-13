@@ -17,6 +17,7 @@ namespace SkylinesLink.Mod.Native
         private readonly UpdateSystem updateSystem;
         private readonly WorldContextTracker context;
         private readonly Action<string>? report;
+        private readonly Action<WorldContextSnapshot>? observeReady;
         private readonly Func<bool> updater;
         private GameManager? manager;
         private World? world;
@@ -24,11 +25,13 @@ namespace SkylinesLink.Mod.Native
         private bool started, stopRequested, preloadHeld, updaterMayBeHeld;
         private string? lastIssue;
 
-        public NativeWorldContextObserver(UpdateSystem updateSystem, WorldContextTracker context, Action<string>? report = null)
+        public NativeWorldContextObserver(UpdateSystem updateSystem, WorldContextTracker context, Action<string>? report = null,
+            Action<WorldContextSnapshot>? observeReady = null)
         {
             this.updateSystem = updateSystem ?? throw new ArgumentNullException(nameof(updateSystem));
             this.context = context ?? throw new ArgumentNullException(nameof(context));
             this.report = report;
+            this.observeReady = observeReady;
             updater = Tick;
         }
 
@@ -143,6 +146,10 @@ namespace SkylinesLink.Mod.Native
             // witnessed its historical load. This is not an AI Load receipt.
             long generation = observed.State == "loading" ? observed.Generation : context.EnterLoading();
             if (!context.ObserveReady(generation)) throw new InvalidOperationException("The observed world scope changed.");
+            // A failed optional source listener cannot undo authoritative Ready
+            // or disable unrelated observations. It receives each new scope once.
+            try { observeReady?.Invoke(context.Read()); }
+            catch { ReportIssue("WORLD_READY_LISTENER_UNAVAILABLE"); }
         }
 
         private void SetUnavailable()

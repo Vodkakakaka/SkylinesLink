@@ -13,7 +13,7 @@ const contracts=await import('data:text/javascript;base64,'+Buffer.from(bundle.o
 const fixtureSchema=JSON.parse(fs.readFileSync(path.join(root,'contracts/fixtures/profile-schema.json'),'utf8'));
 const metadata=JSON.parse(fs.readFileSync(path.join(root,'contracts/fixtures/profile-metadata.json'),'utf8'));
 const fixtureValidate=contracts.createValidator({[fixtureSchema.$id]:compileSchema(fixtureSchema,metadata)},{[fixtureSchema.$id]:fixtureSchema},[]);
-const cases=['cases.json','operation-v2-cases.json','operation-journal-cases.json','operation-v3-cases.json','operation-journal-v2-cases.json','history-cases.json','mixed-history-cases.json','journal-control-cases.json','guidance-cases.json','authorization-v2-cases.json','mixed-journal-cases.json','journal-control-v2-cases.json','task-stop-cases.json','module-runtime-cases.json'].flatMap(name=>JSON.parse(fs.readFileSync(path.join(root,'contracts/fixtures',name),'utf8')));
+const cases=['cases.json','operation-v2-cases.json','operation-journal-cases.json','operation-v3-cases.json','operation-journal-v2-cases.json','history-cases.json','mixed-history-cases.json','journal-control-cases.json','guidance-cases.json','authorization-v2-cases.json','mixed-journal-cases.json','journal-control-v2-cases.json','task-stop-cases.json','module-runtime-cases.json','building-inspection-cases.json'].flatMap(name=>JSON.parse(fs.readFileSync(path.join(root,'contracts/fixtures',name),'utf8')));
 for (const sample of cases) test('共享契约：'+sample.name,()=>{
   let outcome;
   try {

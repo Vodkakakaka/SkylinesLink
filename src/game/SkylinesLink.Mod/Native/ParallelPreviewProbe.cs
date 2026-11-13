@@ -64,11 +64,14 @@ namespace SkylinesLink.Mod.Native
         private Entity root, node;
         private Entity[] definitionIds = Array.Empty<Entity>(), members = Array.Empty<Entity>();
         private Entity[] rootChildren = Array.Empty<Entity>(), nodeChildren = Array.Empty<Entity>();
-        private JObject? inputReceipt, graphReceipt;
+        private JObject? inputReceipt, graphReceipt, nonemptyInputObservation;
         private Stage stage;
         private string? failureCode, exceptionType;
         private DefinitionProducerPatchProbe patch = new DefinitionProducerPatchProbe();
         private DefinitionProducerPatchProbe? latestPatchObservation;
+        private DefinitionProducerPatchProbe definitionPatch = new DefinitionProducerPatchProbe();
+        private int definitionRechecks, unusedRaycastCount;
+        private string? unusedRaycastHash;
 
         internal ParallelPreviewProbe(World source, UpdateSystem updates, Action requireScope)
         { this.source = source; this.updates = updates; this.requireScope = requireScope; }
@@ -157,6 +160,8 @@ namespace SkylinesLink.Mod.Native
                 "PARALLEL_PREVIEW_WIND_INPUT_UNAVAILABLE");
             site = GroundPreviewSite.Select(source, input.Root, requireScope);
             theme = config.defaultTheme; leftHandTraffic = config.leftHandTraffic;
+            definitionPatch = ObjectDefinitionPatchProbe.Observe();
+            Require(definitionPatch.Qualified, definitionPatch.Reason);
             definition.RunOnce(input, theme, leftHandTraffic, site, default, AgeMask.Sapling, requireScope);
             Require(definition.ChecksPassed && definition.ResourcesReleased, definition.FailureCode ?? "PARALLEL_DEFINITION_UNQUALIFIED");
             expected = definition.RequirePayload(source);
@@ -169,6 +174,7 @@ namespace SkylinesLink.Mod.Native
             RequirePrefabGenerationClosure();
             point = site.RequireCurrent(source, input.Root, requireScope, out _);
             patch = ObservePipeline(); Require(patch.Qualified, patch.Reason);
+            Require(patch.HarmonyMvid == definitionPatch.HarmonyMvid, "EXTERNAL_PREVIEW_PATCH_PROVIDER_CHANGED");
             applyVersion = Existing<ToolApplySystem>().CheckedStateRef.LastSystemVersion;
             validationVersion = Existing<ValidationSystem>().CheckedStateRef.LastSystemVersion;
             componentsVersion = Existing<ValidationSystem.Components>().CheckedStateRef.LastSystemVersion;
@@ -212,6 +218,7 @@ namespace SkylinesLink.Mod.Native
                         Require(point.m_Position.Equals(expected.RootObject.m_Position)
                             && point.m_Rotation.Equals(expected.RootObject.m_Rotation), "EXTERNAL_PREVIEW_GROUND_POSE_CHANGED");
                         emittedFrame = UnityEngine.Time.frameCount;
+                        RequireDefinitionContract();
                         var result = actor.Emit(expected, point, theme, leftHandTraffic, inputDeps);
                         stage = Stage.DefinitionsQueued;
                         return result;
@@ -219,12 +226,12 @@ namespace SkylinesLink.Mod.Native
                     if (stage == Stage.Clear)
                     {
                         Require(previewConfirmed && definitionsConfirmed && !nativeResultUnresolved, "EXTERNAL_CLEAR_COHORT_UNPROVED");
-                        RequirePipeline();
                         ReadGraph(requireStable: true);
                         Require(ReadMoney() == moneyBefore, "EXTERNAL_PREVIEW_FUNDS_CHANGED");
                         RequireDefinitionSet(requireUpdated: false);
                         moneyBeforeClear = ReadMoney();
                         clearVersion = Existing<ToolClearSystem>().CheckedStateRef.LastSystemVersion;
+                        RequirePipeline();
                         var result = actor.ClearDefinitions(definitions, inputDeps);
                         stage = Stage.AwaitAbsence;
                         return result;
@@ -659,9 +666,84 @@ namespace SkylinesLink.Mod.Native
                 && entities.GetComponentData<Owner>(candidateNode).m_Owner == candidateRoot;
         }
 
-        private void RequireEmptyInput() => Require(definitions.CalculateEntityCount() == 0 && visibleTemps.CalculateEntityCount() == 0
-            && objectInputs.CalculateEntityCount() == 0 && nodeInputs.CalculateEntityCount() == 0,
-            "EXTERNAL_PREVIEW_SOURCE_NOT_EMPTY");
+        private void RequireEmptyInput()
+        {
+            // Read all four counts before deciding; an earlier nonzero query
+            // must not hide which default inputs are present at this boundary.
+            int definitionCount = definitions.CalculateEntityCount();
+            int tempCount = visibleTemps.CalculateEntityCount();
+            int objectCount = objectInputs.CalculateEntityCount();
+            int nodeCount = nodeInputs.CalculateEntityCount();
+            bool empty = definitionCount == 0 && tempCount == 0 && objectCount == 0 && nodeCount == 0;
+            if (!empty && nonemptyInputObservation == null)
+                nonemptyInputObservation = new JObject {
+                    ["frame"] = UnityEngine.Time.frameCount, ["stage"] = stage.ToString(),
+                    ["definitions"] = ObserveInputPrefix(definitions, definitionCount),
+                    ["visibleTemps"] = ObserveInputPrefix(visibleTemps, tempCount),
+                    ["objectInputs"] = ObserveInputPrefix(objectInputs, objectCount),
+                    ["nodeInputs"] = ObserveInputPrefix(nodeInputs, nodeCount)
+                };
+            Require(empty, "EXTERNAL_PREVIEW_SOURCE_NOT_EMPTY");
+        }
+
+        private JObject ObserveInputPrefix(EntityQuery query, int count)
+        {
+            // Four queries, at most two fixed primitive rows each: the entire
+            // nonemptyInput projection stays below 3072 compact UTF-8 bytes at
+            // Int32/UInt32 extremes. No names, live queries or type arrays escape.
+            var rows = new JArray();
+            var result = new JObject {
+                ["count"] = count, ["prefixOmitted"] = count < 0 || count > 16,
+                ["prefixComplete"] = count == 0, ["readFailed"] = false, ["members"] = rows
+            };
+            // ToEntityArray allocates the whole result. Never allocate an
+            // unbounded result merely to display its first two members.
+            if (count <= 0 || count > 16) return result;
+            try
+            {
+                requireScope();
+                using var values = query.ToEntityArray(Allocator.Temp);
+                if (values.Length != count || values.Length > 16)
+                { result["readFailed"] = true; return result; }
+                for (int i = 0; i < Math.Min(values.Length, 2); i++)
+                {
+                    requireScope();
+                    Entity entity = values[i];
+                    var entities = source.EntityManager;
+                    if (!entities.Exists(entity))
+                    { result["readFailed"] = true; return result; }
+                    JObject? creation = null, temp = null;
+                    if (entities.HasComponent<CreationDefinition>(entity))
+                    {
+                        var value = entities.GetComponentData<CreationDefinition>(entity);
+                        creation = new JObject { ["flags"] = (uint)value.m_Flags,
+                            ["prefab"] = Id(value.m_Prefab), ["original"] = Id(value.m_Original) };
+                    }
+                    if (entities.HasComponent<Temp>(entity))
+                    {
+                        var value = entities.GetComponentData<Temp>(entity);
+                        temp = new JObject { ["flags"] = (uint)value.m_Flags, ["original"] = Id(value.m_Original) };
+                    }
+                    rows.Add(new JObject {
+                        ["entity"] = Id(entity), ["created"] = entities.HasComponent<Created>(entity),
+                        ["updated"] = entities.HasComponent<Updated>(entity),
+                        ["deleted"] = entities.HasComponent<Deleted>(entity),
+                        ["disabled"] = entities.HasComponent<Disabled>(entity),
+                        ["definition"] = (JToken?)creation ?? JValue.CreateNull(),
+                        ["temp"] = (JToken?)temp ?? JValue.CreateNull()
+                    });
+                }
+                requireScope();
+                result["prefixComplete"] = rows.Count == count;
+            }
+            catch (Exception)
+            {
+                // Diagnostic availability never relaxes the original empty
+                // input requirement or changes its failure/cleanup ownership.
+                result["prefixComplete"] = false; result["readFailed"] = true;
+            }
+            return result;
+        }
 
         private EntityQuery DefaultInput(ComponentSystemBase system)
         {
@@ -716,6 +798,7 @@ namespace SkylinesLink.Mod.Native
             // A finite developer contract, not an all-mod integrity claim.
             foreach (string name in new[] {
                 "Game.Tools.ToolBaseSystem", "Game.Tools.ToolSystem", "Game.Tools.ToolOutputSystem", "Game.Tools.ToolOutputBarrier",
+                "Game.SafeCommandBufferSystem",
                 "Game.Tools.ToolClearSystem", "Game.Tools.GenerateObjectsSystem", "Game.Tools.GenerateNodesSystem",
                 "Game.Tools.ValidationSystem", "Game.Tools.ValidationSystem+Components", "Game.Tools.OriginalDeletedSystem",
                 "Game.Net.LaneSystem", "Game.Tools.FindOwnersSystem", "Game.Tools.FindOwnersSystem2",
@@ -749,6 +832,7 @@ namespace SkylinesLink.Mod.Native
                 // Reuse the original per-type identity and allocation bounds.
                 // Empty marker types have no executable methods to inspect.
                 Require(methods.Count <= 128, "EXTERNAL_PREVIEW_TYPE_METHOD_BOUND");
+                if (type == typeof(ToolBaseSystem)) ExcludeUnusedRaycastInputs(methods);
                 nativeMethodsDeclared += methods.Count;
                 Require(nativeMethodsDeclared <= 4096, "EXTERNAL_PREVIEW_METHOD_BOUND");
                 if (methods.Count == 0) continue;
@@ -774,7 +858,7 @@ namespace SkylinesLink.Mod.Native
             using (var sha = SHA256.Create())
                 result.MethodSetSha256 = BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(identity.ToString())))
                     .Replace("-", "").ToLowerInvariant();
-            result.Qualified = true; result.Reason = "NO_REGISTERED_EXTERNAL_PREVIEW_PATCH_OBSERVED";
+            result.Qualified = true; result.Reason = "NO_REGISTERED_EXTERNAL_PREVIEW_SCOPED_PATCH_OBSERVED";
             latestPatchObservation = result;
             return result;
         }
@@ -782,6 +866,57 @@ namespace SkylinesLink.Mod.Native
         {
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly;
             methods.AddRange(type.GetMethods(flags)); methods.AddRange(type.GetConstructors(flags));
+        }
+
+        private void ExcludeUnusedRaycastInputs(List<MethodBase> methods)
+        {
+            // This actor consumes an explicit ControlPoint and overrides its
+            // update/start/stop hooks without calling the input implementations.
+            // These four input helpers are outside that finite contract; this
+            // is not a qualification of their registered patches or UI callers.
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic
+                | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+            Type parent = typeof(ToolBaseSystem);
+            int named = 0;
+            foreach (MethodInfo method in parent.GetMethods(flags))
+                if (method.Name == "GetRaycastResult") named++;
+            Require(named == 4, "EXTERNAL_RAYCAST_INPUT_ABI_CHANGED");
+            Type entity = typeof(Entity).MakeByRefType(), hit = typeof(Game.Common.RaycastHit).MakeByRefType();
+            Type pointType = typeof(ControlPoint).MakeByRefType(), force = typeof(bool).MakeByRefType();
+            Type[][] signatures = { new[] { entity, hit }, new[] { entity, hit, force },
+                new[] { pointType }, new[] { pointType, force } };
+            var keys = new string[4];
+            for (int i = 0; i < signatures.Length; i++)
+            {
+                MethodInfo? method = parent.GetMethod("GetRaycastResult", flags, null, signatures[i], null);
+                Require(method != null && method.DeclaringType == parent && method.Module == parent.Module
+                    && method.IsFamily && !method.IsStatic && !method.IsGenericMethod && !method.IsAbstract
+                    && method.ReturnType == typeof(bool) && method.IsVirtual == (i >= 2),
+                    "EXTERNAL_RAYCAST_INPUT_ABI_CHANGED");
+                foreach (ParameterInfo parameter in method!.GetParameters())
+                    Require(parameter.IsOut && parameter.ParameterType.IsByRef, "EXTERNAL_RAYCAST_INPUT_ABI_CHANGED");
+                Require(methods.Remove(method), "EXTERNAL_RAYCAST_INPUT_SET_CHANGED");
+                keys[i] = method.Module.ModuleVersionId.ToString("N") + ":" + method.MetadataToken.ToString("x8");
+            }
+            Array.Sort(keys, StringComparer.Ordinal);
+            string identity;
+            using (var sha = SHA256.Create())
+                identity = BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(string.Join("\n", keys))))
+                    .Replace("-", "").ToLowerInvariant();
+            Require(unusedRaycastHash == null || unusedRaycastHash == identity, "EXTERNAL_RAYCAST_INPUT_SET_CHANGED");
+            unusedRaycastHash = identity; unusedRaycastCount = signatures.Length;
+        }
+
+        private void RequireDefinitionContract()
+        {
+            // Recheck the actual protected entry after registration/events and
+            // sampling, immediately before the definition producer is invoked.
+            var current = ObjectDefinitionPatchProbe.Observe();
+            Require(definitionPatch.Qualified && current.Qualified
+                && current.MethodSetSha256 == definitionPatch.MethodSetSha256
+                && current.HarmonyMvid == definitionPatch.HarmonyMvid && current.HarmonyMvid == patch.HarmonyMvid,
+                "EXTERNAL_PREVIEW_DEFINITION_CONTRACT_CHANGED");
+            definitionRechecks++;
         }
         private void RequirePipeline()
         {
@@ -842,10 +977,17 @@ namespace SkylinesLink.Mod.Native
             ["maximumMembers"] = maximumMembers, ["observedFrame"] = observedFrame,
             ["nativeMethodsChecked"] = patch.MethodsChecked,
             ["nativeTypesDeclared"] = nativeTypesDeclared, ["nativeMethodsDeclared"] = nativeMethodsDeclared,
+            ["unusedRaycastInputsExcluded"] = unusedRaycastCount,
+            ["unusedRaycastScope"] = "ToolBaseSystem.GetRaycastResult",
+            ["unusedRaycastInputSetSha256"] = Value(unusedRaycastHash),
+            ["definitionEntryBaselineQualified"] = definitionPatch.Qualified,
+            ["definitionEntryBaselineMethodSetSha256"] = Value(definitionPatch.MethodSetSha256),
+            ["definitionEntryRechecks"] = definitionRechecks,
             ["patchFailureType"] = patchFailureType == null ? JValue.CreateNull() : new JValue(patchFailureType),
             ["patchObservation"] = PatchObservationSnapshot(),
             ["definitionResourcesReleased"] = definition.ResourcesReleased,
             ["ownedDefinitionQueryRetained"] = definitionsCreated, ["ownedTempQueryRetained"] = tempsCreated,
+            ["nonemptyInput"] = (JToken?)nonemptyInputObservation?.DeepClone() ?? JValue.CreateNull(),
             ["inputs"] = (JToken?)inputReceipt?.DeepClone() ?? JValue.CreateNull(),
             ["preview"] = (JToken?)graphReceipt?.DeepClone() ?? JValue.CreateNull(),
             ["failureCode"] = Value(failureCode), ["exceptionType"] = Value(exceptionType),

@@ -46,6 +46,8 @@ namespace SkylinesLink.RuntimeProbe
                 { Emit(new JObject { ["kind"] = "module-runtime-self-test", ["checks"] = await ModuleRuntimeObservationTests.RunAsync(), ["gameRuntimeValidated"] = false }); return 0; }
                 if (args.Length == 1 && args[0] == "--city-overview-probe")
                 { Emit(new JObject { ["kind"] = "city-overview-self-test", ["checks"] = await CityOverviewTests.RunAsync(), ["gameRuntimeValidated"] = false }); return 0; }
+                if (args.Length == 1 && args[0] == "--building-inspection-tests")
+                { Emit(new JObject { ["kind"] = "building-inspection-self-test", ["checks"] = await BuildingInspectionTests.RunAsync(), ["gameRuntimeValidated"] = false }); return 0; }
                 if (args.Length == 1 && args[0] == "--mixed-history-probe") return await MixedHistoryProcessProbe.RunAsync();
                 if (args.Length == 1 && args[0] == "--serve") { await Serve(); return 0; }
                 if (args.Length == 1 && args[0] == "--unknown-close-probe") { await DurableOperationProcessProbe.RunAsync(); return 0; }

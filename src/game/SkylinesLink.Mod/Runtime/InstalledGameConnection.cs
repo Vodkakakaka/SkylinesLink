@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using SkylinesLink.Application.Context;
 using SkylinesLink.Application.Modules;
 using SkylinesLink.Application.Observation;
+using SkylinesLink.Application.Buildings;
 using SkylinesLink.Application.Operations;
 using SkylinesLink.Infrastructure.Installation;
 using SkylinesLink.Infrastructure.Connection;
@@ -44,12 +45,14 @@ namespace SkylinesLink.Mod.Runtime
             Context.MarkUnavailable();
             Modules = new ModuleRuntimeObservationBroker(Context.Read().InstanceId);
             CityOverview = new CityOverviewReadBroker(Context);
+            Buildings = new BuildingInspectionReadBroker(Context);
             lifecycle = new GameConnectionLifecycle(CreateAsync);
         }
 
         public WorldContextTracker Context { get; }
         public ModuleRuntimeObservationBroker Modules { get; }
         public CityOverviewReadBroker CityOverview { get; }
+        public BuildingInspectionReadBroker Buildings { get; }
         public GameConnectionLifecycleSnapshot Read() => lifecycle.Read();
         public string? ProductVersion { get { lock (sync) return version; } }
         internal SetupInitializationSnapshot? ReadPreparation()
@@ -93,7 +96,7 @@ namespace SkylinesLink.Mod.Runtime
             var owner = await ConnectionAuthorityOwner.CreateAsync(opened.ConnectionDirectory, opened.EnvironmentId,
                 opened.CoreManifestSha256, opened.Version,
                 new PipeLimits(4, 65536, 32, 8192, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2)),
-                Context, (operations, context, productVersion) => new SnapshotCapabilityDispatcher(context, productVersion, operations, Modules, CityOverview),
+                Context, (operations, context, productVersion) => new SnapshotCapabilityDispatcher(context, productVersion, operations, Modules, CityOverview, Buildings),
                 initializeEmpty: initialProfile != null, cancellationToken: cancellation).ConfigureAwait(false);
             if (owner == null)
             {
@@ -151,6 +154,7 @@ namespace SkylinesLink.Mod.Runtime
             Context.Stop();
             Modules.Stop();
             CityOverview.Stop();
+            Buildings.Stop();
             lifecycle.RequestStop();
             lock (sync) if (closing == null) closing = Task.Run(CloseCoreAsync);
         }
@@ -170,6 +174,7 @@ namespace SkylinesLink.Mod.Runtime
             // completed/failed by its main-thread owner before this task can end.
             await Modules.WhenIdle.ConfigureAwait(false);
             await CityOverview.WhenIdle.ConfigureAwait(false);
+            await Buildings.WhenIdle.ConfigureAwait(false);
             if (lifecycle.Read().FailureCode == "CLOSE_FAILED") return false;
             InstalledCoreBinding? owned;
             lock (sync) owned = binding;

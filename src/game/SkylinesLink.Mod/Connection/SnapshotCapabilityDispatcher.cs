@@ -6,7 +6,9 @@ using SkylinesLink.Application.Context;
 using SkylinesLink.Application.Operations;
 using SkylinesLink.Application.Modules;
 using SkylinesLink.Application.Observation;
+using SkylinesLink.Application.Buildings;
 using SkylinesLink.Contracts;
+using BuildingInspectionQuery = SkylinesLink.Application.Buildings.BuildingInspectionQuery;
 
 namespace SkylinesLink.Mod.Connection
 {
@@ -26,8 +28,9 @@ namespace SkylinesLink.Mod.Connection
         private readonly OperationAuthority? operations;
         private readonly ModuleRuntimeObservationBroker? modules;
         private readonly CityOverviewReadBroker? cityOverview;
+        private readonly BuildingInspectionReadBroker? buildings;
         public SnapshotCapabilityDispatcher(WorldContextTracker context, string productVersion, OperationAuthority? operations = null,
-            ModuleRuntimeObservationBroker? modules = null, CityOverviewReadBroker? cityOverview = null)
+            ModuleRuntimeObservationBroker? modules = null, CityOverviewReadBroker? cityOverview = null, BuildingInspectionReadBroker? buildings = null)
         {
             this.context = context ?? throw new ArgumentNullException(nameof(context)); this.operations = operations;
             AuthorizationState.ValidateIdentifier(productVersion);
@@ -35,9 +38,19 @@ namespace SkylinesLink.Mod.Connection
             if (modules != null && modules.InstanceId != context.Read().InstanceId) throw new ArgumentException("Module source instance mismatch.");
             this.modules = modules;
             this.cityOverview = cityOverview;
+            this.buildings = buildings;
         }
         public DeferredCapabilityRead BeginRead(string capabilityId, string revision, JToken arguments, GrantSnapshot subject)
         {
+            if (capabilityId == "buildings.inspect" && revision == "1")
+            {
+                BuildingInspectionQuery query;
+                try { query = BuildingInspectionQuery.Parse(arguments); }
+                catch (ArgumentException) { throw new CapabilityFailure("INVALID_ARGUMENT", "建筑读取参数或加载代次不符合契约。"); }
+                if (buildings == null) return Immediate(BuildingInspectionQueryService.Unavailable("SOURCE_UNAVAILABLE"));
+                var read = buildings.Capture(query);
+                return new DeferredCapabilityRead(read.Completion, read, buildings.GetCurrentResult);
+            }
             if (capabilityId == "city.overview" && revision == "2")
             {
                 if (!ContractCatalog.Validate("urn:skylineslink:contract:empty:1", arguments).Valid)

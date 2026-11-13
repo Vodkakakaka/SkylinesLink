@@ -7,7 +7,7 @@ var root = Directory.GetCurrentDirectory();
 var file = args.Length == 0 ? Path.Combine(root, "contracts", "fixtures", "cases.json") : args[0];
 var cases = (JArray)JToken.Parse(File.ReadAllText(file));
 if (args.Length == 0)
-    foreach (var name in new[] { "operation-v2-cases.json", "operation-journal-cases.json", "operation-v3-cases.json", "operation-journal-v2-cases.json", "history-cases.json", "mixed-history-cases.json", "journal-control-cases.json", "guidance-cases.json", "authorization-v2-cases.json", "mixed-journal-cases.json", "journal-control-v2-cases.json", "task-stop-cases.json", "module-runtime-cases.json" })
+    foreach (var name in new[] { "operation-v2-cases.json", "operation-journal-cases.json", "operation-v3-cases.json", "operation-journal-v2-cases.json", "history-cases.json", "mixed-history-cases.json", "journal-control-cases.json", "guidance-cases.json", "authorization-v2-cases.json", "mixed-journal-cases.json", "journal-control-v2-cases.json", "task-stop-cases.json", "module-runtime-cases.json", "building-inspection-cases.json" })
         foreach (var entry in (JArray)JToken.Parse(File.ReadAllText(Path.Combine(root, "contracts", "fixtures", name)))) cases.Add(entry);
 var failures = new List<string>();
 var results = new JArray();
@@ -58,6 +58,8 @@ foreach (var entry in cases)
             SchemaIds.TaskStopQuery => ContractCodec.EncodeTaskStopQuery(ContractCodec.DecodeTaskStopQuery(value!)),
             SchemaIds.ModuleRuntimeQuery => ContractCodec.EncodeModuleRuntimeQuery(ContractCodec.DecodeModuleRuntimeQuery(value!)),
             SchemaIds.ModuleRuntimePage => ContractCodec.EncodeModuleRuntimePage(ContractCodec.DecodeModuleRuntimePage(value!)),
+            SchemaIds.BuildingInspectionQuery => ContractCodec.EncodeBuildingInspectionQuery(ContractCodec.DecodeBuildingInspectionQuery(value!)),
+            SchemaIds.BuildingInspection => ContractCodec.EncodeBuildingInspection(ContractCodec.DecodeBuildingInspection(value!)),
             SchemaIds.TaskStopResult => ContractCodec.EncodeTaskStopResult(ContractCodec.DecodeTaskStopResult(value!)),
             SchemaIds.TaskStopDecisionQuery => ContractCodec.EncodeTaskStopDecisionQuery(ContractCodec.DecodeTaskStopDecisionQuery(value!)),
             SchemaIds.TaskStopDecisionLookup => ContractCodec.EncodeTaskStopDecisionLookup(ContractCodec.DecodeTaskStopDecisionLookup(value!)),

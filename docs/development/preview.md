@@ -19,7 +19,7 @@ This preview publishes the engineering foundation of SkylinesLink. It is intende
 | `tests/` | Contract, runtime, protocol, history and desktop-process checks |
 | `tools/` | Contract generation, dependency checks, builds and source packaging |
 
-The declared MCP surface has nine tools. Three Host-local tools discover/read public guidance and describe capability schemas. The other tools cover context, operation lookup, Task Stop/decision lookup, module observations and city overview. Declarations and offline tests do not establish game readiness. Task creation and production construction tools are not enabled.
+The declared MCP surface has ten tools. Three Host-local tools discover/read public guidance and describe capability schemas. The other tools cover context, operation lookup, Task Stop/decision lookup, module observations, city overview and one-building inspection. Building inspection has bounded direct relations and explicit missing facts; selection reads require a native publication in the current scope. Declarations and offline tests do not establish game readiness. Task creation and production construction tools are not enabled.
 
 The operation and history components exercise identity, durable intent, bounded work, recovery and truthful unknown outcomes. The native construction probes are separate development experiments behind an explicit compile symbol; they are not public building tools or a general construction engine.
 
@@ -29,9 +29,9 @@ The latest development source records optional generated members, bounded typed 
 
 These checks do not establish a public construction API, general asset support, dynamic player/AI coexistence or actual service operation. A separate menu-only exit control without the product assemblies also ended with a native access violation. This narrows the observed preconditions; it does not identify the cause or prove that the process-local background policy is unrelated.
 
-A separate default-pipeline preview prerequisite now has explicit phase ordering, bounded native-method inspection and one cleanup path for partial initialization. Its latest game run rejected a registered ToolBase patch before creating the external actor or emitting a preview, then released the owned resources. The preview/hold/cancel sequence has not passed. This experiment neither qualifies modified tool providers nor establishes simultaneous player/AI operation; normal process exit also remains unresolved.
+A separate default-pipeline preview prerequisite has explicit phase ordering, bounded native-method inspection and one cleanup path for partial initialization. A game run identified the registered patch at an input method. The scoped inspection now distinguishes those unused input methods from the actor's actual definition and cancellation entries. A subsequent run rejected nonempty native inputs before creating the actor or emitting a preview, then released the owned resources. The preview/hold/cancel sequence has not passed. Existing hover previews must not be cleared to satisfy this experiment. Modified tool providers, simultaneous player/AI operation and normal process exit remain unqualified.
 
-The development probe can retain a bounded prefix of registered-patch metadata to distinguish the original method, patch owner and patch method. The added output stays below 1 KiB and distinguishes initial inspection from a recheck. It does not invoke patch bodies or factories, change qualification rules or become a condition for cleanup. These diagnostic fields have build and offline validation; their actual game observation is still pending.
+The development probe has captured a bounded prefix of registered-patch metadata in the game, distinguishing the original method, patch owner and patch method. It does not execute patch bodies or factories. A separate diagnostic now records all four input-query counts and at most two primitive member rows per small query when the empty-input prerequisite fails. Larger results are not materialized merely to take a prefix. This diagnostic preserves the original rejection and cleanup path, remains within the existing status budgets, and has build and offline validation; its game observation is still pending.
 
 ### Build and verify
 
@@ -82,15 +82,15 @@ Player installation and updates, the game UI, full city information and actions,
 | `tests/` | 契约、运行时、协议、历史和桌面进程检查 |
 | `tools/` | 契约生成、依赖检查、构建及源码打包 |
 
-当前 MCP 声明九个工具。其中三个 Host 本地工具检索和读取公共指南、描述能力 schema；其余工具提供上下文、操作查询、Task 停止及决定查询、模组观察和城市概览。声明和离线检查不代表游戏可用性验收。生产 Task 创建和施工工具尚未启用。
+当前 MCP 声明十个工具。其中三个 Host 本地工具检索和读取公共指南、描述能力 schema；其余工具提供上下文、操作查询、Task 停止及决定查询、模组观察、城市概览和单建筑查询。建筑查询返回有限直接关系与明确缺项，选择读取须由原生源在当前作用域发布。声明和离线检查不代表游戏可用性验收。生产 Task 创建和施工工具尚未启用。
 
 操作与历史组件覆盖身份、持久意图、有界工作、恢复及真实未知结果。原生施工探针是由显式编译符号隔离的开发实验，不是公开建筑工具或通用施工引擎。
 
 ### 原生实验更新
 
-新增的默认管线预览前提实验明确了阶段排序、有界原生方法检查和部分初始化的统一收尾。最新实机在创建外部工具或输出预览前，因已注册的 ToolBase 补丁而拒绝，随后释放自有资源。预览／保持／取消尚未通过；这个实验不证明已适配修改过的工具 Provider，也不证明玩家与 AI 可同时操作。进程正常退出问题仍未解决。
+默认管线预览前提实验明确了阶段排序、有界原生方法检查和部分初始化的统一收尾。一次实机已把注册补丁定位到具体输入方法，后续源码区分actor未使用的输入入口和实际定义／取消入口。再一轮实机在创建actor或输出预览前因原生输入非空拒绝，随后释放自有资源。预览／保持／取消尚未通过，不能为了满足实验条件清掉已有悬停预览。修改过的工具Provider、玩家与AI同时操作及进程正常退出仍未通过资格验证。
 
-开发探针补充了已注册补丁的有界元数据前缀，用于区分原方法、补丁归属及补丁方法；新增输出小于 1 KiB，并区分初次检查与复检。它不调用补丁或工厂代码，不改变资格规则，也不成为清理的前置条件。这些诊断字段已完成构建和离线核验，实际游戏观测仍待验证。
+开发探针已在实机取得已注册补丁的有界元数据前缀，区分原方法、归属及补丁方法，不执行补丁或工厂代码。另一诊断在空输入前提失败时记录全部四个query计数，并对小query各取最多两行普通值；不会先物化大集合再截前缀。诊断保留原拒绝与收尾路径，仍在既有状态预算内，已完成构建和离线核验，其实际游戏观测仍待验证。
 
 最新开发源码增加实际可选生成成员、有界的类型化拒绝诊断，以及取消预览与付款前重建候选的逐值比对。游戏1.6.4的有限建筑实验完成了正常预览／取消／建造、迁移和原址不同资产新建。实机合格的内部源码与后续仅说明文字的修订分别记录，不能将源码更新自动视为重新通过实机。
 
