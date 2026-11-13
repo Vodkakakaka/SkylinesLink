@@ -1,12 +1,18 @@
 <Project>
   <!-- SDK upgrades must not silently change the locked analyzer/compiler packages.
        These are product build dependencies, independent of the installed SDK. -->
+  <PropertyGroup>
+    <Net10BuildRuntimeVersion>10.0.14</Net10BuildRuntimeVersion>
+    <!-- NativeAOT replaces CoreLib with the compiler's runtime. Both packs must
+         stay on the same patch even when the installed SDK is newer. -->
+    <RuntimeFrameworkVersion Condition="'$(PublishAot)' == 'true' And '$(TargetFrameworkIdentifier)' == '.NETCoreApp' And '$(TargetFrameworkVersion)' == 'v10.0'">$(Net10BuildRuntimeVersion)</RuntimeFrameworkVersion>
+  </PropertyGroup>
   <ItemGroup>
     <KnownILLinkPack Update="Microsoft.NET.ILLink.Tasks">
-      <ILLinkPackVersion Condition="'%(KnownILLinkPack.TargetFramework)' == 'net10.0'">10.0.14</ILLinkPackVersion>
+      <ILLinkPackVersion Condition="'%(KnownILLinkPack.TargetFramework)' == 'net10.0'">$(Net10BuildRuntimeVersion)</ILLinkPackVersion>
     </KnownILLinkPack>
     <KnownILCompilerPack Update="Microsoft.DotNet.ILCompiler">
-      <ILCompilerPackVersion Condition="'%(KnownILCompilerPack.TargetFramework)' == 'net10.0'">10.0.14</ILCompilerPackVersion>
+      <ILCompilerPackVersion Condition="'%(KnownILCompilerPack.TargetFramework)' == 'net10.0'">$(Net10BuildRuntimeVersion)</ILCompilerPackVersion>
     </KnownILCompilerPack>
   </ItemGroup>
 </Project>

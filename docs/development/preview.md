@@ -51,7 +51,7 @@ pnpm test:core
 
 These checks do not require starting the game. `pnpm test` explicitly skips the NativeAOT real-process installation case in its ordinary managed test form. Official Mod compilation additionally requires a legitimate game installation and its configured toolchain. NativeAOT publishing has separate native build prerequisites. Neither is supplied or installed by these commands.
 
-The [Foundation workflow](../../.github/workflows/foundation.yml) runs the game-independent checks on Windows. Its run belongs to the exact commit shown by GitHub; a successful local run is not a remote CI result. [Architecture](../architecture.md) describes component boundaries and the current implementation.
+The [Foundation workflow](../../.github/workflows/foundation.yml) runs game-independent checks on Windows, including NativeAOT publication and process integration on every configured push, pull request and manual run. A successful managed-only check is insufficient. Its run belongs to the exact commit shown by GitHub; a successful local run is not a remote CI result. [Architecture](../architecture.md) describes component boundaries and the current implementation.
 
 ### Downloads and provenance
 
@@ -118,7 +118,7 @@ pnpm test:core
 
 上述检查不启动游戏。普通托管测试形态下，`pnpm test` 会明确跳过 NativeAOT 实进程安装用例。官方 Mod 编译另需合法游戏及已配置的配套工具链，NativeAOT 发布另需原生构建前提；上述命令不会提供或安装这些工具。
 
-[Foundation 工作流](../../.github/workflows/foundation.yml) 在 Windows 执行游戏无关检查，运行结果属于 GitHub 显示的准确提交；本地通过不等于远端 CI 通过。组件边界和当前实现见[架构说明](../architecture.md)。
+[Foundation 工作流](../../.github/workflows/foundation.yml) 在配置的推送、PR 和手动运行时执行 Windows 游戏无关检查，包含 NativeAOT 发布与实际进程集成；仅托管检查成功不足以通过。运行结果属于 GitHub 显示的准确提交，本地通过不等于远端 CI 通过。组件边界和当前实现见[架构说明](../architecture.md)。
 
 ### 下载与来源
 

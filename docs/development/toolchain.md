@@ -19,7 +19,7 @@ Development tools may use these minimum versions or newer stable versions. Depen
 
 Use PowerShell 7 (`pwsh`) for the PowerShell scripts. TypeScript is installed with the project; no global TypeScript installation is needed. Use pnpm with [pnpm-lock.yaml](../../pnpm-lock.yaml), not a second npm lockfile. Exact MCP SDK and other JavaScript dependency versions are in [the Host package](../../src/host/package.json) and the lockfile.
 
-`packageManager`, `.node-version` and `.nvmrc` identify reference versions. [.npmrc](../../.npmrc) allows a newer pnpm without automatically downloading a different package-manager version. [Directory.Build.targets](../../Directory.Build.targets) keeps the net10.0 ILLink/ILCompiler package versions aligned with the reviewed lockfiles independently of SDK patch upgrades. This preserves compatibility analysis without turning an SDK patch into a dependency update. Bundled player runtimes remain separate, byte-verified distribution inputs.
+`packageManager`, `.node-version` and `.nvmrc` identify reference versions. [.npmrc](../../.npmrc) allows a newer pnpm without automatically downloading a different package-manager version. [Directory.Build.targets](../../Directory.Build.targets) keeps the net10.0 ILLink/ILCompiler package versions aligned with the reviewed lockfiles independently of SDK patch upgrades. NativeAOT publication also selects that same runtime-pack patch: mixing a newer CoreLib with the locked compiler fails publication. Ordinary managed builds retain SDK-owned runtime selection. [The build-pack regression tests](../../tools/build/toolchain.test.mjs) resolve the actual SDK pack graph for all three desktop projects. Bundled player runtimes remain separate, byte-verified distribution inputs.
 
 ### Ordinary build and checks
 
@@ -81,7 +81,7 @@ When updating the baseline, update the version files, relevant lockfiles and gen
 
 PowerShell 脚本使用 PowerShell 7（`pwsh`）。TypeScript 随项目依赖安装，无需全局安装。使用 pnpm 及唯一的 [pnpm-lock.yaml](../../pnpm-lock.yaml)，不另建 npm 锁文件。MCP SDK 和其他 JavaScript 依赖的精确版本见 [Host 配置](../../src/host/package.json)及锁文件。
 
-`packageManager`、`.node-version` 和 `.nvmrc` 标识参考版本。[.npmrc](../../.npmrc) 允许更高版本 pnpm，不会因此自动下载切换包管理器。[Directory.Build.targets](../../Directory.Build.targets) 让 net10.0 的 ILLink/ILCompiler 包版本独立于 SDK 补丁，与已审锁文件一致，保留兼容分析，避免 SDK 补丁隐式变成依赖升级。玩家随包运行时仍按实际字节单独核验。
+`packageManager`、`.node-version` 和 `.nvmrc` 标识参考版本。[.npmrc](../../.npmrc) 允许更高版本 pnpm，不会因此自动下载切换包管理器。[Directory.Build.targets](../../Directory.Build.targets) 让 net10.0 的 ILLink/ILCompiler 包版本独立于 SDK 补丁，与已审锁文件一致。NativeAOT 发布同时采用相同补丁的运行库包，避免较新 CoreLib 与锁定编译器混用导致发布失败；普通托管构建仍由 SDK 选择运行库。[构建包回归测试](../../tools/build/toolchain.test.mjs) 检查三个桌面项目经实际 SDK 解析的依赖图。玩家随包运行时仍按实际字节单独核验。
 
 ### 日常构建与检查
 
