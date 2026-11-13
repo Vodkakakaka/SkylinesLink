@@ -202,6 +202,9 @@ namespace SkylinesLink.Mod.Native
 
                 long now = Stopwatch.GetTimestamp();
                 IntakeDeadline(now);
+                // This bounded prefix releases only our still-owned test
+                // selection; it never gates the city's existing safe drain.
+                normalConnection?.ReleaseSelectionBeforeCity(stopIntent.Requested);
                 // This remains first even after an auxiliary failure. The child
                 // alone decides whether its native responsibility is released.
                 AdvanceCity();
@@ -742,6 +745,8 @@ namespace SkylinesLink.Mod.Native
                 JToken? relocationCommit = roundTrip?["relocationCommit"];
                 JToken? rebuild = roundTrip?["rebuild"];
                 JToken? rebuildChoice = roundTrip?["rebuildChoice"];
+                JToken? selectionFixture = connection?["selectionFixture"];
+                int selectionFixtureBytes = selectionFixture == null ? 0 : encoding.GetByteCount(selectionFixture.ToString(Formatting.None));
                 int rebuildChoiceBytes = rebuildChoice == null ? 0 : encoding.GetByteCount(rebuildChoice.ToString(Formatting.None));
                 int relocationCommitBytes = relocationCommit == null ? 0 : encoding.GetByteCount(relocationCommit.ToString(Formatting.None));
                 int rebuildBytes = rebuild == null ? 0 : encoding.GetByteCount(rebuild.ToString(Formatting.None));
@@ -807,6 +812,7 @@ namespace SkylinesLink.Mod.Native
                     + rootReceiptBytes + nodeReceiptBytes + siteBytes + followupBytes + commitBytes + relocationBytes
                     + relocationGenerationBytes + relocationPreviewBytes + relocationCommitBytes + rebuildBytes + rebuildChoiceBytes;
                 if ((geometry?.Count ?? 0) > 256 || sharedBytes > 465409 ||
+                    selectionFixtureBytes > 1024 || selectionFixture != null && selectionFixture.Type != JTokenType.Null && !(selectionFixture is JObject) ||
                     rootReceiptBytes > 4096 || nodeReceiptBytes > 8192 || siteBytes > 2048 || followupBytes > 12288 || commitBytes > 8192 ||
                     relocationCommitBytes > 4096 || relocationCommit != null && relocationCommit.Type != JTokenType.Null && !(relocationCommit is JObject) ||
                     rebuildBytes > 8192 || rebuild != null && rebuild.Type != JTokenType.Null && !(rebuild is JObject) ||

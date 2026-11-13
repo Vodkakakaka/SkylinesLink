@@ -19,6 +19,7 @@ namespace SkylinesLink.Mod.Native
     internal sealed class NormalConnectionProbe
     {
         private const double ServingSeconds = 45;
+        private const double SelectionPublishSeconds = 5;
         private double RequiredServingSeconds => parallelPreview ? 0 : ServingSeconds;
         private readonly object sync = new object();
         private readonly IMod mod;
@@ -33,12 +34,14 @@ namespace SkylinesLink.Mod.Native
         private JObject? configuredMenu, returnedMenu;
         private JObject? objectInputSurvey;
         private CompositionRoundTrip? compositionRoundTrip;
+        private FixtureSelectionQualification? selectionFixture;
         private ParallelPreviewProbe? externalPreview;
         private Action? definitionScopeGuard;
         private bool startAttempted, applyAttempted, applyObservedBusy, servingCompleted, stopping, resourcesReleased;
         private bool staleGuardRejected;
         private long guardChecks, fullUICaptures;
         private long servingStarted;
+        private long selectionStarted;
         private long menuObservationStarted;
         private long nextScopeSampleTimestamp;
         private string? failureCode, exceptionType;
@@ -59,9 +62,9 @@ namespace SkylinesLink.Mod.Native
         }
 
         internal bool ResourcesReleased { get { lock (sync) return resourcesReleased && (compositionRoundTrip?.ResourcesReleased ?? true)
-            && (externalPreview?.ResourcesReleased ?? true); } }
+            && (externalPreview?.ResourcesReleased ?? true) && (selectionFixture?.ResourcesReleased ?? true); } }
         internal bool Finished { get { lock (sync) return resourcesReleased && (compositionRoundTrip?.WorkersFinished ?? true)
-            && (externalPreview?.WorkersFinished ?? true); } }
+            && (externalPreview?.WorkersFinished ?? true) && (selectionFixture?.IntentEnded ?? true); } }
         internal bool SuppressAutomaticReturn { get { lock (sync) return compositionRoundTrip?.NativeStateUncertain == true
             || externalPreview?.NativeStateUncertain == true; } }
         internal bool HoldingCityForPreviewCleanup { get { lock (sync) return externalPreview?.CleanupPending == true; } }
@@ -72,7 +75,7 @@ namespace SkylinesLink.Mod.Native
             && applyObservedBusy && servingCompleted && failureCode == null
             && (!cityOverview || configuredMenu != null && returnedMenu != null && city?.ChecksPassed == true
                 && staleGuardRejected && (parallelPreview ? externalPreview?.Passed == true
-                    : compositionRoundTrip?.Passed == true && compositionRoundTrip.ResourcesReleased));
+                    : compositionRoundTrip?.Passed == true && compositionRoundTrip.ResourcesReleased && selectionFixture?.Passed == true));
 
         internal bool ReadyToLoadCity
         { get { lock (sync) return cityOverview && configuredMenu != null && city == null && !stopping && failureCode == null; } }
@@ -98,7 +101,7 @@ namespace SkylinesLink.Mod.Native
             RequireMainThread();
             lock (sync)
             {
-                if (resourcesReleased) return;
+                if (resourcesReleased) { ReleaseOwnedSelection(); return; }
                 if (hostStopping)
                 {
                     stopping = true;
@@ -233,6 +236,26 @@ namespace SkylinesLink.Mod.Native
                     }
                     compositionRoundTrip.Advance();
                     if (!compositionRoundTrip.Passed) return;
+                    Check(compositionRoundTrip.ResourcesReleased && compositionRoundTrip.WorkersFinished
+                        && !compositionRoundTrip.NativeStateUncertain, "SELECTION_FIXTURE_CONSTRUCTION_NOT_RELEASED");
+                    compositionRoundTrip.ReleaseInputSnapshot();
+                    if (selectionFixture == null)
+                    {
+                        Check(city.CanHoldReadWindow(ServingSeconds + SelectionPublishSeconds + 10),
+                            "NORMAL_CITY_READ_WINDOW_INSUFFICIENT_BEFORE_SELECTION");
+                        var fixture = compositionRoundTrip.RequireOwnedRebuiltBuilding();
+                        selectionFixture = new FixtureSelectionQualification(updateSystem.World, updateSystem,
+                            definitionScopeGuard!, fixture.Root, fixture.Prefab);
+                        selectionStarted = Stopwatch.GetTimestamp();
+                        selectionFixture.Start();
+                    }
+                    selectionFixture.Observe();
+                    Check(selectionFixture.FailureCode == null, selectionFixture.FailureCode ?? "SELECTION_FIXTURE_FAILED");
+                    if (!selectionFixture.Published)
+                    {
+                        Check(ElapsedSeconds(selectionStarted) < SelectionPublishSeconds, "SELECTION_FIXTURE_PUBLICATION_TIMEOUT");
+                        return;
+                    }
                 }
                 Check(city.CanHoldReadWindow(RequiredServingSeconds + 10), "NORMAL_CITY_READ_WINDOW_INSUFFICIENT_AFTER_DEFINITION");
                 active = sample;
@@ -242,10 +265,17 @@ namespace SkylinesLink.Mod.Native
             if (!servingCompleted)
             {
                 Check(city.QualifiedForRead, "NORMAL_CITY_READ_QUALIFICATION_LOST");
-                if (ElapsedSeconds(servingStarted) < RequiredServingSeconds) return;
+                if (ElapsedSeconds(servingStarted) < RequiredServingSeconds)
+                {
+                    selectionFixture?.Observe();
+                    Check(selectionFixture?.FailureCode == null, selectionFixture?.FailureCode ?? "SELECTION_FIXTURE_FAILED");
+                    return;
+                }
                 var sample = Capture();
                 CheckActiveScope(sample, "ready", active!);
                 Check(Generation(sample) == Generation(active!), "NORMAL_CITY_READ_SCOPE_CHANGED");
+                ReleaseOwnedSelection();
+                Check(selectionFixture?.FailureCode == null, selectionFixture?.FailureCode ?? "SELECTION_FIXTURE_FAILED");
                 servingCompleted = true;
                 city.RequestReturnFromRead();
                 return;
@@ -418,6 +448,7 @@ namespace SkylinesLink.Mod.Native
 
         private void AdvanceStop()
         {
+            ReleaseOwnedSelection();
             compositionRoundTrip?.ReleaseInputSnapshot();
             externalPreview?.RequestStop();
             externalPreview?.Advance();
@@ -453,6 +484,36 @@ namespace SkylinesLink.Mod.Native
             }
             catch (CheckFailure error) { RecordFailure(error.Code, error.GetType().Name); }
             catch (Exception error) { RecordFailure("NORMAL_CONNECTION_CLOSE_OBSERVATION_FAILED", error.GetType().Name); }
+        }
+
+        // Runs before AdvanceCity so its own deadline/stop cannot start the
+        // menu transition ahead of this one main-thread selection cleanup.
+        // It never extends the city's window or delays its safe return.
+        internal void ReleaseSelectionBeforeCity(bool hostStopping)
+        {
+            RequireMainThread();
+            lock (sync)
+            {
+                if (selectionFixture == null || selectionFixture.IntentEnded) return;
+                selectionFixture.Observe();
+                bool serviceDone = servingStarted != 0 && ElapsedSeconds(servingStarted) >= RequiredServingSeconds;
+                bool publicationExpired = !selectionFixture.Published && ElapsedSeconds(selectionStarted) >= SelectionPublishSeconds;
+                bool windowEnding = city == null || !city.CanHoldReadWindow(1);
+                if (!hostStopping && !stopping && !serviceDone && !publicationExpired && !windowEnding
+                    && selectionFixture.FailureCode == null) return;
+                if (publicationExpired) RecordFailure("SELECTION_FIXTURE_PUBLICATION_TIMEOUT", null);
+                if (windowEnding && !hostStopping && !stopping && !serviceDone)
+                    RecordFailure("SELECTION_FIXTURE_CITY_WINDOW_ENDING", null);
+                ReleaseOwnedSelection();
+                if (selectionFixture.FailureCode != null) RecordFailure(selectionFixture.FailureCode, null);
+                if (failureCode != null) stopping = true;
+            }
+        }
+
+        private void ReleaseOwnedSelection()
+        {
+            selectionFixture?.ReleaseOwnedSelection();
+            if (selectionFixture?.FailureCode is string code) RecordFailure(code, null);
         }
 
         private JObject Capture()
@@ -494,6 +555,7 @@ namespace SkylinesLink.Mod.Native
                     ["objectDefinition"] = (JToken?)compositionRoundTrip?.DefinitionSnapshot() ?? JValue.CreateNull(),
                     ["objectGeneration"] = (JToken?)compositionRoundTrip?.GenerationSnapshot() ?? JValue.CreateNull(),
                     ["compositionRoundTrip"] = compositionRoundTrip == null ? JValue.CreateNull() : compositionRoundTrip.Snapshot(),
+                    ["selectionFixture"] = selectionFixture == null ? JValue.CreateNull() : selectionFixture.Snapshot(),
                     ["afterStop"] = ProjectSample(afterStop),
                     ["failureCode"] = failureCode == null ? JValue.CreateNull() : new JValue(failureCode),
                     ["exceptionType"] = exceptionType == null ? JValue.CreateNull() : new JValue(exceptionType)

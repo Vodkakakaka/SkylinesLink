@@ -1,6 +1,7 @@
 #if SKYLINESLINK_INTEGRATION_PROBE
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Colossal.Core;
 using Game.Common;
 using Game.Tools;
@@ -23,6 +24,7 @@ namespace SkylinesLink.Mod.Native
         private bool attempted, postToolClosureConfirmed, referencesDetached, fundsUnchanged;
         private bool destroyEntered, destroyReturned, groupAbsent, slotsReleased, protectionConfirmed;
         private string? failureCode;
+        private JObject? defaultQueryVisibility;
 
         internal bool NativeWorkMayReadSource => tool.NativeWorkMayReadSource || subObjects.NativeWorkMayReadSource;
         internal bool StructuralStateUnknown => tool.EffectsStarted && !groupAbsent;
@@ -127,6 +129,7 @@ namespace SkylinesLink.Mod.Native
                 Require(entities.HasComponent<Deleted>(target), "PREVIEW_CANCEL_GROUP_MARKERS_INCOMPLETE");
                 archetypes.Read(entities.GetChunk(target).Archetype, 272);
             }
+            ObserveDefaultQueryVisibility(source, requireScope);
             using var group = new NativeArray<Entity>(targets, Allocator.Temp);
             requireScope();
             Require(PreviewCancelToolPatchProbe.Observe().Qualified, "PREVIEW_CANCEL_GROUP_DESTROY_PATCH_UNQUALIFIED");
@@ -138,6 +141,78 @@ namespace SkylinesLink.Mod.Native
                 Require(!entities.Exists(target), "PREVIEW_CANCEL_GROUP_ENTITY_RETAINED");
             requireScope();
             groupAbsent = true;
+        }
+
+        private void ObserveDefaultQueryVisibility(World source, Action requireScope)
+        {
+            try
+            {
+                requireScope();
+                Require(targets.Length <= 8 && NativeConstructionBuild.Game(typeof(PrepareCleanUpSystem).Module)
+                    && typeof(PrepareCleanUpSystem).Module.ModuleVersionId.ToString("N") == "46198354d4f94d23bf327e3c085d8b92"
+                    && NativeConstructionBuild.Entities(typeof(EntityQuery).Module), "PREVIEW_CANCEL_QUERY_METADATA_UNQUALIFIED");
+                var tool = source.GetExistingSystemManaged<DefaultToolSystem>();
+                var clear = source.GetExistingSystemManaged<ToolClearSystem>();
+                var prepare = source.GetExistingSystemManaged<PrepareCleanUpSystem>();
+                Require(tool != null && clear != null && prepare != null && tool.GetType() == typeof(DefaultToolSystem)
+                    && clear.GetType() == typeof(ToolClearSystem) && prepare.GetType() == typeof(PrepareCleanUpSystem)
+                    && ReferenceEquals(tool.World, source)
+                    && ReferenceEquals(clear.World, source) && ReferenceEquals(prepare.World, source),
+                    "PREVIEW_CANCEL_DEFAULT_QUERY_OWNER_UNAVAILABLE");
+                // Borrow only these exact native fields. Never filter, dispose,
+                // update their systems or enumerate unrelated world members.
+                var queries = new[] {
+                    BorrowDefaultQuery(typeof(ToolBaseSystem), "m_ErrorQuery", tool!),
+                    BorrowDefaultQuery(typeof(ToolClearSystem), "m_ClearQuery", clear!),
+                    BorrowDefaultQuery(typeof(PrepareCleanUpSystem), "m_DeletedQuery", prepare!),
+                    BorrowDefaultQuery(typeof(PrepareCleanUpSystem), "m_UpdatedQuery", prepare!)
+                };
+                var filters = new JArray();
+                foreach (EntityQuery query in queries) filters.Add(query.HasFilter());
+                var rows = new JArray();
+                var entities = source.EntityManager;
+                foreach (Entity target in targets)
+                {
+                    requireScope();
+                    Require(entities.Exists(target), "PREVIEW_CANCEL_QUERY_MEMBER_UNAVAILABLE");
+                    var matches = new JArray();
+                    var ignoringFilter = new JArray();
+                    foreach (EntityQuery query in queries)
+                    {
+                        matches.Add(query.Matches(target));
+                        ignoringFilter.Add(query.MatchesIgnoreFilter(target));
+                    }
+                    rows.Add(new JObject {
+                        ["entity"] = new JArray(target.Index, target.Version),
+                        ["disabled"] = entities.HasComponent<Disabled>(target),
+                        ["deleted"] = entities.HasComponent<Deleted>(target),
+                        ["temp"] = entities.HasComponent<Temp>(target), ["error"] = entities.HasComponent<Error>(target),
+                        ["matches"] = matches, ["matchesIgnoringFilter"] = ignoringFilter
+                    });
+                }
+                requireScope();
+                // At most eight fixed primitive rows: <=1648 compact UTF-8
+                // bytes at Int32 extremes, inside the existing followups cap.
+                defaultQueryVisibility = new JObject {
+                    ["kind"] = "observed", ["frame"] = UnityEngine.Time.frameCount,
+                    ["queries"] = new JArray("defaultToolError", "toolClearTemp", "prepareDeletedOrEvent", "prepareUpdatedMarkers"),
+                    ["hasFilter"] = filters, ["members"] = rows
+                };
+            }
+            catch (Exception)
+            {
+                // Observation failure cannot interrupt the original guarded
+                // destruction or turn missing evidence into a match result.
+                defaultQueryVisibility = new JObject { ["kind"] = "unavailable", ["reason"] = "QUERY_OBSERVATION_FAILED" };
+            }
+        }
+
+        private static EntityQuery BorrowDefaultQuery(Type declaringType, string name, ComponentSystemBase owner)
+        {
+            var field = declaringType.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+            Require(field != null && field.DeclaringType == declaringType && field.FieldType == typeof(EntityQuery)
+                && field.Module == typeof(PrepareCleanUpSystem).Module, "PREVIEW_CANCEL_DEFAULT_QUERY_ABI_CHANGED");
+            return (EntityQuery)field!.GetValue(owner)!;
         }
 
         private static bool Empty<T>(EntityManager entities, Entity entity) where T : unmanaged, IBufferElementData =>
@@ -153,6 +228,7 @@ namespace SkylinesLink.Mod.Native
                 ["subNetInsideGroupUntilDestroy"] = destroyEntered, ["destroyEntered"] = destroyEntered,
                 ["destroyReturned"] = destroyReturned, ["groupAbsent"] = groupAbsent, ["slotsReleased"] = slotsReleased,
                 ["archetypes"] = archetypes.Snapshot(), ["fundsUnchanged"] = fundsUnchanged,
+                ["defaultQueryVisibility"] = (JToken?)defaultQueryVisibility?.DeepClone() ?? JValue.CreateNull(),
                 ["resourcesReleased"] = ResourcesReleased, ["nativeWorkMayReadSource"] = NativeWorkMayReadSource,
                 ["structuralStateUnknown"] = StructuralStateUnknown, ["failureCode"] = failureCode
             };

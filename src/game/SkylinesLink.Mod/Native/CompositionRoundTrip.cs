@@ -443,6 +443,12 @@ namespace SkylinesLink.Mod.Native
             publish.Generation?.InitializationInputs?.ReleaseSnapshots();
             rebuildPreparation.Generation?.InitializationInputs?.ReleaseSnapshots();
         }
+        internal (Entity Root, Entity Prefab) RequireOwnedRebuiltBuilding()
+        {
+            requireScope();
+            Require(Passed && ResourcesReleased && WorkersFinished && !NativeStateUncertain, "SELECTION_FIXTURE_CONSTRUCTION_NOT_RELEASED");
+            return (rebuild.Generation!.Commit!.RequirePublishedBuildingAndNode().Root, rebuild.RootPrefab);
+        }
         internal JObject? DefinitionSnapshot() => publish.Definition?.Snapshot();
         internal JObject? GenerationSnapshot() => publish.Generation?.Snapshot();
         internal JObject Snapshot()
