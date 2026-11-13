@@ -48,6 +48,25 @@ namespace SkylinesLink.RuntimeProbe
                 }
                 finally { binding.Dispose(); }
                 binding.Dispose(); fixture.CheckReleased(); checks++;
+                string releasedStage = Program.Stage;
+                try
+                {
+                    using (File.Open(fixture.ManifestPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        bool rejected = false;
+                        try { fixture.CheckReleased(); }
+                        catch (IOException error)
+                        {
+                            rejected = true;
+                            Check(error.HResult == unchecked((int)0x80070020) && Program.Stage == releasedStage +
+                                "; pinned-file=releases/" + Fixture.Release + "/core-manifest.json",
+                                "release failure keeps the original sharing HRESULT and only the known relative file role");
+                        }
+                        Check(rejected, "release diagnostics do not weaken the single exclusive-open check");
+                    }
+                }
+                finally { Program.Stage = releasedStage; }
+                fixture.CheckReleased();
                 var wrong = fixture.Components.ToArray();
                 wrong[0] = new LoadedManagedComponent(wrong[0].Name, Guid.NewGuid(), wrong[0].AssemblyVersion, wrong[0].InformationalVersion);
                 Reject(() => InstalledCoreBinding.Open(fixture.EnvironmentId, wrong)); fixture.CheckReleased();
@@ -168,7 +187,15 @@ namespace SkylinesLink.RuntimeProbe
             }
             internal void CheckReleased()
             {
-                foreach (string path in PinnedFiles.Where(File.Exists)) using (File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) { }
+                foreach (string path in PinnedFiles.Where(File.Exists))
+                {
+                    try { using (File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) { } }
+                    catch (IOException)
+                    {
+                        Program.Stage += "; pinned-file=" + path.Substring(root.Length + 1).Replace(Path.DirectorySeparatorChar, '/');
+                        throw;
+                    }
+                }
             }
             private static string Hash(string path)
             {

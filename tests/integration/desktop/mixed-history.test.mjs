@@ -13,15 +13,22 @@ const runtime = join(root, 'artifacts/dotnet/bin/SkylinesLink.RuntimeProbe/debug
 const processProbe = join(root, 'artifacts/dotnet/bin/SkylinesLink.ProcessProbe/debug/SkylinesLink.ProcessProbe.exe');
 const digest = bytes => createHash('sha256').update(bytes).digest();
 
-// Directly owned bounded children only. A forced timeout is a failure, never a normal close.
+// The reader enforces its own 5s protocol deadline after CLR startup. The
+// parent also owns process setup and pipe drain; it must not kill at that same 5s.
+// Writer fixtures perform multiple separately bounded durable appends, rather
+// than one read request. Their complete setup has a separate finite budget.
+// A forced parent timeout remains a failure, never a normal close.
 async function owned(executable, args, input, { maximum = 32768, overlapped = false, secret = '' } = {}) {
+  const deadlineMilliseconds = executable === runtime ? 30000 : 10000;
+  const startedAt = performance.now();
   const pipe = overlapped ? 'overlapped' : 'pipe';
   const child = spawn(executable, args, { windowsHide: true, stdio: [pipe, pipe, 'pipe'] });
   let failure, exited = false, inputBytes = 0, outputBytes = 0, errorBytes = 0;
   const chunks = [], streams = [child.stdin, child.stdout, child.stderr];
   const role = executable === runtime ? 'runtime' : executable === launcher ? 'launcher' : executable === processProbe ? 'processProbe' : 'unknown';
   const mode = ['--mixed-history-probe', '--read-history', '--read-history-v2', '--read-history-v3', 'task-rules'].includes(args[0]) ? args[0] : 'unknown';
-  const diagnostic = () => JSON.stringify({ role, mode, exitObserved: exited,
+  const diagnostic = () => JSON.stringify({ role, mode, deadlineMilliseconds,
+    elapsedMilliseconds: Math.round(performance.now() - startedAt), exitObserved: exited,
     stdinClosed: child.stdin.closed, stdinEnded: child.stdin.writableEnded, stdinFinished: child.stdin.writableFinished,
     stdoutClosed: child.stdout.closed, stdoutEnded: child.stdout.readableEnded,
     stderrClosed: child.stderr.closed, stderrEnded: child.stderr.readableEnded,
@@ -42,7 +49,7 @@ async function owned(executable, args, input, { maximum = 32768, overlapped = fa
   child.stderr.on('data', chunk => { errorBytes += chunk.length; if (errorBytes > 256) fail('Mixed history diagnostics exceeded their bound.'); });
   const exit = new Promise(done => child.once('close', (code, signal) => done({ code, signal })));
   child.once('exit', () => { exited = true; if (!child.stdin.writableEnded) child.stdin.end(); });
-  const timer = setTimeout(() => fail('Mixed history owned deadline exceeded.'), 5000);
+  const timer = setTimeout(() => fail('Mixed history owned deadline exceeded.'), deadlineMilliseconds);
   const payload = typeof input === 'string' ? input : JSON.stringify(input);
   inputBytes = typeof payload === 'string' ? Buffer.byteLength(payload) : 0;
   child.stdin.end(payload);

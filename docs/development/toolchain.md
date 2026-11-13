@@ -63,7 +63,7 @@ pnpm test:desktop:aot
 
 The [desktop publication script](../../tools/build/publish-desktop.ps1) uses locked restores and writes local Launcher/Setup executables and notices under `artifacts/nativeaot`. NativeAOT uses the separate `packages.nativeaot.lock.json` files. It does not upload a release; ordinary managed-build checks do not establish AOT compatibility or complete package acceptance.
 
-`pnpm test:core` checks the actual MSBuild-resolved reference, runtime, compiler and linker graph for both desktop entrypoints against the independent [runtime-source record](../../tools/release/runtime-inputs.json). The AOT verifier includes the mixed-history readers. The Foundation workflow can run these native builds and tests with the manual `verify_native_aot` input; it uploads only `validation.json`. Its report records elevation, and elevated hosted CI does not establish ordinary-user or clean-machine qualification. NativeAOT linking and execution still require that validation to pass.
+`pnpm test:core` checks the actual MSBuild-resolved reference, runtime, compiler and linker graph for both desktop entrypoints against the independent [runtime-source record](../../tools/release/runtime-inputs.json). The AOT verifier includes the mixed-history readers. The Foundation workflow runs these native builds and tests on every configured push, pull request and manual run; its AOT artifact contains only `validation.json`. Its report records elevation, and elevated hosted CI does not establish ordinary-user or clean-machine qualification. NativeAOT linking and execution still require that validation to pass.
 
 When updating the baseline, update the version files, relevant lockfiles and generated outputs together, then run the affected checks. Keep proprietary game dependencies out of the repository and release payloads. See [architecture](../architecture.md) and [licensing](../governance/licensing.md) for component and distribution boundaries.
 
@@ -130,7 +130,7 @@ pnpm test:desktop:aot
 
 [桌面发布脚本](../../tools/build/publish-desktop.ps1) 使用锁定还原，将本地 Launcher/Setup 可执行文件及 notices 写入 `artifacts/nativeaot`。NativeAOT 使用独立的 `packages.nativeaot.lock.json`；该命令不会上传发行版，普通托管构建检查也不能替代 AOT 及完整安装包验收。
 
-`pnpm test:core` 将两个桌面入口实际经 MSBuild 解析的 reference、运行库、编译器和链接器依赖图与独立的[运行库来源记录](../../tools/release/runtime-inputs.json)核对。AOT verifier 包含 mixed-history 读取闭包。Foundation 工作流可通过手动 `verify_native_aot` 输入构建并验证，只上传 `validation.json`；报告保留 elevation，elevated CI 不构成普通用户或干净机器资格。NativeAOT 链接与运行仍须由该验证实际通过。
+`pnpm test:core` 将两个桌面入口实际经 MSBuild 解析的 reference、运行库、编译器和链接器依赖图与独立的[运行库来源记录](../../tools/release/runtime-inputs.json)核对。AOT verifier 包含 mixed-history 读取闭包。Foundation 工作流在配置的推送、PR 和手动运行时均构建并验证；AOT 附件只包含 `validation.json`；报告保留 elevation，elevated CI 不构成普通用户或干净机器资格。NativeAOT 链接与运行仍须由该验证实际通过。
 
 更新基线时，同步版本配置、相关锁文件与生成文件，再运行受影响的检查。专有游戏依赖不得进入仓库或发行包；组件和分发边界见[架构](../architecture.md)与[许可说明](../governance/licensing.md)。
 

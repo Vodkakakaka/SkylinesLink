@@ -201,6 +201,8 @@ namespace SkylinesLink.RuntimeProbe
 
         private static async Task PublishedInstallation(bool explicitProfile, bool stopBeforeRelease)
         {
+            Program.Stage = "automatic preparation publication: explicitProfile=" + explicitProfile +
+                "; stopBeforeRelease=" + stopBeforeRelease;
             using (var fixture = new InstalledCoreBindingTests.Fixture(complete: true))
             {
                 SetupInitializationTests.PrepareChild(fixture, "release");
