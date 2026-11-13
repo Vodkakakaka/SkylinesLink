@@ -33,7 +33,7 @@ SOURCE.txt 明示这是开发候选而非可用初版，当前声明工具及验
 `tools/build/publish-desktop.ps1` 在每个实际 `dotnet publish` 成功后调用 `write-nativeaot-notices.ps1`。任一步不匹配即失败；它不修改锁文件、不下载运行时、不改变 Launcher 的工程依赖。
 
 - 核对应工程的 NativeAOT lock 与本次 `project.assets.json` 中两个 ILCompiler 包及 ILLink 的版本和 signed-package content hash。
-- 只对实际 `.ilc.rsp` 列出的托管输入读取 BCL PE/ECMA-335 元数据，检查其程序集身份及 AssemblyRef，拒绝 Game、SkylinesLink.Contracts/Application/Infrastructure 和 Newtonsoft.Json；不加载程序集、不遍历目录，只报告文件名或计数。managed `.deps.json` 仅证明对应 managed 边界，AOT 的 PE/无 CLR header 检查不能替代这项实际编译输入检查。
+- 对实际 `.ilc.rsp` 的全部 `-r` 输入以 PE [HasMetadata](https://learn.microsoft.com/en-us/dotnet/api/system.reflection.portableexecutable.pereader.hasmetadata) / [CLR header](https://learn.microsoft.com/en-us/dotnet/api/system.reflection.portableexecutable.peheaders.corheader) 区分：有元数据的输入必须能读取 AssemblyDef/AssemblyRef，拒绝 Game、SkylinesLink.Contracts/Application/Infrastructure 和 Newtonsoft.Json；损坏的 PE/元数据直接失败。无元数据输入只接受两个已审 runtime pack 的准确 `runtimes/win-x64/native/*.dll` 条目，且必须先通过下述来源、归档及逐字节核对；未知原生 DLL 不因没有元数据而跳过。分别报告实际 managed/native `-r` 计数，不加载程序集、不遍历目录，只报告文件名或计数。managed `.deps.json` 仅证明对应 managed 边界，AOT 的 PE/无 CLR header 检查不能替代这项实际编译输入检查。
 - 从本次 `.ilc.rsp` / `link.rsp` 取得实际托管框架及静态库输入，包括 `Microsoft.NETCore.App.Runtime.win-x64` 的 CoreLib 和 `Microsoft.NETCore.App.Runtime.NativeAOT.win-x64` 的 AOT 输入；这些隐式 SDK runtime pack 不在 `packages.nativeaot.lock.json` 中，因此另按实际输入和固定归档检查。
 - 核五个本机 NuGet 归档的 SHA-512、来源与 content hash；再逐文件比对本次实际引用的运行时框架/静态库与对应 runtime pack 归档条目。该检查不重建编译器/SDK 的完整供应链审计。
 - 核原 LICENSE 与 THIRD-PARTY-NOTICES 的归档条目、固定文件大小和 SHA-256，向当前 `artifacts/nativeaot/launcher` / `setup` 输出 `DOTNET.LICENSE.txt`、`DOTNET.THIRD-PARTY-NOTICES.txt` 与不含本机路径的 `DOTNET.SOURCES.txt`。

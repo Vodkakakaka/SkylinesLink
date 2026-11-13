@@ -35,7 +35,7 @@ $runtimeFiles = [Collections.Generic.Dictionary[string,object]]::new([StringComp
 $nugetRoot = $null
 $managedCount = 0
 $nativeCount = 0
-$managedReferenceCount = 0
+$compilerReferences = [Collections.Generic.List[string]]::new()
 foreach ($kind in @('managed', 'native')) {
     $rsp = if ($kind -eq 'managed') { "$project.ilc.rsp" } else { 'link.rsp' }
     $rspPath = Join-Path $obj "release_win-x64/native/$rsp"
@@ -47,36 +47,14 @@ foreach ($kind in @('managed', 'native')) {
             $candidate = $candidate.Substring(3)
         }
         $candidate = $candidate.Trim('"')
-        if ($kind -eq 'managed') {
-            $managedReferenceCount++
-            $referenceName = [IO.Path]::GetFileName($candidate)
-            # Reuse the Core inspector's BCL metadata approach on only the
-            # actual compiler inputs. Never load assemblies or scan directories.
-            $reference = $null
-            $referenceStream = $null
-            $forbidden = $false
-            try {
-                $referenceStream = [IO.File]::OpenRead($candidate)
-                $reference = [System.Reflection.PortableExecutable.PEReader]::new($referenceStream)
-                $metadata = [System.Reflection.Metadata.PEReaderExtensions]::GetMetadataReader($reference)
-                $names = @($metadata.GetString($metadata.GetAssemblyDefinition().Name))
-                $names += @($metadata.AssemblyReferences | ForEach-Object { $metadata.GetString($metadata.GetAssemblyReference($_).Name) })
-                $forbidden = @($names | Where-Object { $_ -match '^(Game|SkylinesLink\.(Contracts|Application|Infrastructure)|Newtonsoft\.Json)$' }).Count -ne 0
-            }
-            catch { throw "NativeAOT managed reference metadata unavailable: $referenceName" }
-            finally {
-                if ($null -ne $reference) { $reference.Dispose() }
-                elseif ($null -ne $referenceStream) { $referenceStream.Dispose() }
-            }
-            if ($forbidden) { throw "NativeAOT desktop has a forbidden managed reference in: $referenceName" }
-        }
+        if ($kind -eq 'managed') { $compilerReferences.Add($candidate) }
         if ($candidate -notmatch '^(?<root>.+)[\\/](?<id>microsoft\.netcore\.app\.runtime(?:\.nativeaot)?\.win-x64)[\\/](?<version>[^\\/]+)[\\/](?<entry>.+)$') { continue }
         if ($Matches.version -ne $expected.version) { throw 'Actual NativeAOT runtime version changed.' }
         $actualRoot = [IO.Path]::GetFullPath($Matches.root)
         if ($null -ne $nugetRoot -and !$actualRoot.Equals($nugetRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'NativeAOT uses multiple package roots.' }
         $nugetRoot = $actualRoot
         $entry = $Matches.entry.Replace('\', '/').Replace('//', '/')
-        $runtimeFiles[[IO.Path]::GetFullPath($candidate)] = @{ PackageId=$Matches.id; Entry=$entry }
+        $runtimeFiles[[IO.Path]::GetFullPath($candidate)] = @{ PackageId=$Matches.id; Entry=$entry; Verified=$false }
         if ($kind -eq 'managed') { $managedCount++ } else { $nativeCount++ }
     }
 }
@@ -102,6 +80,7 @@ foreach ($package in $runtimePackages) {
         $stream = $entry.Open()
         try { $hash = [Convert]::ToHexStringLower([Security.Cryptography.SHA256]::HashData($stream)) } finally { $stream.Dispose() }
         if ((Get-FileHash -LiteralPath $file.Key -Algorithm SHA256).Hash.ToLowerInvariant() -cne $hash) { throw 'An actual NativeAOT runtime input differs from its verified archive.' }
+        $file.Value.Verified = $true
     }
     if ($package.id -ne $expected.runtimePack.id) { continue }
     foreach ($notice in @(
@@ -121,6 +100,54 @@ foreach ($package in $runtimePackages) {
   finally { $zip.Dispose() }
 }
 
+# ILC -r inputs can include native DLLs. Establish runtime archive/source/byte
+# identity above before accepting a native input; never downgrade bad metadata.
+$managedReferenceCount = 0
+$nativeReferenceCount = 0
+foreach ($candidate in $compilerReferences) {
+    $referenceName = [IO.Path]::GetFileName($candidate)
+    $reference = $null
+    $referenceStream = $null
+    $forbidden = $false
+    $hasMetadata = $false
+    try {
+        $referenceStream = [IO.File]::OpenRead($candidate)
+        $reference = [System.Reflection.PortableExecutable.PEReader]::new($referenceStream)
+        $headers = $reference.PEHeaders
+        if ($null -eq $headers.PEHeader) { throw 'Not a PE image.' }
+        $hasMetadata = $reference.HasMetadata
+        if ($hasMetadata) {
+            if ($null -eq $headers.CorHeader) { throw 'Metadata has no CLR header.' }
+            $metadata = [System.Reflection.Metadata.PEReaderExtensions]::GetMetadataReader($reference)
+            if (!$metadata.IsAssembly) { throw 'Compiler reference has no assembly definition.' }
+            $names = @($metadata.GetString($metadata.GetAssemblyDefinition().Name))
+            $names += @($metadata.AssemblyReferences | ForEach-Object { $metadata.GetString($metadata.GetAssemblyReference($_).Name) })
+            $forbidden = @($names | Where-Object { $_ -match '^(Game|SkylinesLink\.(Contracts|Application|Infrastructure)|Newtonsoft\.Json)$' }).Count -ne 0
+        }
+        elseif ($null -ne $headers.CorHeader -or $headers.CoffHeader.Machine -ne [System.Reflection.PortableExecutable.Machine]::Amd64 -or $headers.PEHeader.Magic -ne [System.Reflection.PortableExecutable.PEMagic]::PE32Plus) {
+            throw 'Not a native win-x64 PE image.'
+        }
+    }
+    catch { throw "NativeAOT compiler reference PE/metadata unavailable: $referenceName" }
+    finally {
+        if ($null -ne $reference) { $reference.Dispose() }
+        elseif ($null -ne $referenceStream) { $referenceStream.Dispose() }
+    }
+    if ($hasMetadata) {
+        if ($forbidden) { throw "NativeAOT desktop has a forbidden managed reference in: $referenceName" }
+        $managedReferenceCount++
+    }
+    else {
+        $path = [IO.Path]::GetFullPath($candidate)
+        if (!$runtimeFiles.ContainsKey($path)) { throw "NativeAOT native compiler reference is not a verified runtime native entry: $referenceName" }
+        $bound = $runtimeFiles[$path]
+        if (!$bound.Verified -or $runtimePackages.id -inotcontains $bound.PackageId -or $bound.Entry -cnotmatch '^runtimes/win-x64/native/[^/]+\.dll$') {
+            throw "NativeAOT native compiler reference is not a verified runtime native entry: $referenceName"
+        }
+        $nativeReferenceCount++
+    }
+}
+
 $sources = @"
 .NET NativeAOT runtime $($expected.version), win-x64
 Source: $($expected.repository)/tree/$($expected.commit)/src/runtime
@@ -133,11 +160,11 @@ Framework whole archive SHA-512: $($expected.frameworkPack.archiveSha512)
 The adjacent LICENSE and THIRD-PARTY-NOTICES are complete original runtime-package texts.
 The notice collection is conservatively preserved; it is not a claim that every listed component is linked.
 Compiler tools and the .NET SDK are build inputs and are not included in this output.
-Actual compiler managed-reference inputs: $managedReferenceCount; forbidden desktop dependencies: 0.
+Actual compiler -r inputs: $managedReferenceCount managed; $nativeReferenceCount verified runtime native; forbidden desktop dependencies: 0.
 Signature verification was recorded on $($expected.verification.date) for the pinned archive bytes.
 This build checks those bytes and the actual runtime references; it does not perform fresh online signature validation.
 This record covers the .NET runtime notice inputs, not a complete product or marketplace license review.
 "@
 [IO.File]::WriteAllText((Join-Path $output 'DOTNET.SOURCES.txt'), $sources.Replace("`r`n", "`n") + "`n", [Text.UTF8Encoding]::new($false))
-Write-Host "NativeAOT notices: $ProjectName; $managedCount managed references, $nativeCount native inputs verified."
-Write-Host "NativeAOT desktop reference boundary: $ProjectName; $managedReferenceCount compiler inputs; forbidden references: 0."
+Write-Host "NativeAOT notices: $ProjectName; $managedCount runtime compiler inputs, $nativeCount runtime linker inputs verified."
+Write-Host "NativeAOT desktop reference boundary: $ProjectName; $managedReferenceCount managed -r inputs, $nativeReferenceCount verified native -r inputs; forbidden references: 0."
