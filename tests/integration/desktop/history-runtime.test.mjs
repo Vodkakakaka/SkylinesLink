@@ -64,26 +64,38 @@ test('真实Runtime journal→publisher→SLHC→Native：正常关闭持久取�
     if (line.includes(token) || queue.length >= 16) { lineFailure ??= new Error('Runtime control output failed its bound.'); runtime.abort(); return; }
     if (waiting) { const consume = waiting; waiting = undefined; consume(line); } else queue.push(line);
   });
-  const next = async () => {
+  const next = async (deadlineMilliseconds = 4000, phase = 'response') => {
+    const startedAt = performance.now();
     let timer;
     try {
       const line = queue.length ? queue.shift() : await new Promise((resolveLine, reject) => {
         waiting = resolveLine;
-        timer = setTimeout(() => { waiting = undefined; reject(new Error('Runtime control response deadline exceeded.')); }, 4000);
+        timer = setTimeout(() => {
+          waiting = undefined;
+          reject(new Error(`Runtime control ${phase} deadline exceeded. ${JSON.stringify({
+            deadlineMilliseconds, elapsedMilliseconds: Math.round(performance.now() - startedAt),
+            exitObserved: runtime.child.exitCode !== null || runtime.child.signalCode !== null,
+            stdinFinished: runtime.child.stdin.writableFinished, stdoutEnded: runtime.child.stdout.readableEnded,
+          })}`));
+        }, deadlineMilliseconds);
       });
       if (lineFailure) throw lineFailure;
       return JSON.parse(line);
     } finally { clearTimeout(timer); }
   };
-  const command = async value => {
+  const command = async (value, deadlineMilliseconds, phase) => {
     const text = typeof value === 'string' ? value : JSON.stringify(value);
     await new Promise((resolveWrite, reject) => runtime.child.stdin.write(`${text}\n`, error => error ? reject(error) : resolveWrite()));
-    return next();
+    return next(deadlineMilliseconds, phase);
   };
   try {
     await assert.rejects(lstat(connection), { code: 'ENOENT' }, 'root fixture must not pre-create authorization or connection');
     const ready = await command({ privateDirectory: connection, environmentId: environment, profileId: 'History.Reader',
-      internalToken: token, externalHttpToken: null, coreManifestSha256: 'a'.repeat(64), initialize: true, operationProbe: true, deadlineMilliseconds: 3000 });
+      internalToken: token, externalHttpToken: null, coreManifestSha256: 'a'.repeat(64), initialize: true, operationProbe: true, deadlineMilliseconds: 3000 },
+    // Initial ready includes CLR startup and durable authorization/journal setup.
+    // Later commands retain their 4s response budget; the fixture's own 3s
+    // service deadline and the 15s owned lifetime remain unchanged.
+    10000, 'initialization');
     assert.equal(ready.kind, 'ready');
     const context = await command({ command: 'context' }); assert.equal(context.kind, 'write-context');
     const key = { writeContextId: context.writeContextId, requestId: '历史真实出版/😀' };
