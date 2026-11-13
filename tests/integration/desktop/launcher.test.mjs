@@ -149,8 +149,9 @@ for (const modern of [false, true]) test(`官方SDK ${modern ? '2026' : '2025'} 
     // There is no separate guide file, service or client-specific prompt in this fixture.
     for (const language of ['en', 'zh-CN']) {
       const search = await client.callTool({ name: 'skylines_guidance_search', arguments: { language } });
-      assert.notEqual(search.isError, true); assert.equal(search.structuredContent.results.length, 4);
-      assert(search.structuredContent.results.some(guide => guide.guideId === 'module-runtime'));
+      assert.notEqual(search.isError, true);
+      assert.deepEqual(search.structuredContent.results.map(guide => guide.guideId).sort(),
+        ['building-inspection', 'getting-started', 'module-runtime', 'operation-status', 'planning']);
       const guide = await client.callTool({ name: 'skylines_guidance_get', arguments: { guideId: search.structuredContent.results[0].guideId, language } });
       assert.notEqual(guide.isError, true); assert.equal(guide.structuredContent.sourceKind, 'productGuide');
       assert.equal(guide.structuredContent.language, language);
