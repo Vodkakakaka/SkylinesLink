@@ -107,7 +107,8 @@ async function requireGone(pid) {
 test('进程创建时已有Job归属，且不继承额外可继承句柄', () => {
   const probe = join(root, 'artifacts/dotnet/bin/SkylinesLink.ProcessProbe/debug/SkylinesLink.ProcessProbe.exe');
   const observed = JSON.parse(execFileSync(probe, [], { windowsHide: true, encoding: 'utf8' }));
-  assert.deepEqual(observed, { inJob: true, inheritedUnrelatedHandle: false });
+  assert.deepEqual(observed, { inJob: true, inheritedUnrelatedHandle: false,
+    inheritedHandlePositiveControl: true, signaledCollisionRejected: true });
 });
 
 test('Managed Deployment实际运行同源Task固定向量且不引入Application或Newtonsoft', { timeout: 8000 }, async () => {
