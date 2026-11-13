@@ -7,20 +7,28 @@ import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '../../..');
-const launcher = process.env.SKYLINESLINK_TEST_LAUNCHER ?? join(root, 'artifacts/dotnet/bin/SkylinesLink.Launcher/debug/SkylinesLink.Launcher.exe');
+const managedLauncher = join(root, 'artifacts/dotnet/bin/SkylinesLink.Launcher/debug/SkylinesLink.Launcher.exe');
+const launcher = process.env.SKYLINESLINK_TEST_LAUNCHER ?? managedLauncher;
 const runtime = join(root, 'artifacts/dotnet/bin/SkylinesLink.RuntimeProbe/debug/SkylinesLink.RuntimeProbe.exe');
 const processProbe = join(root, 'artifacts/dotnet/bin/SkylinesLink.ProcessProbe/debug/SkylinesLink.ProcessProbe.exe');
 const digest = bytes => createHash('sha256').update(bytes).digest();
 
-// Directly owned bounded children only. A forced timeout is a failure, never a normal close.
+// The reader enforces its own 5s protocol deadline after CLR startup. The
+// parent also owns startup and pipe drain; it must not kill at that same 5s.
+// Writer fixtures perform multiple separately bounded durable appends, rather
+// than one read request. Their complete setup has a separate finite budget.
+// A forced parent timeout remains a failure, never a normal close.
 async function owned(executable, args, input, { maximum = 32768, overlapped = false, secret = '' } = {}) {
+  const deadlineMilliseconds = executable === runtime ? 30000 : 10000;
+  const startedAt = performance.now();
   const pipe = overlapped ? 'overlapped' : 'pipe';
   const child = spawn(executable, args, { windowsHide: true, stdio: [pipe, pipe, 'pipe'] });
   let failure, exited = false, inputBytes = 0, outputBytes = 0, errorBytes = 0;
   const chunks = [], streams = [child.stdin, child.stdout, child.stderr];
   const role = executable === runtime ? 'runtime' : executable === launcher ? 'launcher' : executable === processProbe ? 'processProbe' : 'unknown';
   const mode = ['--mixed-history-probe', '--read-history', '--read-history-v2', '--read-history-v3', 'task-rules'].includes(args[0]) ? args[0] : 'unknown';
-  const diagnostic = () => JSON.stringify({ role, mode, exitObserved: exited,
+  const diagnostic = () => JSON.stringify({ role, mode, deadlineMilliseconds,
+    elapsedMilliseconds: Math.round(performance.now() - startedAt), exitObserved: exited,
     stdinClosed: child.stdin.closed, stdinEnded: child.stdin.writableEnded, stdinFinished: child.stdin.writableFinished,
     stdoutClosed: child.stdout.closed, stdoutEnded: child.stdout.readableEnded,
     stderrClosed: child.stderr.closed, stderrEnded: child.stderr.readableEnded,
@@ -41,7 +49,7 @@ async function owned(executable, args, input, { maximum = 32768, overlapped = fa
   child.stderr.on('data', chunk => { errorBytes += chunk.length; if (errorBytes > 256) fail('Mixed history diagnostics exceeded their bound.'); });
   const exit = new Promise(done => child.once('close', (code, signal) => done({ code, signal })));
   child.once('exit', () => { exited = true; if (!child.stdin.writableEnded) child.stdin.end(); });
-  const timer = setTimeout(() => fail('Mixed history owned deadline exceeded.'), 5000);
+  const timer = setTimeout(() => fail('Mixed history owned deadline exceeded.'), deadlineMilliseconds);
   const payload = typeof input === 'string' ? input : JSON.stringify(input);
   inputBytes = typeof payload === 'string' ? Buffer.byteLength(payload) : 0;
   child.stdin.end(payload);
@@ -272,12 +280,12 @@ test('Native2实际读取真实publisher出版的超1MiB完整CP2，仍只返回
   } finally { cleanup(directory); }
 });
 
-test('CP2消费者沿用实际Deployment BCL依赖闭包，不Compile旁路规则副本', { timeout: 15000 }, async () => {
+test('托管CP2消费者沿用实际Deployment BCL依赖闭包，不Compile旁路规则副本', { timeout: 15000 }, async () => {
   const result = await owned(processProbe, ['task-rules', join(root, 'contracts/fixtures/task-rules-vectors.json')], '', { maximum: 8192 });
   assert.equal(result.code, 0); assert.equal(result.value.ruleAssembly, 'SkylinesLink.Deployment'); assert.equal(result.value.managed, true);
   const forbidden = name => /^(?:SkylinesLink\.(?:Application|Contracts|Infrastructure)|Newtonsoft\.Json)$/.test(name);
   assert.ok(!result.value.references.some(forbidden)); assert.ok(!result.value.consumerReferences.some(forbidden));
-  const deps = JSON.parse(await readFile(join(dirname(launcher), 'SkylinesLink.Launcher.deps.json'), 'utf8'));
+  const deps = JSON.parse(await readFile(join(dirname(managedLauncher), 'SkylinesLink.Launcher.deps.json'), 'utf8'));
   assert.ok(!Object.keys(deps.libraries).some(name => forbidden(name.split('/')[0])), 'actual managed Launcher dependency manifest stays BCL/Deployment only');
 });
 

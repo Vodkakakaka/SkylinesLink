@@ -49,7 +49,7 @@ try {
         if ($name -eq 'Launcher') { $env:SKYLINESLINK_TEST_LAUNCHER = $file } else { $env:SKYLINESLINK_TEST_SETUP = $file }
     }
     $env:SKYLINESLINK_TEST_LAUNCHER_KIND = 'nativeaot'
-    $slTestOutput = @(& node --test --test-reporter=tap tests/integration/desktop/launcher.test.mjs tests/integration/desktop/history.test.mjs tests/integration/desktop/history-runtime.test.mjs)
+    $slTestOutput = @(& node --test --test-reporter=tap tests/integration/desktop/launcher.test.mjs tests/integration/desktop/history.test.mjs tests/integration/desktop/history-runtime.test.mjs tests/integration/desktop/mixed-history.test.mjs)
     $slTestExit = $LASTEXITCODE
     $slTestOutput | Where-Object { $_ -match '^(ok |not ok |# (tests|pass|fail|cancelled|skipped|todo|duration))' } | Write-Output
     if ($slTestExit -ne 0) { $slTestOutput | Write-Output; throw 'NativeAOT desktop integration failed.' }
