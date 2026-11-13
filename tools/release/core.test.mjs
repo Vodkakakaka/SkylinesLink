@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { archiveFiles } from './core.mjs';
 import { managedNames, managedComponentIndex, meetsMinimumVersion, rejectPrivatePrefixes, requireInspectedBytes, validateManagedClosure, validateOutputInventory, validateSourcePath } from './core-policy.mjs';
@@ -18,6 +19,43 @@ test('源码预览保留 CommonJS 客户端适配器及无凭据的包管理配�
 });
 
 const root = resolve(import.meta.dirname, '../..');
+test('SDK选择保持当前LTS系列内的更高feature band/patch，真实解析满足最低稳定版', () => {
+  const { sdk } = JSON.parse(readFileSync(resolve(root, 'global.json'), 'utf8'));
+  const runtime = JSON.parse(readFileSync(resolve(root, 'tools/release/runtime-inputs.json'), 'utf8')).dotnet.version;
+  assert.equal(sdk.rollForward, 'latestFeature'); assert.equal(sdk.allowPrerelease, false);
+  const series = sdk.version.split('.').slice(0, 2).join('.');
+  assert.equal(series, runtime.split('.').slice(0, 2).join('.'));
+  const result = spawnSync('dotnet', ['--version'], { cwd: root, windowsHide: true, encoding: 'utf8', timeout: 30000 });
+  assert.equal(result.error, undefined); assert.equal(result.status, 0, result.stderr);
+  const actual = result.stdout.trim();
+  assert.equal(actual.split('.').slice(0, 2).join('.'), series);
+  assert.ok(meetsMinimumVersion(actual, `>=${sdk.version}`));
+});
+test('NativeAOT真实MSBuild解析的编译器、链接器、框架与运行库对应已审许可版本', () => {
+  const expected = JSON.parse(readFileSync(resolve(root, 'tools/release/runtime-inputs.json'), 'utf8')).dotnet.version;
+  const inspect = (project, aot) => {
+    const result = spawnSync('dotnet', ['msbuild', project, '-nologo', '-target:ProcessFrameworkReferences',
+      `-p:PublishAot=${aot}`, `-p:SelfContained=${aot}`, '-p:RuntimeIdentifier=win-x64',
+      '-getProperty:RuntimeFrameworkVersion', '-getItem:RuntimePack,TargetingPack,PackageReference,PackageDownload'],
+    { cwd: root, windowsHide: true, encoding: 'utf8', timeout: 30000, maxBuffer: 2 * 1024 * 1024 });
+    assert.equal(result.error, undefined); assert.equal(result.status, 0, result.stdout + result.stderr);
+    return JSON.parse(result.stdout);
+  };
+  const selected = (items, id) => { const rows = items.filter(row => row.Identity === id); assert.equal(rows.length, 1, id); return rows[0]; };
+  for (const name of ['Launcher', 'Setup']) {
+    const graph = inspect(`src/desktop/SkylinesLink.${name}/SkylinesLink.${name}.csproj`, true);
+    assert.equal(selected(graph.Items.TargetingPack, 'Microsoft.NETCore.App').NuGetPackageVersion, expected);
+    assert.equal(selected(graph.Items.RuntimePack, 'Microsoft.NETCore.App.Runtime.win-x64').NuGetPackageVersion, expected);
+    for (const id of ['Microsoft.DotNet.ILCompiler', 'Microsoft.NET.ILLink.Tasks'])
+      assert.equal(selected(graph.Items.PackageReference, id).Version, expected);
+    for (const id of ['Microsoft.NETCore.App.Runtime.win-x64', 'Microsoft.NETCore.App.Runtime.NativeAOT.win-x64', 'runtime.win-x64.Microsoft.DotNet.ILCompiler'])
+      assert.equal(selected(graph.Items.PackageDownload, id).Version, `[${expected}]`);
+    assert.equal(graph.Properties.RuntimeFrameworkVersion, expected);
+  }
+  const ordinary = inspect('src/desktop/SkylinesLink.Setup/SkylinesLink.Setup.csproj', false);
+  assert.equal(ordinary.Properties.RuntimeFrameworkVersion, '', 'ordinary development does not acquire a self-contained runtime pin');
+  assert.equal(selected(ordinary.Items.TargetingPack, 'Microsoft.NETCore.App').NuGetPackageVersion, expected);
+});
 const informationalVersion = '0.1.0-dev.0+' + 'a'.repeat(40);
 const records = () => managedNames.map((name, index) => ({ name, file: `${name}.dll`, managed: true, version: '0.1.0.0', probeTypePresent: false,
   informationalVersion, buildMode: null, moduleId: 'a'.repeat(30) + String(index + 1).padStart(2, '0'),

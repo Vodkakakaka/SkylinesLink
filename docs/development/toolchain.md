@@ -8,18 +8,18 @@ These are contributor build instructions for Windows. They do not install the mo
 
 ### Minimum tool versions
 
-Development tools may use these minimum versions or newer stable versions. Dependency lockfiles remain fixed; each release records the tools actually used.
+Node.js and pnpm may use the minimum versions below or newer stable versions. The .NET SDK stays within the explicitly selected 10.0 LTS series at or above its minimum, allowing higher feature bands and patches. Dependency lockfiles remain fixed; each release records the tools actually used.
 
 | Tool | Minimum / dependency version | Source of truth |
 | --- | --- | --- |
 | Node.js | >=26.13.0 | [package.json](../../package.json), [.node-version](../../.node-version), [.nvmrc](../../.nvmrc) |
 | pnpm | >=12.16.1 | [package.json](../../package.json) |
-| .NET SDK | >=10.0.403 | [global.json](../../global.json): newest installed stable SDK at or above the minimum |
+| .NET SDK | 10.0 series, >=10.0.403 | [global.json](../../global.json): `latestFeature`, stable versions only |
 | TypeScript | 7.0.2 | Project devDependency in [package.json](../../package.json) |
 
 Use PowerShell 7 (`pwsh`) for the PowerShell scripts. TypeScript is installed with the project; no global TypeScript installation is needed. Use pnpm with [pnpm-lock.yaml](../../pnpm-lock.yaml), not a second npm lockfile. Exact MCP SDK and other JavaScript dependency versions are in [the Host package](../../src/host/package.json) and the lockfile.
 
-`packageManager`, `.node-version` and `.nvmrc` identify reference versions. [.npmrc](../../.npmrc) allows a newer pnpm without automatically downloading a different package-manager version. [Directory.Build.targets](../../Directory.Build.targets) keeps the net10.0 ILLink/ILCompiler package versions aligned with the reviewed lockfiles independently of SDK patch upgrades. This preserves compatibility analysis without turning an SDK patch into a dependency update. Bundled player runtimes remain separate, byte-verified distribution inputs.
+`packageManager`, `.node-version` and `.nvmrc` identify reference versions. [.npmrc](../../.npmrc) allows a newer pnpm without automatically downloading a different package-manager version. [Directory.Build.targets](../../Directory.Build.targets) selects the reviewed .NET 10.0.15 reference/apphost, ILLink and ILCompiler inputs through one version property. Self-contained and NativeAOT publications also set `RuntimeFrameworkVersion` to that exact version, keeping their CoreLib and NativeAOT runtime packs aligned. Ordinary framework-dependent development does not receive this runtime pin. SDK selection remains separate; SDK patch upgrades cannot silently mix target-runtime and compiler patches. Bundled player runtimes remain separate, byte-verified distribution inputs.
 
 ### Ordinary build and checks
 
@@ -58,11 +58,16 @@ NativeAOT is separate from ordinary development. The current target is Windows x
 
 ```powershell
 pnpm build:aot
+pnpm test:desktop:aot
 ```
 
 The [desktop publication script](../../tools/build/publish-desktop.ps1) uses locked restores and writes local Launcher/Setup executables and notices under `artifacts/nativeaot`. NativeAOT uses the separate `packages.nativeaot.lock.json` files. It does not upload a release; ordinary managed-build checks do not establish AOT compatibility or complete package acceptance.
 
+`pnpm test:core` checks the actual MSBuild-resolved reference, runtime, compiler and linker graph for both desktop entrypoints against the independent [runtime-source record](../../tools/release/runtime-inputs.json). The AOT verifier includes the mixed-history readers. The Foundation workflow can run these native builds and tests with the manual `verify_native_aot` input; it uploads only `validation.json`. Its report records elevation, and elevated hosted CI does not establish ordinary-user or clean-machine qualification. NativeAOT linking and execution still require that validation to pass.
+
 When updating the baseline, update the version files, relevant lockfiles and generated outputs together, then run the affected checks. Keep proprietary game dependencies out of the repository and release payloads. See [architecture](../architecture.md) and [licensing](../governance/licensing.md) for component and distribution boundaries.
+
+Selecting a future LTS series is an explicit update. Installing an STS SDK alongside .NET 10 does not change this project's selected series. `latestFeature` follows Microsoft's SDK resolver rules; builds do not query a network service to identify LTS releases.
 
 ## 简体中文
 
@@ -70,18 +75,18 @@ When updating the baseline, update the version files, relevant lockfiles and gen
 
 ### 最低工具版本
 
-开发工具可使用以下最低版本或更高稳定版本。依赖锁文件仍固定，发行记录本次实际使用的工具版本。
+Node.js 和 pnpm 可使用以下最低版本或更高稳定版本。.NET SDK 保持在明确选定的 10.0 LTS 系列内，允许达到最低版本的更高 feature band 和补丁。依赖锁文件仍固定，发行记录本次实际使用的工具版本。
 
 | 工具 | 最低版本 / 依赖版本 | 权威配置 |
 | --- | --- | --- |
 | Node.js | >=26.13.0 | [package.json](../../package.json)、[.node-version](../../.node-version)、[.nvmrc](../../.nvmrc) |
 | pnpm | >=12.16.1 | [package.json](../../package.json) |
-| .NET SDK | >=10.0.403 | [global.json](../../global.json)：采用达到最低版本的最新已装稳定 SDK |
+| .NET SDK | 10.0 系列，>=10.0.403 | [global.json](../../global.json)：`latestFeature`，仅稳定版 |
 | TypeScript | 7.0.2 | [package.json](../../package.json) 中的项目开发依赖 |
 
 PowerShell 脚本使用 PowerShell 7（`pwsh`）。TypeScript 随项目依赖安装，无需全局安装。使用 pnpm 及唯一的 [pnpm-lock.yaml](../../pnpm-lock.yaml)，不另建 npm 锁文件。MCP SDK 和其他 JavaScript 依赖的精确版本见 [Host 配置](../../src/host/package.json)及锁文件。
 
-`packageManager`、`.node-version` 和 `.nvmrc` 标识参考版本。[.npmrc](../../.npmrc) 允许更高版本 pnpm，不会因此自动下载切换包管理器。[Directory.Build.targets](../../Directory.Build.targets) 让 net10.0 的 ILLink/ILCompiler 包版本独立于 SDK 补丁，与已审锁文件一致，保留兼容分析，避免 SDK 补丁隐式变成依赖升级。玩家随包运行时仍按实际字节单独核验。
+`packageManager`、`.node-version` 和 `.nvmrc` 标识参考版本。[.npmrc](../../.npmrc) 允许更高版本 pnpm，不会因此自动下载切换包管理器。[Directory.Build.targets](../../Directory.Build.targets) 用一个版本属性统一已审 .NET 10.0.15 的 reference/apphost、ILLink 和 ILCompiler 输入。自包含及 NativeAOT 发布还将 `RuntimeFrameworkVersion` 精确设为同版，保证 CoreLib 与 NativeAOT 运行库一致；普通 framework-dependent 开发不设置这项运行库锁定。SDK 选择独立管理，SDK 补丁升级不能再隐式混用不同补丁的目标运行库与编译器。玩家随包运行时仍按实际字节单独核验。
 
 ### 日常构建与检查
 
@@ -120,8 +125,13 @@ NativeAOT 与日常开发分开。当前目标为 Windows x64，需要适用构�
 
 ```powershell
 pnpm build:aot
+pnpm test:desktop:aot
 ```
 
 [桌面发布脚本](../../tools/build/publish-desktop.ps1) 使用锁定还原，将本地 Launcher/Setup 可执行文件及 notices 写入 `artifacts/nativeaot`。NativeAOT 使用独立的 `packages.nativeaot.lock.json`；该命令不会上传发行版，普通托管构建检查也不能替代 AOT 及完整安装包验收。
 
+`pnpm test:core` 将两个桌面入口实际经 MSBuild 解析的 reference、运行库、编译器和链接器依赖图与独立的[运行库来源记录](../../tools/release/runtime-inputs.json)核对。AOT verifier 包含 mixed-history 读取闭包。Foundation 工作流可通过手动 `verify_native_aot` 输入构建并验证，只上传 `validation.json`；报告保留 elevation，elevated CI 不构成普通用户或干净机器资格。NativeAOT 链接与运行仍须由该验证实际通过。
+
 更新基线时，同步版本配置、相关锁文件与生成文件，再运行受影响的检查。专有游戏依赖不得进入仓库或发行包；组件和分发边界见[架构](../architecture.md)与[许可说明](../governance/licensing.md)。
+
+未来选择新的 LTS 系列需要显式更新；本机并装 STS SDK 不会切换本项目选定系列。`latestFeature` 使用微软 SDK resolver 的标准规则，构建不会联网识别 LTS。

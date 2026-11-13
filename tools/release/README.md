@@ -32,13 +32,16 @@ SOURCE.txt 明示这是开发候选而非可用初版，当前声明工具及验
 
 `tools/build/publish-desktop.ps1` 在每个实际 `dotnet publish` 成功后调用 `write-nativeaot-notices.ps1`。任一步不匹配即失败；它不修改锁文件、不下载运行时、不改变 Launcher 的工程依赖。
 
-- 核对应工程的 NativeAOT lock 与本次 `project.assets.json` 中两个 ILCompiler 包的版本和 signed-package content hash。
-- 从本次 `.ilc.rsp` / `link.rsp` 取得实际托管框架及静态库输入。运行时来自 `Microsoft.NETCore.App.Runtime.NativeAOT.win-x64`，不是编译器工具包；该隐式 SDK runtime pack 未出现在现有 `packages.nativeaot.lock.json`，因此另按实际输入和固定归档检查。
-- 核三个本机 NuGet 归档的 SHA-512、来源与 content hash；再逐文件比对本次实际引用的运行时框架/静态库与 runtime pack 归档条目。该检查不重建编译器/SDK 的完整供应链审计。
+- 核对应工程的 NativeAOT lock 与本次 `project.assets.json` 中两个 ILCompiler 包及 ILLink 的版本和 signed-package content hash。
+- 只对实际 `.ilc.rsp` 列出的托管输入读取 BCL PE/ECMA-335 元数据，检查其程序集身份及 AssemblyRef，拒绝 Game、SkylinesLink.Contracts/Application/Infrastructure 和 Newtonsoft.Json；不加载程序集、不遍历目录，只报告文件名或计数。managed `.deps.json` 仅证明对应 managed 边界，AOT 的 PE/无 CLR header 检查不能替代这项实际编译输入检查。
+- 从本次 `.ilc.rsp` / `link.rsp` 取得实际托管框架及静态库输入，包括 `Microsoft.NETCore.App.Runtime.win-x64` 的 CoreLib 和 `Microsoft.NETCore.App.Runtime.NativeAOT.win-x64` 的 AOT 输入；这些隐式 SDK runtime pack 不在 `packages.nativeaot.lock.json` 中，因此另按实际输入和固定归档检查。
+- 核五个本机 NuGet 归档的 SHA-512、来源与 content hash；再逐文件比对本次实际引用的运行时框架/静态库与对应 runtime pack 归档条目。该检查不重建编译器/SDK 的完整供应链审计。
 - 核原 LICENSE 与 THIRD-PARTY-NOTICES 的归档条目、固定文件大小和 SHA-256，向当前 `artifacts/nativeaot/launcher` / `setup` 输出 `DOTNET.LICENSE.txt`、`DOTNET.THIRD-PARTY-NOTICES.txt` 与不含本机路径的 `DOTNET.SOURCES.txt`。
 
-三个包的 nuspec 都指向 `dotnet/dotnet` commit `0427b9abbead3fa64c6655eb4290c537397131fa`。实际 runtime pack 内含原 LICENSE（1,139 字节）和完整通知（78,041 字节），对应 [runtime 源码](https://github.com/dotnet/dotnet/tree/0427b9abbead3fa64c6655eb4290c537397131fa/src/runtime)。通知保守保留整个上游集合，不声称每个条目都进入当前二进制；ILCompiler、ILLink、SDK 工具文件不因此复制给玩家。
+当前已审版本为 [最新 LTS .NET 10.0.15](https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json)。五个包的 nuspec 都指向 `dotnet/dotnet` commit `8e0f8ed2312954727f8919d7d1c2f78b483b4ee7`。实际 NativeAOT runtime pack 内含原 LICENSE（1,139 字节）和完整通知（78,041 字节），对应 [runtime 源码](https://github.com/dotnet/dotnet/tree/8e0f8ed2312954727f8919d7d1c2f78b483b4ee7/src/runtime)。通知保守保留整个上游集合，不声称每个条目都进入当前二进制；ILCompiler、ILLink、SDK 工具文件不因此复制给玩家。
 
-2026-10-31 对三个现有归档逐一执行 `dotnet nuget verify --all`，Microsoft 作者签名和 NuGet 仓库签名均成功验证。归档完整 SHA-512 绑定本次验证，不冒充每次构建都重新检查在线证书。两种哈希必须区分：已签 `.nupkg` 的整个 ZIP 哈希不同于 NuGet lock 的 content hash。[NuGet 官方实现](https://github.com/NuGet/NuGet.Client/blob/dev/src/NuGet.Core/NuGet.Packaging/PackageArchiveReader.cs) 对已签包读取内容哈希；[.NET 10 verify 命令](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-nuget-verify) 会直接输出该值。本次 verify 输出与锁/记录一致，没有用 ZIP 哈希伪装成 content hash。
+2026-11-14 对五个 10.0.15 归档逐一执行 `dotnet nuget verify --all`，Microsoft 作者签名和 NuGet 仓库签名均成功验证。归档完整 SHA-512 绑定本次验证，不冒充每次构建都重新检查在线证书。两种哈希必须区分：已签 `.nupkg` 的整个 ZIP 哈希不同于 NuGet lock 的 content hash。[NuGet 官方实现](https://github.com/NuGet/NuGet.Client/blob/dev/src/NuGet.Core/NuGet.Packaging/PackageArchiveReader.cs) 对已签包读取内容哈希；[.NET 10 verify 命令](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-nuget-verify) 会直接输出该值。本次 verify 输出与锁/记录一致，没有用 ZIP 哈希伪装成 content hash。
+
+[Directory.Build.targets](../../Directory.Build.targets) 的单个版本属性约束 .NET 10 的工具包和 reference/apphost；self-contained/AOT 通过官方 `RuntimeFrameworkVersion` 契约精确选择同版运行库。`pnpm test:core` 实际调用 MSBuild 的 `ProcessFrameworkReferences` 核对两个入口的编译器、链接器、reference、普通 runtime 与 NativeAOT 下载图，和上述独立来源记录必须一致；普通开发构建不设置 self-contained runtime pin。SDK 用标准 `latestFeature` 保持当前明确选定的 10.0 LTS 系列内 >=10.0.403，不固定到某个 SDK 补丁，也不自动跳转并装的 STS 系列。
 
 升级版本需要重新核官方来源、原文及真实链接输入并更新本记录。当前检查尚不覆盖完整 Mod/第三方模组闭包、市场条款、正式源码获取包、玩家安装或发布认证。

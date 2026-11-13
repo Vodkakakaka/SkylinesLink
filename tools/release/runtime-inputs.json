@@ -20,44 +20,57 @@
     }
   },
   "dotnet": {
-    "version": "10.0.14",
+    "version": "10.0.15",
     "repository": "https://github.com/dotnet/dotnet",
-    "commit": "0427b9abbead3fa64c6655eb4290c537397131fa",
-    "licenseFile": "dotnet-10.0.14.license.txt",
+    "commit": "8e0f8ed2312954727f8919d7d1c2f78b483b4ee7",
+    "licenseFile": "dotnet-10.0.15.license.txt",
     "licenseSha256": "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b",
     "licenseSize": 1139,
-    "noticesFile": "dotnet-10.0.14.third-party-notices.txt",
+    "noticesFile": "dotnet-10.0.15.third-party-notices.txt",
     "noticesSha256": "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21",
     "noticesSize": 78041,
     "runtimePack": {
       "id": "Microsoft.NETCore.App.Runtime.NativeAOT.win-x64",
-      "contentHash": "xa0wRPCOznsH5tM4iov+OrowlRRRzt/4NS1EzHx9SSbdTltXiv3H7uW8kOlygyQ1VXrP3NfIU/5DO8CDf2dGTA==",
-      "archiveSha512": "932Q01OgC1k4vtlOWSqCT3+fHDken18kfcyV5sNSBMrKNGuXs9XBcK+GqFeUS65BgWRao4K8BhbaJYxJRythsA==",
-      "sourceArchive": "https://api.nuget.org/v3-flatcontainer/microsoft.netcore.app.runtime.nativeaot.win-x64/10.0.14/microsoft.netcore.app.runtime.nativeaot.win-x64.10.0.14.nupkg",
+      "contentHash": "ZSAK0P3kkGCw+9+V0hBVR2zNXKrXad+MqjajUD3ZVpOlm5oKhXV5hdlqWcBuZ3UTtVfQ8KVZCr7LfYyQwOFHzA==",
+      "archiveSha512": "6SGRVVrUH0xToHEXymcNnsvaojZunYTYNFZmRk1/eYLLTD133zbCAQxZCzHLAIjKS4AEMQmor8wDouuNloyR/A==",
+      "sourceArchive": "https://api.nuget.org/v3-flatcontainer/microsoft.netcore.app.runtime.nativeaot.win-x64/10.0.15/microsoft.netcore.app.runtime.nativeaot.win-x64.10.0.15.nupkg",
       "licenseEntry": "LICENSE.TXT",
       "noticesEntry": "THIRD-PARTY-NOTICES.TXT"
+    },
+    "frameworkPack": {
+      "id": "Microsoft.NETCore.App.Runtime.win-x64",
+      "contentHash": "vzCVKwBmeXZ31VkaU956oQE1zda/pweaw1q0vtnRWzivoPa4jyz9zVrmhrora1UJlPkzfBteQHf9bOYAF2ZuVw==",
+      "archiveSha512": "MEGAkRGHrAXYA2t/Lo0mDxH+/O5NLqgWTcVh70iOZJTpoOCL/jKfOgDqYoDi3W9WcnviL4DhMl+5lWC8cxttSw==",
+      "sourceArchive": "https://api.nuget.org/v3-flatcontainer/microsoft.netcore.app.runtime.win-x64/10.0.15/microsoft.netcore.app.runtime.win-x64.10.0.15.nupkg"
     },
     "compilerPackages": [
       {
         "id": "Microsoft.DotNet.ILCompiler",
-        "contentHash": "CDQ/+XRT1JT/0u87j9exR1AociehKUzxae4KCOWxCQ1PIKbYS0F8ovxaCrqRlkylGmbhywKxV/zbbrEhWa5NXg==",
-        "archiveSha512": "obn/HAYT8K4e5aBYP25r2hlbFTdS58QMsUcwFEnxDIwmRJSeFao0aFGdmVbtrU1QIzSshSBXmqB+4625w7c28A==",
-        "sourceArchive": "https://api.nuget.org/v3-flatcontainer/microsoft.dotnet.ilcompiler/10.0.14/microsoft.dotnet.ilcompiler.10.0.14.nupkg"
+        "contentHash": "MjeBT/P5YgUuXfwSbI3ms+F5DkQ2+ilynoHE2jA/Kto//MaE/wtP5EveCAL8abpxFGw9tlHNTAV1j60Wh1oLqg==",
+        "archiveSha512": "cZNLf6PwbHrXOabWzdqJ53E/kuDNoaB0V/VP6tk79KBPRH93QRMsCPJMP18qb71VW2PvbQWIIHAJkIdfSbn9ig==",
+        "sourceArchive": "https://api.nuget.org/v3-flatcontainer/microsoft.dotnet.ilcompiler/10.0.15/microsoft.dotnet.ilcompiler.10.0.15.nupkg"
       },
       {
         "id": "runtime.win-x64.Microsoft.DotNet.ILCompiler",
-        "contentHash": "B28xsyrO3PRFGL9yd1lLWdX3/wATFkaxPFM3VmGOFG8pfx7jDeb1Yz09v6n+z0jNEPAlQLqOx2noOXw8aytYNw==",
-        "archiveSha512": "ZiiQBsOdluailDf6kiMGIqF8fN4nllbQf/B39Mrkc+n2CMb2ZLc3g43GDo4T77aDV6gcmLYCNf2Idxc0AQdZmw==",
-        "sourceArchive": "https://api.nuget.org/v3-flatcontainer/runtime.win-x64.microsoft.dotnet.ilcompiler/10.0.14/runtime.win-x64.microsoft.dotnet.ilcompiler.10.0.14.nupkg"
+        "contentHash": "WEtOJ41ItA7fJ+pqQFYgCmZxiX5d6AByfLWbifqEjyjkfFXmD9/T9V7xTwrvh5OxkJkBhnZsygcdU0Al9MNcVw==",
+        "archiveSha512": "4Nhb9uYM+qubw5jwNFEwnYhKUMJ5cw2Oy8boxpQqTU2JJXz95yM+eQ5Qrc32MGKjW60fb4s/72ATiBay8Ts4FQ==",
+        "sourceArchive": "https://api.nuget.org/v3-flatcontainer/runtime.win-x64.microsoft.dotnet.ilcompiler/10.0.15/runtime.win-x64.microsoft.dotnet.ilcompiler.10.0.15.nupkg"
+      },
+      {
+        "id": "Microsoft.NET.ILLink.Tasks",
+        "contentHash": "u0WnRcZgBZYHlVFpbe/3Adpmb9rmNJ8/fmEwqc/xjB7fFppq+gfaLJd3Sdaw+J02zV0eP/T9dneQ3Dv5jWw6bw==",
+        "archiveSha512": "q/cuZxi8XPwa4dpK+7y9t3KoL7T6qQZUtIqqN96YKx1Kcgr/bhD0K3U+OaLlrWVn6R23UrsEr8FARqKYVuE3Zg==",
+        "sourceArchive": "https://api.nuget.org/v3-flatcontainer/microsoft.net.illink.tasks/10.0.15/microsoft.net.illink.tasks.10.0.15.nupkg"
       }
     ],
     "verification": {
-      "date": "2026-10-31",
+      "date": "2026-11-14",
       "command": "dotnet nuget verify --all",
-      "result": "All three pinned archives passed author and repository signature verification; the displayed signed-package content hashes match the recorded values.",
+      "result": "All five pinned archives passed author and repository signature verification; the signed-package content hashes match the recorded values. Each nuspec identifies the same reviewed dotnet/dotnet commit.",
       "authorCertificateSha256": "9A1B131BEE0605433056A4EA3815478A8E177961A968C6C0027C1093D1FEB630",
       "repositoryCertificateSha256": "1F4B311D9ACC115C8DC8018B5A49E00FCE6DA8E2855F9F014CA6F34570BC482D",
-      "scope": "Archive hashes bind this recorded verification. Offline builds do not perform fresh certificate or revocation validation. Compiler packages are build inputs, not player payloads."
+      "scope": "Archive hashes bind this recorded verification. Offline builds do not perform fresh certificate or revocation validation. Compiler packages are build inputs, not player payloads.",
+      "releaseMetadata": "https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json"
     }
   }
 }

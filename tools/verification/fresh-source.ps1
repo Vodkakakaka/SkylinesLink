@@ -90,7 +90,7 @@ while ($ancestor) {
     $ancestor = Split-Path $ancestor -Parent
 }
 New-Item -ItemType Directory -Path $exportRoot | Out-Null
-$rootFiles = @('.editorconfig', '.gitattributes', '.gitignore', '.node-version', '.nvmrc', 'Directory.Build.props', 'global.json', 'NuGet.Config', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'SkylinesLink.slnx')
+$rootFiles = @('.editorconfig', '.gitattributes', '.gitignore', '.node-version', '.nvmrc', 'Directory.Build.props', 'Directory.Build.targets', 'global.json', 'NuGet.Config', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'SkylinesLink.slnx')
 $sourceExtensions = @('.cs', '.csproj', '.json', '.mjs', '.ts', '.ps1', '.md', '.template', '.yaml', '.props', '.targets', '.slnx')
 $copied = [Collections.Generic.List[object]]::new()
 $report = [ordered]@{ kind = 'fresh-source-export'; gitCheckout = $false; status = 'incomplete'; gameStarted = $false; deployed = $false; filesystemSandbox = $false; dependencyMode = 'existing toolchain and locked package caches'; sourceFiles = 0; childExitCode = $null; cleanup = 'pending' }

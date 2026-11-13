@@ -7,7 +7,8 @@ import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '../../..');
-const launcher = process.env.SKYLINESLINK_TEST_LAUNCHER ?? join(root, 'artifacts/dotnet/bin/SkylinesLink.Launcher/debug/SkylinesLink.Launcher.exe');
+const managedLauncher = join(root, 'artifacts/dotnet/bin/SkylinesLink.Launcher/debug/SkylinesLink.Launcher.exe');
+const launcher = process.env.SKYLINESLINK_TEST_LAUNCHER ?? managedLauncher;
 const runtime = join(root, 'artifacts/dotnet/bin/SkylinesLink.RuntimeProbe/debug/SkylinesLink.RuntimeProbe.exe');
 const processProbe = join(root, 'artifacts/dotnet/bin/SkylinesLink.ProcessProbe/debug/SkylinesLink.ProcessProbe.exe');
 const digest = bytes => createHash('sha256').update(bytes).digest();
@@ -277,7 +278,10 @@ test('CP2消费者沿用实际Deployment BCL依赖闭包，不Compile旁路规�
   assert.equal(result.code, 0); assert.equal(result.value.ruleAssembly, 'SkylinesLink.Deployment'); assert.equal(result.value.managed, true);
   const forbidden = name => /^(?:SkylinesLink\.(?:Application|Contracts|Infrastructure)|Newtonsoft\.Json)$/.test(name);
   assert.ok(!result.value.references.some(forbidden)); assert.ok(!result.value.consumerReferences.some(forbidden));
-  const deps = JSON.parse(await readFile(join(dirname(launcher), 'SkylinesLink.Launcher.deps.json'), 'utf8'));
+  // The managed manifest proves this managed boundary. Actual AOT references
+  // are checked from ilc.rsp by write-nativeaot-notices.ps1 after publication.
+  const dependencyLauncher = process.env.SKYLINESLINK_TEST_LAUNCHER_KIND === 'nativeaot' ? managedLauncher : launcher;
+  const deps = JSON.parse(await readFile(join(dirname(dependencyLauncher), 'SkylinesLink.Launcher.deps.json'), 'utf8'));
   assert.ok(!Object.keys(deps.libraries).some(name => forbidden(name.split('/')[0])), 'actual managed Launcher dependency manifest stays BCL/Deployment only');
 });
 
