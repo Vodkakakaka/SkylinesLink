@@ -16,10 +16,18 @@ const digest = bytes => createHash('sha256').update(bytes).digest();
 async function owned(executable, args, input, { maximum = 32768, overlapped = false, secret = '' } = {}) {
   const pipe = overlapped ? 'overlapped' : 'pipe';
   const child = spawn(executable, args, { windowsHide: true, stdio: [pipe, pipe, 'pipe'] });
-  let failure, exited = false, outputBytes = 0, errorBytes = 0;
+  let failure, exited = false, inputBytes = 0, outputBytes = 0, errorBytes = 0;
   const chunks = [], streams = [child.stdin, child.stdout, child.stderr];
+  const role = executable === runtime ? 'runtime' : executable === launcher ? 'launcher' : executable === processProbe ? 'processProbe' : 'unknown';
+  const mode = ['--mixed-history-probe', '--read-history', '--read-history-v2', '--read-history-v3', 'task-rules'].includes(args[0]) ? args[0] : 'unknown';
+  const diagnostic = () => JSON.stringify({ role, mode, exitObserved: exited,
+    stdinClosed: child.stdin.closed, stdinEnded: child.stdin.writableEnded, stdinFinished: child.stdin.writableFinished,
+    stdoutClosed: child.stdout.closed, stdoutEnded: child.stdout.readableEnded,
+    stderrClosed: child.stderr.closed, stderrEnded: child.stderr.readableEnded,
+    inputBytes, stdoutBytes: outputBytes, stderrBytes: errorBytes });
   const fail = message => {
-    failure ??= new Error(message);
+    // Freeze only bounded state before our kill/destroy changes the evidence.
+    failure ??= new Error(`${message} ${diagnostic()}`);
     if (!exited) child.kill();
     for (const stream of streams) stream.destroy();
   };
@@ -34,7 +42,9 @@ async function owned(executable, args, input, { maximum = 32768, overlapped = fa
   const exit = new Promise(done => child.once('close', (code, signal) => done({ code, signal })));
   child.once('exit', () => { exited = true; if (!child.stdin.writableEnded) child.stdin.end(); });
   const timer = setTimeout(() => fail('Mixed history owned deadline exceeded.'), 5000);
-  child.stdin.end(typeof input === 'string' ? input : JSON.stringify(input));
+  const payload = typeof input === 'string' ? input : JSON.stringify(input);
+  inputBytes = typeof payload === 'string' ? Buffer.byteLength(payload) : 0;
+  child.stdin.end(payload);
   try {
     const [result] = await Promise.all([exit, ...closed]);
     if (failure) throw failure;
