@@ -570,7 +570,7 @@ namespace SkylinesLink.RuntimeProbe
                 Ops = new OperationAuthority(Journal, Grants, context, new HostIdentity(), () => 0);
                 Identity = new EnvironmentDiscovery { ProductId = "skylineslink", EnvironmentId = "probe", InstanceId = instance,
                     AuthorityEpoch = Grants.State.AuthorityEpoch, PipeName = "skylineslink-" + Guid.NewGuid().ToString("N"),
-                    ProductVersion = "0.1.0-dev.0", ContractVersion = "2", CoreManifestSha256 = new string('c', 64), ProcessId = Process.GetCurrentProcess().Id };
+                    ProductVersion = Program.ProductVersion, ContractVersion = "2", CoreManifestSha256 = new string('c', 64), ProcessId = Process.GetCurrentProcess().Id };
                 Modules = withModules ? new ModuleRuntimeObservationBroker(instance) : null;
                 CityOverview = withCityOverview ? new CityOverviewReadBroker(context) : null;
                 Buildings = withBuildings ? new BuildingInspectionReadBroker(context) : null;

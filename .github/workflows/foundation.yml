@@ -32,26 +32,46 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - name: Restore locked dependencies
+        id: restore
         run: |
           pnpm install --frozen-lockfile
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet restore SkylinesLink.slnx --locked-mode
       - name: Build foundation
+        id: build
         run: pnpm build
       - name: Test foundation
+        id: test
         run: pnpm test
       - name: Test package boundaries
+        id: packages
         run: pnpm test:core
       - name: Build NativeAOT desktop
+        id: aot-build
         run: pnpm build:aot
       # The report records elevation. Elevated CI does not establish
       # ordinary-user or clean-machine qualification.
       - name: Verify NativeAOT desktop
+        id: aot-test
         run: pnpm test:desktop:aot
       - name: Check generated source is unchanged
+        id: generated
         run: git diff --exit-code
       - name: Package exact source preview
+        id: source-package
         run: pnpm build:source-preview
+      - name: Write source validation summary
+        env:
+          SOURCE_PREVIEW_CHECKS: >-
+            {"restore":"${{ steps.restore.outcome }}",
+            "build":"${{ steps.build.outcome }}",
+            "test":"${{ steps.test.outcome }}",
+            "packages":"${{ steps.packages.outcome }}",
+            "aot-build":"${{ steps['aot-build'].outcome }}",
+            "aot-test":"${{ steps['aot-test'].outcome }}",
+            "generated":"${{ steps.generated.outcome }}",
+            "source-package":"${{ steps['source-package'].outcome }}"}
+        run: node tools/release/source-validation.mjs
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: source-preview

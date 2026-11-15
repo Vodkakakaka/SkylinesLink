@@ -12,6 +12,7 @@ import { GameClientError } from '../../src/host/src/game-client/game-client.ts';
 import { LocalReads } from '../../src/host/src/guidance/local-reads.ts';
 import { measureJson } from '../../src/host/src/shared/json-budget.ts';
 import { probeLimits } from '../../src/host/src/shared/limits.ts';
+import { productVersion } from '../../src/host/src/shared/identity.ts';
 
 const localNames = ['skylines_capability_describe', 'skylines_guidance_get', 'skylines_guidance_search'];
 
@@ -75,7 +76,7 @@ async function exercise(client: Client) {
     const result = await call(client, 'skylines_guidance_get', { guideId: item.guideId, language });
     assert.notEqual(result.isError, true); requireContract(schemaIds.GuidanceDocument, result.structuredContent);
     const guide = result.structuredContent as { sourceKind: string; productVersion: string; language: string; revision: string };
-    assert.equal(guide.sourceKind, 'productGuide'); assert.equal(guide.productVersion, '0.1.0-dev.0');
+    assert.equal(guide.sourceKind, 'productGuide'); assert.equal(guide.productVersion, productVersion);
     assert.equal(guide.language, language); assert.equal(guide.revision, item.revision);
   }
   const chinese = await call(client, 'skylines_guidance_search', { query: '规划', language: 'zh-CN' });

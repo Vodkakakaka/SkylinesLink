@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { archiveFiles } from './core.mjs';
+import { createSourceValidationSummary } from './source-validation.mjs';
 import { managedNames, managedComponentIndex, meetsMinimumVersion, rejectPrivatePrefixes, requireInspectedBytes, validateManagedClosure, validateOutputInventory, validateSourcePath } from './core-policy.mjs';
 
 test('开发工具接受基线及更高稳定版本，拒绝旧版及预发布版', () => {
@@ -19,6 +20,46 @@ test('源码预览保留 CommonJS 客户端适配器及无凭据的包管理配�
 });
 
 const root = resolve(import.meta.dirname, '../..');
+test('源码验证摘要绑定本次源码和完整CI结果，保留管理员与未验游戏边界', () => {
+  const source = { commit: 'a'.repeat(40), tree: 'b'.repeat(40), productVersion: '0.1.0-dev.1' };
+  const manifest = { formatVersion: 1, productId: 'skylineslink', distribution: 'developer-source-preview',
+    playerInstallationPackage: false, gameRuntimeValidatedByPackaging: false,
+    sourceCommit: source.commit, sourceTree: source.tree, productVersion: source.productVersion };
+  const nativeReportBytes = Buffer.from(JSON.stringify({ kind: 'nativeaot-local-integration', integrationTests: 45,
+    isElevated: true, ordinaryUserValidated: false, cleanMachineValidated: false, gameValidated: false }));
+  const ci = { serverUrl: 'https://github.com', repository: 'example/project', runId: '123', runAttempt: '2' };
+  const checks = Object.fromEntries(['restore', 'build', 'test', 'packages', 'aot-build', 'aot-test', 'generated', 'source-package']
+    .map(id => [id, 'success']));
+  const workflow = readFileSync(resolve(root, '.github/workflows/foundation.yml'), 'utf8');
+  const workflowChecks = workflow.match(/SOURCE_PREVIEW_CHECKS: >-\r?\n((?: {12}[^\n]*\n)+)/)?.[1];
+  assert.ok(workflowChecks, 'the actual workflow supplies explicit preceding step outcomes');
+  assert.deepEqual(JSON.parse(workflowChecks.replace(/\$\{\{[^}]+\}\}/g, 'success')), checks);
+  for (const id of Object.keys(checks)) assert.ok(workflow.includes(`id: ${id}\n`));
+  const input = { source, manifest, nativeReportBytes, ci, checks };
+  const report = createSourceValidationSummary(input);
+  assert.equal(report.sourceCommit, source.commit); assert.equal(report.sourceTree, source.tree);
+  assert.equal(report.ci.url, 'https://github.com/example/project/actions/runs/123/attempts/2');
+  assert.equal(report.checks.length, 8); assert.equal(report.nativeAot.integrationTests, 45);
+  assert.equal(report.nativeAot.isElevated, true); assert.equal(report.nativeAot.ordinaryUserValidated, false);
+  assert.ok(Object.values(report.limits).every(value => value === false));
+  for (const mutate of [
+    value => { value.manifest.sourceCommit = 'c'.repeat(40); },
+    value => { value.manifest.sourceTree = 'c'.repeat(40); },
+    value => { value.manifest.productVersion = '0.1.0-dev.0'; },
+    value => { value.manifest.playerInstallationPackage = true; },
+    value => { value.checks['aot-test'] = 'skipped'; },
+    value => { delete value.checks.test; },
+    value => { value.ci.runId = '0'; },
+    value => { value.ci.runAttempt = 'unknown'; },
+    value => { value.nativeReportBytes = Buffer.from(JSON.stringify({ kind: 'nativeaot-local-integration', integrationTests: 45,
+      isElevated: true, ordinaryUserValidated: true, cleanMachineValidated: false, gameValidated: false })); },
+    value => { value.nativeReportBytes = Buffer.from(JSON.stringify({ kind: 'nativeaot-local-integration', integrationTests: 45,
+      isElevated: true, ordinaryUserValidated: false, cleanMachineValidated: false, gameValidated: true })); },
+  ]) {
+    const changed = { source: { ...source }, manifest: { ...manifest }, ci: { ...ci }, checks: { ...checks }, nativeReportBytes };
+    mutate(changed); assert.throws(() => createSourceValidationSummary(changed), /^Error: SOURCE_VALIDATION_/);
+  }
+});
 test('SDK选择保持当前LTS系列内的更高feature band/patch，真实解析满足最低稳定版', () => {
   const { sdk } = JSON.parse(readFileSync(resolve(root, 'global.json'), 'utf8'));
   const runtime = JSON.parse(readFileSync(resolve(root, 'tools/release/runtime-inputs.json'), 'utf8')).dotnet.version;

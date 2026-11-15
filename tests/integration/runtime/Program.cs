@@ -16,7 +16,7 @@ namespace SkylinesLink.RuntimeProbe
 {
     internal static class Program
     {
-        internal const string ProductVersion = "0.1.0-dev.0";
+        internal const string ProductVersion = RuntimeProductVersion.Value;
         internal const string ContractVersion = "2";
         internal static string Stage = "entry";
         private static int Main(string[] args)

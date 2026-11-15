@@ -6,6 +6,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { discoverConnection, readAuthorizationSubjectCandidate, type DiscoverySelection } from '../../src/host/src/game-client/discovery.ts';
 import { DiscoveredGameClient } from '../../src/host/src/game-client/discovered-game-client.ts';
 import { GameClientError } from '../../src/host/src/game-client/game-client.ts';
+import { productVersion } from '../../src/host/src/shared/identity.ts';
 
 const errorCode = (code: string) => (error: unknown) => error instanceof GameClientError && error.code === code;
 
@@ -15,7 +16,7 @@ test('发现严格预期发行/代际/完整snapshot，profile精确选择，且
   const selection: DiscoverySelection = { environment: 'fixture', profile: 'Codex', coreManifestSha256: 'a'.repeat(64), userProfile: base };
   const token = randomBytes(32).toString('hex');
   const discovery = { productId: 'skylineslink', environmentId: 'fixture', instanceId: 'fixture-instance', authorityEpoch: 2,
-    pipeName: 'skylineslink-offline-fixture', productVersion: '0.1.0-dev.0', contractVersion: '2', coreManifestSha256: selection.coreManifestSha256, processId: process.pid };
+    pipeName: 'skylineslink-offline-fixture', productVersion, contractVersion: '2', coreManifestSha256: selection.coreManifestSha256, processId: process.pid };
   const authorization = { formatVersion: 2, productId: 'skylineslink', environmentId: 'fixture', recordRevision: 3, authorityEpoch: 2,
     profiles: [{ profileId: 'Codex', profileInstanceId: 'a'.repeat(32), grantEpoch: 3, scopeMask: 1, internalToken: token, externalHttpToken: null }] };
   const put = async (file: string, value: unknown) => writeFile(resolve(directory, file), JSON.stringify(value));
