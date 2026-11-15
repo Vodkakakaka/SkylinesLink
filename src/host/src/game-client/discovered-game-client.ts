@@ -165,19 +165,26 @@ export class DiscoveredGameClient implements GameClient {
         ...(subject.profileInstanceId === undefined ? {} : { profileInstanceId: subject.profileInstanceId }) });
   }
 
-  #live(signal: AbortSignal): Promise<LiveGameConnection> {
+  async #live(signal: AbortSignal): Promise<LiveGameConnection> {
     this.#checkOpen(signal);
-    return this.#attempt ??= (async () => {
+    // Discovery/authentication belongs to this Host session. Cancelling one
+    // consumer must not cancel its siblings or poison the one shared attempt.
+    const lifetime = this.#lifetime.signal;
+    const attempt = this.#attempt ??= (async () => {
       const connection = await (this.dependencies.discover ?? discoverConnection)(this.selection);
-      this.#checkOpen(signal);
+      this.#checkOpen(lifetime);
       if (this.#subject && !compatibleSubject(this.#subject, connection))
         throw new GameClientError('SUBJECT_CHANGED', '连接授权主体已改变，请重新建立客户端会话。');
-      const game = await (this.dependencies.connect ?? ((value, stop) => NamedPipeGameClient.connect(value, undefined, stop)))(connection, signal);
-      try { this.#checkOpen(signal); this.#bind(game.connection); }
+      const game = await (this.dependencies.connect ?? ((value, stop) => NamedPipeGameClient.connect(value, undefined, stop)))(connection, lifetime);
+      try { this.#checkOpen(lifetime); this.#bind(game.connection); }
       catch (error) { await game.close(); throw error; }
       this.#game = game;
       return game;
     })().finally(() => { this.#attemptSettled = true; });
+    // Keep this consumer's credit until the actual shared IO settles. Its own
+    // cancellation/deadline still prevents a later RPC, including generic reads.
+    try { return await attempt; }
+    finally { this.#checkOpen(signal); }
   }
 
   async #queryLive(query: OperationQueryV3, revision: '4' | '5', signal: AbortSignal): Promise<unknown> {

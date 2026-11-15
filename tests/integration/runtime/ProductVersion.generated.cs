@@ -3,6 +3,6 @@ namespace SkylinesLink.RuntimeProbe
 {
     internal static class RuntimeProductVersion
     {
-        internal const string Value = @"0.1.0-dev.1";
+        internal const string Value = @"0.1.0-dev.2";
     }
 }

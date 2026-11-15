@@ -178,16 +178,38 @@ test('Native先完成的并发CAS同样拒迟到live主体，并关闭未采用�
   } finally { await game.close(); }
 });
 
-test('definite busy转live沿用同一个绝对期限signal，不创建第二等待窗口', async () => {
-  const reader = new FakeReader(); let nativeSignal: AbortSignal | undefined, liveSignal: AbortSignal | undefined;
+test('definite busy转live保同一个请求期限，连接尝试由Host寿命持有', async () => {
+  const reader = new FakeReader(); let nativeSignal: AbortSignal | undefined, connectSignal: AbortSignal | undefined, querySignal: AbortSignal | undefined;
   reader.next = async (_request, waiting) => { nativeSignal = waiting; await immediate(); throw new GameClientError('HISTORY_AUTHORITY_BUSY', 'fixture'); };
   const live = new FakeLive(connection);
+  const call = live.call.bind(live);
+  live.call = async (id, revision, args, waiting) => { querySignal = waiting; return call(id, revision, args, waiting); };
   const game = new DiscoveredGameClient(selection, { historyReader: reader, discover: async () => connection,
-    connect: async (_connection, waiting) => { liveSignal = waiting; return live; } });
+    connect: async (_connection, waiting) => { connectSignal = waiting; return live; } });
   try {
     await game.call('operations.get', '4', historyQuery, signal());
-    assert.equal(nativeSignal, liveSignal); assert.equal(reader.deadlines.length, 1);
+    assert.equal(nativeSignal, querySignal); assert.notEqual(nativeSignal, connectSignal);
+    assert.equal(connectSignal?.aborted, false); assert.equal(reader.deadlines.length, 1);
   } finally { await game.close(); }
+});
+
+test('history期限到达不冒充共享认证结束，真实结束后报超时且不发RPC', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const reader = new FakeReader();
+  reader.next = async () => { throw new GameClientError('HISTORY_AUTHORITY_BUSY', 'fixture'); };
+  const live = new FakeLive(connection);
+  let authenticate!: (game: LiveGameConnection) => void, connectingSignal: AbortSignal | undefined, settled = false;
+  const game = new DiscoveredGameClient(selection, { historyReader: reader, discover: async () => connection,
+    connect: (_connection, waiting) => { connectingSignal = waiting; return new Promise(resolve => { authenticate = resolve; }); } });
+  const pending = game.call('operations.get', '4', historyQuery, signal()).finally(() => { settled = true; });
+  const rejected = assert.rejects(pending, code('HISTORY_TIMEOUT'));
+  try {
+    await immediate(); t.mock.timers.tick(5001); await immediate();
+    assert.equal(settled, false, 'timeout is not shared authentication completion');
+    assert.equal(connectingSignal?.aborted, false); assert.equal(live.calls.length, 0);
+    authenticate(live); await rejected;
+    assert.equal(live.calls.length, 0); assert.equal(reader.deadlines.length, 1);
+  } finally { authenticate?.(live); await game.close(); await Promise.allSettled([pending]); }
 });
 
 test('没有固定reader依赖的standalone组合不从PATH或discovery猜历史入口', async () => {

@@ -6,7 +6,7 @@
 
 This preview publishes the engineering foundation of SkylinesLink. It is intended for contributors reviewing the structure, building the source and running isolated tests. It is not a player installation package. Do not copy development probe output into a normal game profile.
 
-The 0.1.0-dev.1 source update includes one-building inspection, the .NET 10.0.15 LTS build inputs, and NativeAOT verification in the regular Windows workflow. Its downloadable validation summary identifies the exact source and CI run. Earlier game observations remain scoped to their original candidates; packaging and CI do not qualify this source revision for normal gameplay, player installation or silent operation.
+The 0.1.0-dev.2 source update fixes shared connection ownership: cancelling the first query during discovery or authentication no longer cancels other queries or permanently prevents later queries. Host shutdown still waits for the actual connection attempt to finish, and cancelled requests cannot send a late RPC. This update retains one-building inspection, the .NET 10.0.15 LTS build inputs, and NativeAOT verification in the regular Windows workflow. Its downloadable validation summary identifies the exact source and CI run. Earlier game observations remain scoped to their original candidates; packaging and CI do not qualify this source revision for normal gameplay, player installation or silent operation.
 
 ### What the source contains
 
@@ -62,7 +62,7 @@ The [GitHub Releases](https://github.com/Vodkakakaka/SkylinesLink/releases) deve
 To verify a download on Windows:
 
 ```powershell
-Get-FileHash -LiteralPath ./SkylinesLink-0.1.0-dev.1-source.zip -Algorithm SHA256
+Get-FileHash -LiteralPath ./SkylinesLink-0.1.0-dev.2-source.zip -Algorithm SHA256
 ```
 
 Compare the result with `SHA256SUMS.txt`. `pnpm build:source-preview` packages a clean public checkout after checking every tracked path and each archived Git blob. Existing output is refused. It does not filter private files out of an internal tree, compile binaries, upload a release or claim game validation. The source ZIP is not the shared player Core planned for GitHub and Paradox Mods.
@@ -75,7 +75,7 @@ Player installation and updates, the game UI, full city information and actions,
 
 本预览版公开 SkylinesLink 的工程骨架，供贡献者阅读结构、构建源码和运行隔离测试。它不是玩家安装包，请勿将开发探针产物复制到日常游戏配置中。
 
-0.1.0-dev.1 源码更新包含单建筑查询、.NET 10.0.15 LTS 构建输入，以及常规 Windows 工作流中的 NativeAOT 验证。下载附带的验证摘要绑定准确源码和 CI 运行；早先游戏观测仍归属于各自原候选，打包和 CI 不代表本源码修订已经通过正常游玩、玩家安装或静默运行验收。
+0.1.0-dev.2 源码更新修复共享连接的寿命归属：发现或认证期间取消第一个查询，不再连带取消其他查询或使后续查询永久失败。Host关闭仍等待真实连接尝试结束，已取消请求不能随后发送RPC。本次保留单建筑查询、.NET 10.0.15 LTS 构建输入，以及常规 Windows 工作流中的 NativeAOT 验证。下载附带的验证摘要绑定准确源码和 CI 运行；早先游戏观测仍归属于各自原候选，打包和 CI 不代表本源码修订已经通过正常游玩、玩家安装或静默运行验收。
 
 ### 源码包含什么
 
@@ -131,7 +131,7 @@ pnpm test:core
 Windows 下载后可运行：
 
 ```powershell
-Get-FileHash -LiteralPath ./SkylinesLink-0.1.0-dev.1-source.zip -Algorithm SHA256
+Get-FileHash -LiteralPath ./SkylinesLink-0.1.0-dev.2-source.zip -Algorithm SHA256
 ```
 
 将结果与 `SHA256SUMS.txt` 对照。`pnpm build:source-preview` 只打包干净的公开源码树，检查全部跟踪路径与归档内每个 Git blob，拒绝覆盖既有输出。它不会从内部树靠排除文件生成公开包、编译二进制、上传或宣称游戏验收。此源码 ZIP 不是未来 GitHub 与 Paradox Mods 共用的玩家 Core。
