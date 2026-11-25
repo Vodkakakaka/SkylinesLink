@@ -25,19 +25,11 @@ The declared MCP surface has ten tools. Three Host-local tools discover/read pub
 
 The operation and history components exercise identity, durable intent, bounded work, recovery and truthful unknown outcomes. The native construction probes are separate development experiments behind an explicit compile symbol; they are not public building tools or a general construction engine.
 
-### Native experiment update
+### Game validation
 
-The one-building read has passed a bounded native new-city fixture through the normal mod connection and both tested MCP protocol versions. The external client checked exact object/prefab identity, direct-relation limits, wrong object type and stale loading scope. A separate fixture setup selected only its own newly built object with the native UI API; the ordinary UI published the change, both protocol runs read that exact selection, and the setup then restored its still-owned selection and removed its observers. The production read does not select an object or take a tool. Early-stop and cleanup failures remain distinct from a successful read; this is not a full player-interaction or concurrency qualification.
+A bounded native new-city fixture read population, treasury balance, selected simulation speed and the game clock through the ordinary mod connection and both tested MCP protocol versions. Separate building fixtures verified exact-reference and published-selection reads, direct-relation limits, wrong object types and stale loading scopes. The published-selection read uses the native UI event in the current loading scope.
 
-A read-only observation at the existing cancellation boundary also captured seven owned members carrying Disabled, Deleted and Temp. None matched the four observed default Error/Clear/Prepare queries, with or without their filters; no member carried Error. The original guarded destruction then completed. This confirms that the observed default Prepare path cannot retire this Disabled cohort. It does not test an Error-bearing member, prove a different consumer's behavior, or qualify handing private cleanup to the default pipeline.
-
-The latest development source records optional generated members, bounded typed rejection details, and value-based checks of a cancelled preview against the candidate rebuilt before payment. A limited building experiment on game 1.6.4 completed normal preview/cancel/build, relocation, and a different-prefab build at the old site. The runtime-qualified internal source and the later wording-only revision are recorded separately; subsequent source changes are not automatically game-qualified.
-
-These checks do not establish a public construction API, general asset support, dynamic player/AI coexistence or actual service operation. A separate menu-only exit control without the product assemblies also ended with a native access violation. This narrows the observed preconditions; it does not identify the cause or prove that the process-local background policy is unrelated.
-
-A separate default-pipeline preview prerequisite has explicit phase ordering, bounded native-method inspection and one cleanup path for partial initialization. A game run identified the registered patch at an input method. The scoped inspection now distinguishes those unused input methods from the actor's actual definition and cancellation entries. A subsequent run rejected nonempty native inputs before creating the actor or emitting a preview, then released the owned resources. The preview/hold/cancel sequence has not passed. Existing hover previews must not be cleared to satisfy this experiment. Modified tool providers, simultaneous player/AI operation and normal process exit remain unqualified.
-
-The development probe has captured a bounded prefix of registered-patch metadata in the game, distinguishing the original method, patch owner and patch method. It does not execute patch bodies or factories. A separate diagnostic now records all four input-query counts and at most two primitive member rows per small query when the empty-input prerequisite fails. Larger results are not materialized merely to take a prefix. This diagnostic preserves the original rejection and cleanup path, remains within the existing status budgets, and has build and offline validation; its game observation is still pending.
+Development-only building fixtures exercised preview, cancellation, placement, relocation and a different-prefab placement at the original site. These results apply to the builds and input shapes used in those sessions. The default-tool preview and cancellation sequence and simultaneous player/AI operation remain under test.
 
 ### Build and verify
 
@@ -94,19 +86,11 @@ Player installation and updates, the game UI, full city information and actions,
 
 操作与历史组件覆盖身份、持久意图、有界工作、恢复及真实未知结果。原生施工探针是由显式编译符号隔离的开发实验，不是公开建筑工具或通用施工引擎。
 
-### 原生实验更新
+### 实机验证
 
-单建筑读取已在有界原生新城夹具中，通过普通模组连接和两种受测MCP协议验证准确对象／Prefab、直接关系限额、错误对象类型及过期加载作用域。独立夹具只用正常原生UI接口选中自己的新建建筑，等待普通UI发布变化，再由两次协议运行读回准确选择；随后恢复仍属夹具的选择并移除监听。生产读取不会选中对象或接管工具，提前停止和清理失败与读取成功分别记录。该结果不是完整玩家交互或并行验收。
+原生新城夹具通过普通模组连接和两种受测 MCP 协议读回人口、资金、选定模拟速度和游戏时钟。单建筑夹具验证了准确引用和已发布选择读取、直接关系限额、错误对象类型及过期加载范围。已发布选择读取依赖当前加载范围内的原生界面事件。
 
-既有取消边界的只读观测还取得七个自有成员，均带Disabled、Deleted和Temp；无成员带Error，四个被观察的默认Error／Clear／Prepare查询，无论是否忽略filter都不匹配它们。之后原有受保护销毁完成。它确认本批Disabled对象不能靠所观察的默认Prepare路径退役，不证明含Error成员、其他消费者或把私有取消交给默认管线已安全。
-
-默认管线预览前提实验明确了阶段排序、有界原生方法检查和部分初始化的统一收尾。一次实机已把注册补丁定位到具体输入方法，后续源码区分actor未使用的输入入口和实际定义／取消入口。再一轮实机在创建actor或输出预览前因原生输入非空拒绝，随后释放自有资源。预览／保持／取消尚未通过，不能为了满足实验条件清掉已有悬停预览。修改过的工具Provider、玩家与AI同时操作及进程正常退出仍未通过资格验证。
-
-开发探针已在实机取得已注册补丁的有界元数据前缀，区分原方法、归属及补丁方法，不执行补丁或工厂代码。另一诊断在空输入前提失败时记录全部四个query计数，并对小query各取最多两行普通值；不会先物化大集合再截前缀。诊断保留原拒绝与收尾路径，仍在既有状态预算内，已完成构建和离线核验，其实际游戏观测仍待验证。
-
-最新开发源码增加实际可选生成成员、有界的类型化拒绝诊断，以及取消预览与付款前重建候选的逐值比对。游戏1.6.4的有限建筑实验完成了正常预览／取消／建造、迁移和原址不同资产新建。实机合格的内部源码与后续仅说明文字的修订分别记录，不能将源码更新自动视为重新通过实机。
-
-这些结果不代表公开施工接口、通用资产支持、动态玩家并行或实际服务运营已完成。另一个不加载产品程序集的纯菜单退出对照也发生原生访问冲突；这缩小了已观察前提，尚未定位根因，也未证明本进程后台策略与崩溃无关。
+开发夹具验证过预览、取消、建造、迁移和原址不同资产新建。结果以各次受测构建和输入为准。默认工具的完整预览与取消，以及玩家与 AI 同时操作，仍在验证。
 
 ### 构建与验证
 
