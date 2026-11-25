@@ -19,6 +19,25 @@ function Assert-Contained([string]$Root, [string]$Path) {
     return $full
 }
 
+function Assert-NoReparseAncestor([string]$Path) {
+    for ($ancestor = $Path; $ancestor; $ancestor = [IO.Path]::GetDirectoryName($ancestor)) {
+        if ((Test-Path -LiteralPath $ancestor) -and ((Get-Item -LiteralPath $ancestor -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+            throw 'Reparse verification path refused.'
+        }
+    }
+}
+
+function Get-ExportRoot([string]$EvidenceRoot) {
+    $runName = [regex]::Match([IO.Path]::GetFileName($EvidenceRoot), '^fresh-source-([a-f0-9]{32})$')
+    if (!$runName.Success) {
+        throw 'Unexpected evidence directory.'
+    }
+    # pnpm and its dependencies can add long paths under node_modules.
+    # Keep the working snapshot independent of the checkout or evidence depth.
+    $tempRoot = [IO.Path]::GetTempPath()
+    return Assert-Contained $tempRoot (Join-Path $tempRoot ('sl-source-' + $runName.Groups[1].Value))
+}
+
 function Read-OwnedTree([string]$Root) {
     $pending = [Collections.Generic.Stack[string]]::new()
     $pending.Push($Root)
@@ -34,11 +53,16 @@ function Read-OwnedTree([string]$Root) {
     }
 }
 
+$sourceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
+$artifacts = Join-Path $sourceRoot 'artifacts'
 if ($Worker) {
     $SnapshotRoot = [IO.Path]::GetFullPath($SnapshotRoot)
     $EvidenceRoot = [IO.Path]::GetFullPath($EvidenceRoot)
-    $null = Assert-Contained $EvidenceRoot $SnapshotRoot
-    if ((Split-Path $EvidenceRoot -Leaf) -notmatch '^fresh-source-[a-f0-9]{32}$') { throw 'Unexpected evidence directory.' }
+    if ([IO.Path]::GetDirectoryName($EvidenceRoot) -ine $artifacts -or $SnapshotRoot -ine (Get-ExportRoot $EvidenceRoot)) {
+        throw 'Snapshot does not match its evidence directory.'
+    }
+    Assert-NoReparseAncestor $EvidenceRoot
+    Assert-NoReparseAncestor $SnapshotRoot
     Set-Location -LiteralPath $SnapshotRoot
     $cleared = @(Get-ChildItem Env: | Where-Object Name -like 'CSII_*' | Select-Object -ExpandProperty Name)
     foreach ($name in $cleared) { [Environment]::SetEnvironmentVariable($name, $null, 'Process') }
@@ -78,23 +102,18 @@ if ($Worker) {
     exit 0
 }
 
-$sourceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
-$artifacts = Join-Path $sourceRoot 'artifacts'
 $runRoot = Join-Path $artifacts ('fresh-source-' + [Guid]::NewGuid().ToString('N'))
-$exportRoot = Join-Path $runRoot 'source'
 $null = Assert-Contained $artifacts $runRoot
-$null = Assert-Contained $runRoot $exportRoot
-$ancestor = $artifacts
-while ($ancestor) {
-    if ((Test-Path -LiteralPath $ancestor) -and ((Get-Item -LiteralPath $ancestor -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Reparse output ancestor refused.' }
-    $ancestor = Split-Path $ancestor -Parent
-}
-New-Item -ItemType Directory -Path $exportRoot | Out-Null
+$exportRoot = Get-ExportRoot $runRoot
+Assert-NoReparseAncestor $runRoot
+Assert-NoReparseAncestor $exportRoot
+New-Item -ItemType Directory -Path $runRoot | Out-Null
 $rootFiles = @('.editorconfig', '.gitattributes', '.gitignore', '.node-version', '.nvmrc', 'Directory.Build.props', 'Directory.Build.targets', 'global.json', 'NuGet.Config', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'SkylinesLink.slnx')
 $sourceExtensions = @('.cs', '.csproj', '.json', '.mjs', '.ts', '.ps1', '.md', '.template', '.yaml', '.props', '.targets', '.slnx')
 $copied = [Collections.Generic.List[object]]::new()
-$report = [ordered]@{ kind = 'fresh-source-export'; gitCheckout = $false; status = 'incomplete'; gameStarted = $false; deployed = $false; filesystemSandbox = $false; dependencyMode = 'existing toolchain and locked package caches'; sourceFiles = 0; childExitCode = $null; cleanup = 'pending' }
+$report = [ordered]@{ kind = 'fresh-source-export'; gitCheckout = $false; status = 'incomplete'; gameStarted = $false; deployed = $false; filesystemSandbox = $false; dependencyMode = 'existing toolchain and locked package caches'; exportLocation = 'system-temp'; sourceFiles = 0; childExitCode = $null; cleanup = 'pending' }
 Write-JsonFile (Join-Path $runRoot 'source-manifest.json') @()
+New-Item -ItemType Directory -Path $exportRoot | Out-Null
 try {
     Push-Location -LiteralPath $sourceRoot
     try {
@@ -154,7 +173,7 @@ try {
 }
 catch { $report['failureType'] = $_.Exception.GetType().Name; $report.status = 'failed' }
 finally {
-    if ((Get-Item -LiteralPath $exportRoot -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Owned export root was replaced by a reparse point; refusing traversal.' }
+    Assert-NoReparseAncestor $exportRoot
     $entries = @(Read-OwnedTree $exportRoot)
     $built = @($entries | Where-Object { !$_.PSIsContainer -or ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) } | ForEach-Object {
         $link = [bool]($_.Attributes -band [IO.FileAttributes]::ReparsePoint)
@@ -163,11 +182,11 @@ finally {
     Write-JsonFile (Join-Path $runRoot 'build-manifest.json') $built
     # 先移除链接本身，再删普通文件和空目录；不递归越过 pnpm/store 链接。
     try {
-        $null = Assert-Contained $runRoot $exportRoot
         foreach ($entry in @($entries | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint })) { Remove-Item -LiteralPath $entry.FullName -ErrorAction Stop }
         foreach ($entry in @($entries | Where-Object { !$_.PSIsContainer -and !($_.Attributes -band [IO.FileAttributes]::ReparsePoint) })) { Remove-Item -LiteralPath $entry.FullName -ErrorAction Stop }
         foreach ($entry in @($entries | Where-Object { $_.PSIsContainer -and !($_.Attributes -band [IO.FileAttributes]::ReparsePoint) } | Sort-Object { $_.FullName.Length } -Descending)) { Remove-Item -LiteralPath $entry.FullName -ErrorAction Stop }
         Remove-Item -LiteralPath $exportRoot -ErrorAction Stop
+        if (Test-Path -LiteralPath $exportRoot) { throw 'Owned export directory still exists.' }
         $report.cleanup = 'source-and-build-output-removed'
     }
     catch { $report.cleanup = 'owned-export-retained'; $report['cleanupFailureType'] = $_.Exception.GetType().Name }
