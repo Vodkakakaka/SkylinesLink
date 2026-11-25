@@ -372,7 +372,7 @@ namespace SkylinesLink.Mod.Native
 
         // Shared fixed-fixture input check: it does not run the native lane
         // system or infer that every orphan node has no output.
-        internal static void RequireStandaloneUtilityDefaults(EntityManager entities, Entity prefab)
+        internal static DefaultNetLane RequireStandaloneUtilityDefaults(EntityManager entities, Entity prefab)
         {
             RequirePrefab(entities, prefab);
             Require(entities.HasBuffer<DefaultNetLane>(prefab), "PREVIEW_LANE_DEFAULT_COUNT_CHANGED");
@@ -381,6 +381,7 @@ namespace SkylinesLink.Mod.Native
             var rows = new DefaultNetLane[4];
             for (int i = 0; i < rows.Length; i++) rows[i] = buffer[i];
             RequireUtilityDefaultRows(entities, rows);
+            return rows[2];
         }
 
         private static void RequireUtilityDefaultRows(EntityManager entities, DefaultNetLane[] rows)

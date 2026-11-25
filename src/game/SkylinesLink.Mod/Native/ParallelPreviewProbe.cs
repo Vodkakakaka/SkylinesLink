@@ -29,6 +29,7 @@ namespace SkylinesLink.Mod.Native
     internal sealed class ParallelPreviewProbe
     {
         private const int FrameLimit = 180, HoldFrames = 3, MaximumRows = 8;
+        private const int MaximumNativeTypes = 144; // 141 types with secondary object generation and references.
         private enum Stage { NotStarted, Emit, DefinitionsQueued, AwaitPreview, Hold, Clear, AwaitAbsence, Yield, Released }
         private readonly World source;
         private readonly UpdateSystem updates;
@@ -61,7 +62,7 @@ namespace SkylinesLink.Mod.Native
         private string? patchFailureType;
         private int? moneyBefore, moneyBeforeClear, moneyAfter;
         private uint applyVersion, clearVersion, validationVersion, componentsVersion;
-        private Entity root, node;
+        private Entity root, node, nodeUtilityChildPrefab;
         private Entity[] definitionIds = Array.Empty<Entity>(), members = Array.Empty<Entity>();
         private Entity[] rootChildren = Array.Empty<Entity>(), nodeChildren = Array.Empty<Entity>();
         private JObject? inputReceipt, graphReceipt, nonemptyInputObservation;
@@ -170,8 +171,8 @@ namespace SkylinesLink.Mod.Native
                 && expected.CourseCreation.m_Owner == Entity.Null, "PARALLEL_PREVIEW_NEW_ONLY_REQUIRED");
             rootChildren = ReadDeclaredChildren(expected.RootCreation.m_Prefab, 4);
             nodeChildren = ReadDeclaredChildren(expected.CourseCreation.m_Prefab, 1);
-            maximumMembers = 2 + rootChildren.Length + nodeChildren.Length;
-            RequirePrefabGenerationClosure();
+            nodeUtilityChildPrefab = ReadPrefabGenerationClosure();
+            maximumMembers = 3 + rootChildren.Length + nodeChildren.Length;
             point = site.RequireCurrent(source, input.Root, requireScope, out _);
             patch = ObservePipeline(); Require(patch.Qualified, patch.Reason);
             Require(patch.HarmonyMvid == definitionPatch.HarmonyMvid, "EXTERNAL_PREVIEW_PATCH_PROVIDER_CHANGED");
@@ -232,7 +233,7 @@ namespace SkylinesLink.Mod.Native
                         moneyBeforeClear = ReadMoney();
                         clearVersion = Existing<ToolClearSystem>().CheckedStateRef.LastSystemVersion;
                         RequirePipeline();
-                        var result = actor.ClearDefinitions(definitions, inputDeps);
+                        var result = actor.ClearDefinitions(definitionIds[0], definitionIds[1], inputDeps);
                         stage = Stage.AwaitAbsence;
                         return result;
                     }
@@ -357,7 +358,7 @@ namespace SkylinesLink.Mod.Native
         private JObject ReadGraph(bool requireStable)
         {
             int count = visibleTemps.CalculateEntityCount();
-            Require(count == maximumMembers && count <= 2 + 2 * MaximumRows, "EXTERNAL_PREVIEW_MEMBER_BOUND_CHANGED");
+            Require(count == maximumMembers && count <= 3 + 2 * MaximumRows, "EXTERNAL_PREVIEW_MEMBER_BOUND_CHANGED");
             using var ids = visibleTemps.ToEntityArray(Allocator.Temp);
             Require(ids.Length == count, "EXTERNAL_PREVIEW_MEMBER_SET_CHANGED");
             var actual = ids.ToArray();
@@ -385,12 +386,13 @@ namespace SkylinesLink.Mod.Native
                 && entities.GetComponentData<PrefabRef>(foundRoot).m_Prefab == expected!.RootCreation.m_Prefab
                 && entities.GetComponentData<PrefabRef>(foundNode).m_Prefab == expected.CourseCreation.m_Prefab
                 && !entities.HasComponent<Owner>(foundRoot) && entities.HasComponent<Owner>(foundNode)
+                && !entities.HasComponent<Secondary>(foundRoot) && !entities.HasComponent<Secondary>(foundNode)
                 && entities.GetComponentData<Owner>(foundNode).m_Owner == foundRoot, "EXTERNAL_PREVIEW_PARENT_ROLES_CHANGED");
             var nets = entities.GetBuffer<Game.Net.SubNet>(foundRoot, true);
             Require(nets.Length == 1 && nets[0].m_SubNet == foundNode, "EXTERNAL_PREVIEW_SUBNET_CHANGED");
             RequireEmptyBuffer<Game.Net.SubNet>(foundNode);
-            RequireChildren(foundRoot, rootChildren, actual);
-            RequireChildren(foundNode, nodeChildren, actual);
+            RequireChildren(foundRoot, rootChildren, actual, Entity.Null);
+            RequireChildren(foundNode, nodeChildren, actual, nodeUtilityChildPrefab);
             var rows = new JArray();
             int totalCost = 0;
             foreach (Entity entity in actual)
@@ -415,7 +417,8 @@ namespace SkylinesLink.Mod.Native
                 Require(math.all(math.isfinite(position)) && math.all(math.isfinite(rotation.value)), "EXTERNAL_PREVIEW_POSE_INVALID");
                 rows.Add(new JObject {
                     ["entity"] = Id(entity), ["prefab"] = Id(entities.GetComponentData<PrefabRef>(entity).m_Prefab),
-                    ["owner"] = Id(owner), ["flags"] = (uint)temp.m_Flags, ["cost"] = temp.m_Cost, ["value"] = temp.m_Value,
+                    ["owner"] = Id(owner), ["secondary"] = entities.HasComponent<Secondary>(entity),
+                    ["flags"] = (uint)temp.m_Flags, ["cost"] = temp.m_Cost, ["value"] = temp.m_Value,
                     ["position"] = new JArray(position.x, position.y, position.z),
                     ["rotation"] = new JArray(rotation.value.x, rotation.value.y, rotation.value.z, rotation.value.w)
                 });
@@ -428,22 +431,31 @@ namespace SkylinesLink.Mod.Native
             return receipt;
         }
 
-        private void RequireChildren(Entity parent, Entity[] prefabs, Entity[] all)
+        private void RequireChildren(Entity parent, Entity[] prefabs, Entity[] all, Entity secondaryPrefab)
         {
-            var entries = source.EntityManager.GetBuffer<SubObject>(parent, true);
-            Require(entries.Length == prefabs.Length, "EXTERNAL_PREVIEW_CHILD_COUNT_CHANGED");
+            var entities = source.EntityManager;
+            var entries = entities.GetBuffer<SubObject>(parent, true);
+            bool needsSecondary = secondaryPrefab != Entity.Null;
+            Require(entries.Length == prefabs.Length + (needsSecondary ? 1 : 0), "EXTERNAL_PREVIEW_CHILD_COUNT_CHANGED");
             var remaining = new List<Entity>(prefabs);
             var seen = new HashSet<Entity>();
             foreach (SubObject entry in entries)
             {
                 Entity child = entry.m_SubObject;
-                Require(Array.IndexOf(all, child) >= 0 && seen.Add(child) && source.EntityManager.HasComponent<Owner>(child)
-                    && source.EntityManager.GetComponentData<Owner>(child).m_Owner == parent,
+                Require(Array.IndexOf(all, child) >= 0 && seen.Add(child) && entities.HasComponent<Owner>(child)
+                    && entities.GetComponentData<Owner>(child).m_Owner == parent,
                     "EXTERNAL_PREVIEW_CHILD_REFERENCE_CHANGED");
-                Require(remaining.Remove(source.EntityManager.GetComponentData<PrefabRef>(child).m_Prefab),
-                    "EXTERNAL_PREVIEW_CHILD_PREFAB_CHANGED");
+                Entity prefab = entities.GetComponentData<PrefabRef>(child).m_Prefab;
+                if (entities.HasComponent<Secondary>(child))
+                {
+                    var temp = entities.GetComponentData<Temp>(child);
+                    Require(needsSecondary && prefab == secondaryPrefab && temp.m_Cost == 0 && temp.m_Value == 0,
+                        "EXTERNAL_PREVIEW_UTILITY_CHILD_CHANGED");
+                    needsSecondary = false;
+                }
+                else Require(remaining.Remove(prefab), "EXTERNAL_PREVIEW_CHILD_PREFAB_CHANGED");
             }
-            Require(remaining.Count == 0, "EXTERNAL_PREVIEW_DECLARED_CHILD_MISSING");
+            Require(remaining.Count == 0 && !needsSecondary, "EXTERNAL_PREVIEW_DECLARED_CHILD_MISSING");
         }
 
         private Entity[] ReadDeclaredChildren(Entity prefab, int expectedCount)
@@ -600,10 +612,10 @@ namespace SkylinesLink.Mod.Native
                 && config.leftHandTraffic == leftHandTraffic, "EXTERNAL_PREVIEW_PREFAB_INPUT_CHANGED");
             RequireSameRows(rootChildren, ReadDeclaredChildren(rootPrefab, 4));
             RequireSameRows(nodeChildren, ReadDeclaredChildren(expected.CourseCreation.m_Prefab, 1));
-            RequirePrefabGenerationClosure();
+            Require(ReadPrefabGenerationClosure() == nodeUtilityChildPrefab, "EXTERNAL_PREVIEW_UTILITY_PREFAB_CHANGED");
         }
 
-        private void RequirePrefabGenerationClosure()
+        private Entity ReadPrefabGenerationClosure()
         {
             prefabExpansionQualified = false;
             var entities = source.EntityManager;
@@ -616,12 +628,16 @@ namespace SkylinesLink.Mod.Native
             RequireEmptyBuffer<Game.Prefabs.SubArea>(rootPrefab);
             foreach (Entity prefab in rootChildren) RequireLeafDeclaration(prefab);
             foreach (Entity prefab in nodeChildren) RequireLeafDeclaration(prefab);
-            PreviewLaneProducer.RequireStandaloneUtilityDefaults(entities, nodePrefab);
-            // This detached course has one owner and no connected edges. The
-            // qualified utility rows therefore have no second connection per
-            // order; object-declared lanes and recursive children are excluded.
-            // The real default output still must satisfy the complete graph.
+            var undergroundLane = PreviewLaneProducer.RequireStandaloneUtilityDefaults(entities, nodePrefab);
+            // The detached node has no edges or generated lanes. Only the
+            // standalone utility row without FindAnchor can add a secondary object.
+            Entity utilityChild = entities.GetComponentData<UtilityLaneData>(undergroundLane.m_Lane).m_NodeObjectPrefab;
+            Require(utilityChild != Entity.Null && utilityChild != nodeChildren[0]
+                && entities.HasComponent<ObjectData>(utilityChild) && entities.HasComponent<ObjectGeometryData>(utilityChild),
+                "EXTERNAL_PREVIEW_UTILITY_PREFAB_UNQUALIFIED");
+            RequireLeafDeclaration(utilityChild);
             prefabExpansionQualified = true;
+            return utilityChild;
         }
 
         private void RequireLeafDeclaration(Entity prefab)
@@ -661,7 +677,7 @@ namespace SkylinesLink.Mod.Native
                 || !entities.HasBuffer<SubObject>(candidateNode) || !entities.HasBuffer<Game.Net.SubNet>(candidateRoot)
                 || !entities.HasComponent<Owner>(candidateNode)) return false;
             return entities.GetBuffer<SubObject>(candidateRoot, true).Length == rootChildren.Length
-                && entities.GetBuffer<SubObject>(candidateNode, true).Length == nodeChildren.Length
+                && entities.GetBuffer<SubObject>(candidateNode, true).Length == nodeChildren.Length + 1
                 && entities.GetBuffer<Game.Net.SubNet>(candidateRoot, true).Length == 1
                 && entities.GetComponentData<Owner>(candidateNode).m_Owner == candidateRoot;
         }
@@ -806,6 +822,7 @@ namespace SkylinesLink.Mod.Native
                 "Game.Input.UIInputOverrideAction", "Game.Input.InputActivator", "Game.Input.DisplayNameOverride",
                 "Game.Input.ProxyAction",
                 "Game.Objects.SubObjectSystem", "Game.Objects.SubObjectReferencesSystem", "Game.Net.SubNetReferencesSystem",
+                "Game.Objects.SecondaryObjectSystem", "Game.Objects.SecondaryObjectReferencesSystem",
                 "Game.Buildings.InitializeSystem", "Game.Common.PrepareCleanUpSystem", "Game.Common.CleanUpSystem" })
             {
                 Type? type = typeof(ToolSystem).Assembly.GetType(name, false);
@@ -817,10 +834,10 @@ namespace SkylinesLink.Mod.Native
                 foreach (Type nested in pending.Dequeue().GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic))
                     if (types.Add(nested))
                     {
-                        Require(types.Count <= 128, "EXTERNAL_PREVIEW_TYPE_BOUND");
+                        Require(types.Count <= MaximumNativeTypes, "EXTERNAL_PREVIEW_TYPE_BOUND");
                         pending.Enqueue(nested);
                     }
-            Require(types.Count > 0 && types.Count <= 128, "EXTERNAL_PREVIEW_TYPE_BOUND");
+            Require(types.Count > 0 && types.Count <= MaximumNativeTypes, "EXTERNAL_PREVIEW_TYPE_BOUND");
             var ordered = new List<Type>(types);
             ordered.Sort((left, right) => StringComparer.Ordinal.Compare(left.FullName, right.FullName));
             var result = new DefinitionProducerPatchProbe();

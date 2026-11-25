@@ -29,7 +29,7 @@ The operation and history components exercise identity, durable intent, bounded 
 
 A bounded native new-city fixture read population, treasury balance, selected simulation speed and the game clock through the ordinary mod connection and both tested MCP protocol versions. Separate building fixtures verified exact-reference and published-selection reads, direct-relation limits, wrong object types and stale loading scopes. The published-selection read uses the native UI event in the current loading scope.
 
-Development-only building fixtures exercised preview, cancellation, placement, relocation and a different-prefab placement at the original site. These results apply to the builds and input shapes used in those sessions. The default-tool preview and cancellation sequence and simultaneous player/AI operation remain under test.
+Development-only building fixtures exercised preview, cancellation, placement, relocation and a different-prefab placement at the original site. A separate default-tool fixture held and cancelled a complete wind turbine preview without charging the city. Two definitions in an independent scope stayed outside the default input queries during the hold. The results apply to the tested builds and inputs. Dynamic player takeover and simultaneous construction remain under test.
 
 ### Build and verify
 
@@ -90,7 +90,7 @@ Player installation and updates, the game UI, full city information and actions,
 
 原生新城夹具通过普通模组连接和两种受测 MCP 协议读回人口、资金、选定模拟速度和游戏时钟。单建筑夹具验证了准确引用和已发布选择读取、直接关系限额、错误对象类型及过期加载范围。已发布选择读取依赖当前加载范围内的原生界面事件。
 
-开发夹具验证过预览、取消、建造、迁移和原址不同资产新建。结果以各次受测构建和输入为准。默认工具的完整预览与取消，以及玩家与 AI 同时操作，仍在验证。
+开发夹具验证过预览、取消、建造、迁移和原址不同资产新建。独立的默认工具夹具保持并取消了完整的风机预览，余额保持原值。同时放入的两条独立定义只由所属查询读取。结果以各次受测构建和输入为准，动态玩家接管及并行施工仍待验收。
 
 ### 构建与验证
 

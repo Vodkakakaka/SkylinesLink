@@ -21,6 +21,7 @@ namespace SkylinesLink.Mod.Native
         private ParallelPreviewProbe? owner;
         private PrefabBase? managedPrefab;
         private NativeList<ControlPoint> points;
+        private EntityQuery cancellationDefinitions;
         private bool allocationAttempted, allocationReturned;
         private readonly IProxyAction?[] ownedActions = new IProxyAction?[5];
         private readonly bool[] inputRead = new bool[5], disposeAttempted = new bool[5], disposeReturned = new bool[5];
@@ -68,6 +69,7 @@ namespace SkylinesLink.Mod.Native
                 base.OnCreate();
                 baseCreationReturned = true;
                 CaptureInputs();
+                cancellationDefinitions = GetDefinitionQuery();
             }
             catch
             {
@@ -140,17 +142,31 @@ namespace SkylinesLink.Mod.Native
             return job;
         }
 
-        internal JobHandle ClearDefinitions(EntityQuery exactDefinitions, JobHandle inputDeps)
+        internal JobHandle ClearDefinitions(Entity rootDefinition, Entity courseDefinition, JobHandle inputDeps)
         {
             RequireMainThread();
             if (ClearStarted) throw new Rejection("EXTERNAL_TOOL_CLEAR_REPEATED");
+            RequireCancellationPair(rootDefinition, courseDefinition);
             applyMode = ApplyMode.Clear;
             ClearStarted = true;
-            var job = DestroyDefinitions(exactDefinitions, m_ToolOutputBarrier, inputDeps);
+            var job = DestroyDefinitions(cancellationDefinitions, m_ToolOutputBarrier, inputDeps);
             ClearReturned = true;
             job.Complete();
             ClearJoined = true;
             return job;
+        }
+
+        private void RequireCancellationPair(Entity rootDefinition, Entity courseDefinition)
+        {
+            if (rootDefinition == Entity.Null || courseDefinition == Entity.Null || rootDefinition == courseDefinition
+                || cancellationDefinitions.CalculateEntityCount() != 2)
+                throw new Rejection("EXTERNAL_TOOL_CLEAR_DEFINITION_SET_CHANGED");
+
+            using var members = cancellationDefinitions.ToEntityArray(Allocator.Temp);
+            if (members.Length != 2
+                || !(members[0] == rootDefinition && members[1] == courseDefinition
+                    || members[0] == courseDefinition && members[1] == rootDefinition))
+                throw new Rejection("EXTERNAL_TOOL_CLEAR_DEFINITION_SET_CHANGED");
         }
 
         internal void Hold() => applyMode = ApplyMode.None;
