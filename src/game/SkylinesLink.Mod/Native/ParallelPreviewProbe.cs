@@ -84,6 +84,9 @@ namespace SkylinesLink.Mod.Native
             && (actorOwner?.Instance.InputStatesReleased ?? true)
             && (group?.OwnershipConfirmed ?? true);
         internal bool WorkersFinished => !NativeStateUncertain && (stage == Stage.Released || failureCode != null);
+        private bool OwnsActiveTool => actorOwner != null && ReferenceEquals(tools?.activeTool, actorOwner.Instance);
+        private bool CanClearOwnedPreview => definitionsConfirmed && previewConfirmed && !nativeResultUnresolved
+            && !NativeStateUncertain && OwnsActiveTool;
         internal bool Passed => ResourcesReleased && failureCode == null && definitionsConfirmed && previewConfirmed
             && holdConfirmed && cancellationConfirmed && clearAdvanced;
         internal string? FailureCode => failureCode;
@@ -108,15 +111,11 @@ namespace SkylinesLink.Mod.Native
                 requireScope();
                 if (stage == Stage.NotStarted) Start();
                 if (actorOwner == null) return;
-                if (stage != Stage.Yield && stage != Stage.Released && actorActivated
-                    && !ReferenceEquals(tools!.activeTool, actorOwner.Instance))
-                {
-                    nativeResultUnresolved |= !cancellationConfirmed;
-                    throw new Rejection("PARALLEL_PREVIEW_TOOL_TAKEN_OVER");
-                }
+                if (stage != Stage.Yield && stage != Stage.Released && actorActivated && !OwnsActiveTool)
+                    RefuseAfterToolLoss();
                 if (stage != Stage.Yield && UnityEngine.Time.frameCount - startedFrame > FrameLimit)
                     throw new Rejection("PARALLEL_PREVIEW_FRAME_LIMIT");
-                if (stopRequested && stage == Stage.Hold && previewConfirmed) stage = Stage.Clear;
+                if (stopRequested && stage == Stage.Hold && CanClearOwnedPreview) stage = Stage.Clear;
                 if (stage == Stage.Yield) RetireActor();
             }
             catch (Exception error) { RecordFailure(error); }
@@ -127,7 +126,7 @@ namespace SkylinesLink.Mod.Native
             stopRequested = true;
             BeginCleanupDeadline();
             // Stopping does not invent permission to clear an unproved cohort.
-            if (stage == Stage.Hold && previewConfirmed) stage = Stage.Clear;
+            if (stage == Stage.Hold && CanClearOwnedPreview) stage = Stage.Clear;
             // Start may have acquired a group and queries before actor creation.
             // Advance owns their cleanup even while the stage is NotStarted.
         }
@@ -198,10 +197,11 @@ namespace SkylinesLink.Mod.Native
 
         internal JobHandle OnNativePhase(ExternalPreviewTool actor, JobHandle inputDeps)
         {
-            if (stage == Stage.Released) return inputDeps;
+            if (stage == Stage.Released || stage == Stage.Yield || NativeStateUncertain) return inputDeps;
             requireScope();
-            Require(actorOwner != null && ReferenceEquals(actorOwner.Instance, actor) && ReferenceEquals(tools!.activeTool, actor)
-                && actor.World == source, "EXTERNAL_TOOL_PHASE_OWNER_CHANGED");
+            Require(actorOwner != null && ReferenceEquals(actorOwner.Instance, actor) && actor.World == source,
+                "EXTERNAL_TOOL_PHASE_OWNER_CHANGED");
+            if (!OwnsActiveTool) RefuseAfterToolLoss();
             RequireSelection();
             switch (updates.currentPhase)
             {
@@ -226,7 +226,7 @@ namespace SkylinesLink.Mod.Native
                     }
                     if (stage == Stage.Clear)
                     {
-                        Require(previewConfirmed && definitionsConfirmed && !nativeResultUnresolved, "EXTERNAL_CLEAR_COHORT_UNPROVED");
+                        Require(CanClearOwnedPreview, "EXTERNAL_CLEAR_COHORT_UNPROVED");
                         ReadGraph(requireStable: true);
                         Require(ReadMoney() == moneyBefore, "EXTERNAL_PREVIEW_FUNDS_CHANGED");
                         RequireDefinitionSet(requireUpdated: false);
@@ -473,6 +473,13 @@ namespace SkylinesLink.Mod.Native
             return result;
         }
 
+        private void RefuseAfterToolLoss()
+        {
+            nativeResultUnresolved |= !cancellationConfirmed;
+            stage = Stage.Yield;
+            throw new Rejection("PARALLEL_PREVIEW_TOOL_TAKEN_OVER");
+        }
+
         private void RetireActor()
         {
             if (NativeStateUncertain || actorOwner == null || group == null) return;
@@ -532,7 +539,7 @@ namespace SkylinesLink.Mod.Native
             stopRequested = true;
             BeginCleanupDeadline();
             // A previously proved held cohort may still use normal cancellation.
-            if (stage == Stage.Hold && previewConfirmed && !NativeStateUncertain) stage = Stage.Clear;
+            if (stage == Stage.Hold && CanClearOwnedPreview) stage = Stage.Clear;
             else if (stage == Stage.Clear)
             {
                 // Failure while rechecking the cancellation closure does not
