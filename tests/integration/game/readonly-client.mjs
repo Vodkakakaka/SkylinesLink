@@ -11,12 +11,29 @@ import { canonicalEnvironment, isDeploymentIdentifier } from '../../../src/host/
 const root = resolve(import.meta.dirname, '../../..');
 const require = createRequire(join(root, 'src/host/package.json'));
 const marker = 'SKYLINESLINK_READONLY_EXIT ';
-const tools = ['skylines_context', 'skylines_operation_get'];
+const contextTool = 'skylines_context';
+const operationTool = 'skylines_operation_get';
+const probedTools = [contextTool, operationTool];
 let stage = 'arguments';
 const help = '用法：node tests/integration/game/readonly-client.mjs --target <私有目标配置绝对路径>\n只验证已启动且已 Ready 的指定菜单实例；不启动游戏，不修改客户端配置。参见同目录 README.md。\n';
 class ProbeFailure extends Error { constructor(code) { super(code); this.code = code; } }
 function check(value, code) { if (!value) throw new ProbeFailure(code); }
 function equal(actual, expected, code) { check(isDeepStrictEqual(actual, expected), code); }
+export function requireDeclaredCatalog(actual, declarations) {
+  const expected = new Map(declarations.map(tool => [tool.toolName, tool]));
+  equal(actual.map(tool => tool.name).sort(), [...expected.keys()].sort(), 'TOOL_CATALOG_MISMATCH');
+  for (const tool of actual) {
+    const readOnly = expected.get(tool.name).effect === 'read';
+    check(tool.annotations?.readOnlyHint === readOnly && tool.annotations?.destructiveHint === !readOnly, 'TOOL_EFFECT_MISMATCH');
+  }
+}
+
+function readOutputContract(declarations, name) {
+  const tool = declarations.find(entry => entry.toolName === name && entry.effect === 'read');
+  check(tool !== undefined, 'PROBE_READ_TOOL_UNAVAILABLE');
+  return tool.outputId;
+}
+
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -63,11 +80,12 @@ async function targetFrom(path, expectedHash) {
 
 // Compile the existing production read boundary and generated validators in memory.
 // This is test glue, not a second discovery/schema implementation or a product build.
-async function contractHelpers() {
+export async function contractHelpers() {
   const { build } = createRequire(join(root, 'package.json'))('esbuild');
   const result = await build({ stdin: { contents: `
 export { readConnectionDocument } from './src/host/src/game-client/discovery.ts';
 export { requireContract, schemaIds } from './contracts/ts/index.ts';
+export { productCapabilities } from './src/host/src/catalog/catalog.ts';
 export { productVersion, internalContractVersion } from './src/host/src/shared/identity.ts';`, resolveDir: root },
     bundle: true, platform: 'node', format: 'esm', target: 'node26', write: false, logLevel: 'silent' });
   return import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`);
@@ -166,6 +184,8 @@ async function run(path) {
   check(process.platform === 'win32', 'WINDOWS_REQUIRED');
   const { target, digest } = await targetFrom(path);
   const helpers = await contractHelpers();
+  const contextOutputId = readOutputContract(helpers.productCapabilities, contextTool);
+  const operationOutputId = readOutputContract(helpers.productCapabilities, operationTool);
   stage = 'preflight';
   const launcherHash = hash(await boundedFile(target.productLauncherPath, 16 * 1024 * 1024));
   const pinnedActivation = await verifyActivation(target, helpers);
@@ -189,8 +209,7 @@ async function run(path) {
     check(Number.isSafeInteger(item.relayPid) && item.relayPid !== target.expectedGamePID, 'RELAY_PROCESS_EVIDENCE');
     equal(client.getNegotiatedProtocolVersion(), modern ? '2026-07-28' : '2025-11-25', 'PROTOCOL_MISMATCH');
     const catalog = (await client.listTools()).tools;
-    equal(catalog.map(tool => tool.name).sort(), tools, 'TOOL_CATALOG_MISMATCH');
-    check(catalog.every(tool => tool.annotations?.readOnlyHint === true && tool.annotations?.destructiveHint === false), 'TOOL_EFFECT_MISMATCH');
+    requireDeclaredCatalog(catalog, helpers.productCapabilities);
     return item;
   };
   const call = (item, name, args) => item.client.callTool({ name, arguments: args }, undefined, { timeout: 5000 });
@@ -201,27 +220,27 @@ async function run(path) {
       stage = item.modern ? 'context-2026' : 'context-2025';
       await verifyActivation(target, helpers, pinnedActivation);
       await verifyTarget(target, helpers, pinned);
-      const result = await call(item, 'skylines_context', {});
+      const result = await call(item, contextTool, {});
       check(result.isError !== true, 'CONTEXT_READ_FAILED');
-      const context = sameRepresentation(result); helpers.requireContract(helpers.schemaIds.Context, context);
+      const context = sameRepresentation(result); helpers.requireContract(contextOutputId, context);
       check(context.instanceId === pinned.instanceId && context.productVersion === helpers.productVersion
         && context.contractVersion === helpers.internalContractVersion && context.gameState === 'menu' && context.world === null, 'CONTEXT_NOT_PINNED_MENU');
       for (const operationId of [`readonly-absent-${randomUUID()}`, `只读不存在-🛣️-${randomUUID()}`]) {
         stage = item.modern ? 'lookup-2026' : 'lookup-2025';
-        const lookup = await call(item, 'skylines_operation_get', { selector: { kind: 'operationId', operationId } });
+        const lookup = await call(item, operationTool, { selector: { kind: 'operationId', operationId } });
         check(lookup.isError !== true, 'LOOKUP_READ_FAILED');
-        const content = sameRepresentation(lookup); helpers.requireContract(helpers.schemaIds.OperationLookupV3, content);
+        const content = sameRepresentation(lookup); helpers.requireContract(operationOutputId, content);
         equal(content, { selector: { kind: 'operationId', operationId }, result: { kind: 'live', instanceId: pinned.instanceId,
           lookup: { kind: 'absent' } } }, 'HEALTHY_ABSENCE_NOT_PROVEN');
       }
       const unknownSelector = { kind: 'submissionKey', submissionKey: { writeContextId: `未签发-${randomUUID()}`, requestId: '只读查询-🧭' } };
-      const unknown = await call(item, 'skylines_operation_get', { selector: unknownSelector });
+      const unknown = await call(item, operationTool, { selector: unknownSelector });
       check(unknown.isError !== true, 'UNKNOWN_KEY_READ_FAILED');
-      const unknownContent = sameRepresentation(unknown); helpers.requireContract(helpers.schemaIds.OperationLookupV3, unknownContent);
+      const unknownContent = sameRepresentation(unknown); helpers.requireContract(operationOutputId, unknownContent);
       equal(unknownContent, { selector: unknownSelector, result: { kind: 'live', instanceId: pinned.instanceId,
         lookup: { kind: 'unavailable', reason: 'CONTEXT_UNKNOWN' } } }, 'UNKNOWN_CONTEXT_NOT_ABSENT');
       stage = item.modern ? 'invalid-2026' : 'invalid-2025';
-      for (const [name, args] of [['skylines_context', { extra: true }], ['skylines_operation_get', { operationId: 'old-v1-shape' }]]) {
+      for (const [name, args] of [[contextTool, { extra: true }], [operationTool, { operationId: 'old-v1-shape' }]]) {
         const rejected = await call(item, name, args);
         check(rejected.isError === true, 'INVALID_ARGUMENT_ACCEPTED');
       }
@@ -270,18 +289,20 @@ async function run(path) {
   }
   process.stdout.write(JSON.stringify({ kind: 'readonly-game-validation', passed: true, gamePID: target.expectedGamePID,
     instanceId: pinned.instanceId, gameState: 'menu', world: null, productLauncherSha256: launcherHash,
-    protocols: ['2025-11-25', '2026-07-28'], tools, children: closed, resourceSummaryVerified,
+    protocols: ['2025-11-25', '2026-07-28'], tools: probedTools, children: closed, resourceSummaryVerified,
     ordinaryUserVerified: false, actualCodexOrDshVerified: false, nativeLoadVerified: false }) + '\n');
 }
 
-try {
-  const args = process.argv.slice(2);
-  if (args.length === 1 && args[0] === '--help') process.stdout.write(help);
-  else if (args.length === 2 && args[0] === '--target') await run(args[1]);
-  else if (args.length === 3 && args[0] === '--relay') await relay(args[1], args[2]);
-  else { process.stderr.write(help); process.exitCode = 2; }
-} catch (error) {
-  // Never print arbitrary child/SDK/file errors, input objects, paths or credentials.
-  process.stderr.write(JSON.stringify({ kind: 'readonly-game-validation-failed', stage, code: error instanceof ProbeFailure ? error.code : 'PROBE_FAILED' }) + '\n');
-  process.exitCode = 1;
+if (import.meta.main) {
+  try {
+    const args = process.argv.slice(2);
+    if (args.length === 1 && args[0] === '--help') process.stdout.write(help);
+    else if (args.length === 2 && args[0] === '--target') await run(args[1]);
+    else if (args.length === 3 && args[0] === '--relay') await relay(args[1], args[2]);
+    else { process.stderr.write(help); process.exitCode = 2; }
+  } catch (error) {
+    // Never print arbitrary child/SDK/file errors, input objects, paths or credentials.
+    process.stderr.write(JSON.stringify({ kind: 'readonly-game-validation-failed', stage, code: error instanceof ProbeFailure ? error.code : 'PROBE_FAILED' }) + '\n');
+    process.exitCode = 1;
+  }
 }

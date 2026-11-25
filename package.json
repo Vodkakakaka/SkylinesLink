@@ -27,8 +27,9 @@
     "test:architecture": "node --test tools/architecture/check.test.mjs",
     "test:runtime": "dotnet run --project tests/integration/runtime/SkylinesLink.RuntimeProbe.csproj --no-build --no-launch-profile -- --self-test",
     "test:desktop": "pnpm build:host && node --test tests/integration/desktop/launcher.test.mjs tests/integration/desktop/history.test.mjs tests/integration/desktop/history-runtime.test.mjs tests/integration/desktop/mixed-history.test.mjs",
+    "test:game-catalog": "node --test tests/integration/game/readonly-catalog.test.mjs",
     "test:desktop:aot": "pwsh -NoProfile -File tools/verification/nativeaot.ps1",
-    "test": "pnpm check:generated && pnpm check:architecture && pnpm test:architecture && pnpm typecheck && pnpm build:managed && pnpm build:probes && pnpm test:contracts && pnpm test:contracts:managed && pnpm test:runtime && pnpm test:host && pnpm test:desktop"
+    "test": "pnpm check:generated && pnpm check:architecture && pnpm test:architecture && pnpm test:game-catalog && pnpm typecheck && pnpm build:managed && pnpm build:probes && pnpm test:contracts && pnpm test:contracts:managed && pnpm test:runtime && pnpm test:host && pnpm test:desktop"
   },
   "devDependencies": {
     "@types/node": "26.6.6",
