@@ -3,7 +3,7 @@ import { NamedPipeGameClient, type PipeConnection } from './named-pipe-client.ts
 import { GameClientError, type GameClient } from './game-client.ts';
 import { requireContract, schemaIds, type OperationQueryV3, type TaskStopDecisionQuery, type TaskStopSelector, type NativeHistoryRequestV3, type ModuleRuntimeQuery } from '@skylineslink/contracts';
 import type { HistoryReader, HistoryReaderV3 } from './history-reader.ts';
-import { offlineLookup, requireCapture, requireOperationLookup, requireOperationLookupV4, compatibleSubject, type ConnectionSubject } from './history-result.ts';
+import { offlineLookup, requireCapture, requireOperationLookup, requireOperationLookupV4, compatibleSubject, copySelector, type ConnectionSubject } from './history-result.ts';
 import { copyStopSelector, requireStopResult, requireStopDecisionLookup, offlineStopLookup } from './task-stop-result.ts';
 import { requireCaptureV3 } from './mixed-history-result.ts';
 import { copyModuleRuntimeQuery, requireModuleRuntimePage } from './module-runtime-result.ts';
@@ -75,7 +75,9 @@ export class DiscoveredGameClient implements GameClient {
     }
     if (id !== 'operations.get' || revision !== '4' && revision !== '5') return (await this.#live(combined)).call(id, revision, args, combined);
     requireContract(schemaIds.OperationQueryV3, args);
-    const query = args as OperationQueryV3;
+    const input = args as OperationQueryV3;
+    const selector = copySelector(input.selector);
+    const query: OperationQueryV3 = input.source === undefined ? { selector } : { selector, source: input.source };
     if ((query.source ?? 'live') === 'live') return this.#queryLive(query, revision, combined);
     // One deadline covers Native capture and the single definite-busy live route.
     const deadline = performance.now() + 5000;

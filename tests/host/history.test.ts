@@ -91,6 +91,32 @@ test('缺省source仅live；实时失败当次不回退，真实关闭后的下�
   } finally { await game.close(); }
 });
 
+test('操作查询固定受理时的selector和来源，跨发现与历史回读保持原身份', async () => {
+  const active = setup();
+  const selected = { kind: 'submissionKey' as const, submissionKey: { writeContextId: 'write-context', requestId: 'first' } };
+  try {
+    const original = structuredClone(selected);
+    const pending = active.game.call('operations.get', '5', { selector: selected }, signal());
+    selected.submissionKey.requestId = 'different';
+    const result = await pending as OperationLookupV4;
+    assert.deepEqual(result.selector, original);
+    assert.deepEqual(active.live.calls[0], { selector: original });
+  } finally { await active.game.close(); }
+
+  const historical = setup();
+  const args = { ...structuredClone(historyQuery) };
+  try {
+    const pending = historical.game.call('operations.get', '5', args, signal());
+    args.selector = { kind: 'operationId', operationId: 'different' };
+    args.source = 'live';
+    const result = await pending as OperationLookupV4;
+    assert.deepEqual(result.selector, historyQuery.selector);
+    assert.equal(result.result.kind, 'history');
+    assert.deepEqual(historical.reader.requests[0]?.selector, historyQuery.selector);
+  } finally { await historical.game.close(); }
+});
+
+
 test('可信live仅补Native1未知的incarnation，随后旧历史不清除已固定PID', async () => {
   const { game, reader, live } = setup();
   try {
