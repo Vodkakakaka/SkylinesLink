@@ -106,7 +106,6 @@ namespace SkylinesLink.Mod.Native
                 for (int ordinal = 0; ordinal < steps.Length; ordinal++)
                 {
                     Step step = steps[ordinal]; TargetState state = targets[step.Target];
-                    GuardParents(); RequireParentsEmpty();
                     if (step.Write < 0) Birth(step.Target, state);
                     else
                     {
@@ -160,6 +159,7 @@ namespace SkylinesLink.Mod.Native
             Require(allInputsChecked && state.InputsChecked, "GENERATED_SUBOBJECT_INPUTS_UNCONFIRMED");
             stage = "create-scoped-archetype";
             var birthTypes = new Dictionary<TypeIndex, ComponentType>(state.OriginalTypes!);
+            GuardParents(); RequireParentsEmpty();
             EntityArchetype scoped = NativeEntityArchetypes.CreateScoped(source.EntityManager, birthTypes); GuardParents();
             NativeEntityArchetypes.RequireSame(archetypes.Read(scoped, 258), birthTypes); GuardParents();
             RequirePrefab(state);
