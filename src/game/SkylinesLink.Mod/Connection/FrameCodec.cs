@@ -12,21 +12,26 @@ using SkylinesLink.Mod.Runtime;
 
 namespace SkylinesLink.Mod.Connection
 {
-    /// <summary>唯一内部帧实现。对整个帧设绝对期限；分配前验证长度，取消关闭真实流。</summary>
+    /// <summary>握手从调用起计时，认证后从读到数据起计时。分配前核帧长，取消关闭实际流。</summary>
     public static class FrameCodec
     {
         public const int HeaderLength = 12;
         private static readonly UTF8Encoding StrictUtf8 = new UTF8Encoding(false, true);
 
         public static async Task<(JToken Document, int PayloadBytes)?> ReadAsync(Stream stream, PipeLimits limits, TimeSpan deadline, CancellationToken cancellation,
-            CapacityBudget? payloadBudget = null)
+            CapacityBudget? payloadBudget = null, bool waitForData = false)
         {
             using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation))
             using (timeout.Token.Register(stream.Dispose))
             {
-                timeout.CancelAfter(deadline);
+                if (!waitForData) timeout.CancelAfter(deadline);
                 var header = new byte[HeaderLength];
-                if (!await ReadExactlyAsync(stream, header, true, timeout.Token).ConfigureAwait(false)) return null;
+                int received = await stream.ReadAsync(header, 0, header.Length, timeout.Token).ConfigureAwait(false);
+                if (received == 0) return null;
+                if (waitForData) timeout.CancelAfter(deadline);
+                // In byte mode an OS read returns available data up to the full header.
+                // Later fragments share this same deadline.
+                if (received < header.Length) await ReadHeaderRemainderAsync(stream, header, received, timeout.Token).ConfigureAwait(false);
                 int length = DecodeLength(header, limits.MaximumPayloadBytes);
                 string json;
                 try
@@ -109,20 +114,14 @@ namespace SkylinesLink.Mod.Connection
         private static PipeProtocolException WireJsonError(ContractValidationException error) =>
             new PipeProtocolException(error.Issues[0].Code == "JSON_LIMIT" ? "JSON_LIMIT" : "INVALID_JSON");
 
-        private static async Task<bool> ReadExactlyAsync(Stream stream, byte[] buffer, bool allowEof, CancellationToken cancellation)
+        private static async Task ReadHeaderRemainderAsync(Stream stream, byte[] buffer, int offset, CancellationToken cancellation)
         {
-            int offset = 0;
             while (offset < buffer.Length)
             {
                 int read = await stream.ReadAsync(buffer, offset, buffer.Length - offset, cancellation).ConfigureAwait(false);
-                if (read == 0)
-                {
-                    if (offset == 0 && allowEof) return false;
-                    throw new PipeProtocolException("TRUNCATED_FRAME");
-                }
+                if (read == 0) throw new PipeProtocolException("TRUNCATED_FRAME");
                 offset += read;
             }
-            return true;
         }
 
         private sealed class LimitedTextWriter : StringWriter

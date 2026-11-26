@@ -38,6 +38,7 @@ namespace SkylinesLink.RuntimeProbe
             checks += WindowsBoundaryTests.Run();
             await CheckSharedFrameVectorsAsync();
             await CheckFragmentedFramesAsync();
+            await CheckIdleAndStartedPipeFramesAsync();
             checks += await PayloadOwnershipTests.RunAsync();
             checks += await LoadTransitionTests.RunAsync();
             checks += await DurableOperationTests.RunAsync();
@@ -100,6 +101,42 @@ namespace SkylinesLink.RuntimeProbe
                     var second = (await FrameCodec.ReadAsync(fragmented, limits, limits.FrameTimeout, CancellationToken.None))!.Value.Document;
                     Check((string?)first["requestId"] == "first" && (string?)second["requestId"] == "second" &&
                         await FrameCodec.ReadAsync(fragmented, limits, limits.FrameTimeout, CancellationToken.None) == null, "coalesced frames survive three-byte reads");
+                }
+            }
+        }
+        private static async Task CheckIdleAndStartedPipeFramesAsync()
+        {
+            Program.Stage = "pipe byte mode frame deadlines";
+            var interval = TimeSpan.FromMilliseconds(150);
+            var limits = new PipeLimits(1, 256, 8, 64, interval, interval, interval);
+            var budget = new CapacityBudget(1, limits.MaximumPayloadBytes);
+            string name = "skylineslink-probe-" + Guid.NewGuid().ToString("N");
+            using (var server = new NamedPipeServerStream(name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+            using (var client = new NamedPipeClientStream(".", name, PipeDirection.InOut, PipeOptions.Asynchronous))
+            using (var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
+            {
+                Task listening = server.WaitForConnectionAsync(cancellation.Token);
+                await client.ConnectAsync(2500);
+                await listening;
+                var waiting = FrameCodec.ReadAsync(server, limits, interval, cancellation.Token, budget, waitForData: true);
+                await Task.Delay(TimeSpan.FromMilliseconds(450));
+                Check(!waiting.IsCompleted && budget.Read().Count == 0, "an idle authenticated pipe holds no frame payload or assembly timer");
+
+                using (var encoded = RawJsonFrame("{\"ack\":true}"))
+                {
+                    byte[] bytes = encoded.ToArray();
+                    await client.WriteAsync(bytes, 0, bytes.Length, cancellation.Token);
+                }
+                var frame = await waiting;
+                Check(frame.HasValue && (bool)frame.Value.Document["ack"]!, "the same pipe accepts a frame after several assembly intervals");
+
+                var partial = FrameCodec.ReadAsync(server, limits, interval, cancellation.Token, budget, waitForData: true);
+                await client.WriteAsync(new byte[] { (byte)'S' }, 0, 1, cancellation.Token);
+                try { await partial; throw new InvalidOperationException("Incomplete pipe frame did not time out."); }
+                catch (Exception error) when (error is IOException || error is ObjectDisposedException || error is OperationCanceledException || error is PipeProtocolException protocol && protocol.Code == "TRUNCATED_FRAME")
+                {
+                    Check(!cancellation.IsCancellationRequested && !server.IsConnected && budget.Read().Count == 0,
+                        "data starts the frame deadline and closes real IO without a complete header");
                 }
             }
         }

@@ -185,7 +185,7 @@ namespace SkylinesLink.Mod.Connection
         {
             while (!cancellation.IsCancellationRequested)
             {
-                var frame = await FrameCodec.ReadAsync(stream, limits, limits.FrameTimeout, cancellation, ingressBudget).ConfigureAwait(false);
+                var frame = await FrameCodec.ReadAsync(stream, limits, limits.FrameTimeout, cancellation, ingressBudget, waitForData: true).ConfigureAwait(false);
                 if (!frame.HasValue) return;
                 bool keepReceiving = ReceiveFrame(frame.Value.Document, frame.Value.PayloadBytes, subject, replies);
                 frame = null; // 不让父 request DOM 越过下一次异步读取。
