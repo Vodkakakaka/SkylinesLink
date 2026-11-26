@@ -1,5 +1,17 @@
 # Changelog / 更新记录
 
+## Unreleased / 开发中
+
+- Fixed stdio memory growth during long sessions. The Windows Launcher now waits for process and pipe events while idle. Existing output deadlines and worker cleanup still apply.
+- City and building queries share capture lifecycle and encode a result once for consumers of the same sample.
+- Source packaging scans verified Git archive bytes directly. Clean builds record delivery outputs and verify cleanup.
+
+### 简体中文
+
+- 修复 stdio 长连接的内存增长。Windows 启动器空闲时等待子进程和管道事件，保留输出超时与工作线程回收。
+- 城市与建筑读取共用采样生命周期，同一份样本的结果只编码一次。
+- 源码打包直接检查已核对的 Git 归档字节。干净构建记录交付产物，并核对临时输出清理结果。
+
 ## 0.1.0-dev.0 — Developer foundation preview
 
 First source preview of the C# game runtime, TypeScript MCP Host, shared contracts, desktop entry points and isolated validation tools. Includes nine declared MCP tools, bilingual public guidance, bounded communication, operation/history components, native development experiments, architecture checks and Windows CI.

@@ -12,7 +12,7 @@ Reads, planning/preview and writes have distinct paths. Information includes ide
 
 The intended game UI has a Planning & Activity entry for longer plans/history and a Quick Tools entry for explicit player selection, regions and annotations. Public AI guidance is retrieved by task and version. Player preferences come from the current task. Background AI must not take the player's input, active tool, selection or camera.
 
-Work and results have explicit owners, finite capacities and real cleanup lifetimes. Backpressure covers actual processing and IO, not just the caller's wait. Performance acceptance measures the game and all owned processes together. Game rules, funds, unlocks and native validation remain authoritative.
+Start from the player’s expected result and use the simplest path that preserves native rules, lifetime and failure behavior. Apply this to existing code and planned work. Work and results have explicit owners, finite capacities and real cleanup lifetimes. Backpressure covers actual processing and IO, not just the caller's wait. Performance acceptance measures the game and all owned processes together. Game rules, funds, unlocks and native validation remain authoritative.
 
 **Current implementation:** foundation components, ten declared tools, bounded connections, durable-operation/history experiments and desktop entry points. Three Host-local tools search/read bundled bilingual public guides and describe the exact schemas exposed by this connection. The guides are versioned product documentation, not city observations; descriptions are declarations, not runtime qualification. Handler composition checks exact capability/revision/effect/schema bindings. Local reads share request/output budgets with game reads and never fall back to a game call. Task Stop uses Control permission and a bounded transport lane; complete original decision reads use Read and explicit live/history sources. Production task creation/execution remains disabled, and accepted Stop metadata does not prove native work has ended. Complete game actions, game-mechanism/asset/mod knowledge, the game UI, player installation and full in-game performance acceptance remain work in progress. Offline checks are not game acceptance. Player packages are not yet released.
 
@@ -34,7 +34,7 @@ SkylinesLink把有用的游戏信息、正常游玩能力、用户意图、规�
 
 游戏界面计划提供“规划与记录”长页面入口及“快捷工具”入口，供玩家显式选择对象、区域和标注。公共AI指引按任务和版本取得，个人偏好来自当前任务。后台AI不能夺取玩家输入、活动工具、选择或相机。
 
-工作和结果有明确所有者、有限容量与真实清理寿命。背压覆盖实际处理和IO，不因调用方结束等待提前退额。性能验收合计游戏与全部自有进程。正常资金、解锁及原生校验始终由游戏规则约束。
+从玩家实际需要的结果出发，选满足原生规则、生命周期和失败处理的最小方案。已有实现与待做方案均按此复核。工作和结果有明确所有者、有限容量与真实清理寿命。背压覆盖实际处理和IO，不因调用方结束等待提前退额。性能验收合计游戏与全部自有进程。正常资金、解锁及原生校验始终由游戏规则约束。
 
 **当前实现：**骨架组件、十个声明工具、有界连接、持久操作/历史实验和桌面入口。其中三个Host本地工具检索/读取随包双语公共指南，并描述本连接公开能力的精确schema。指南是版本化产品说明，不是城市观测；描述是声明，不是运行资格。处理器组合核对能力/修订/效果/schema的精确绑定；本地读取与游戏读取共用请求和输出预算，失败不会回退到游戏调用。Task停止使用Control权限和有限传输通路，完整原决定读取使用Read与显式live/history来源；生产Task创建/执行仍未启用，停止元数据受理不证明原生工作已经结束。完整游戏操作、游戏机制/资产/模组知识、游戏界面、玩家安装及全面实机性能仍在开发；离线通过不代表游戏验收，目前尚无玩家发行版。
 
