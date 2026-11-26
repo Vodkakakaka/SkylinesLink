@@ -4,12 +4,14 @@
 
 - Fixed stdio memory growth during long sessions. The Windows Launcher now waits for process and pipe events while idle. Existing output deadlines and worker cleanup still apply.
 - City and building queries share capture lifecycle and encode a result once for consumers of the same sample.
+- Authenticated game pipes now survive idle periods and keep the original deadline for started frames. Operation lookups retain the selector and source supplied at call time.
 - Source packaging scans verified Git archive bytes directly. Clean builds record delivery outputs and verify cleanup.
 
 ### 简体中文
 
 - 修复 stdio 长连接的内存增长。Windows 启动器空闲时等待子进程和管道事件，保留输出超时与工作线程回收。
 - 城市与建筑读取共用采样生命周期，同一份样本的结果只编码一次。
+- 已认证的游戏管道可以继续使用空闲连接，已开始的帧沿原绝对期限收束。操作查询固定调用时的选择器和来源。
 - 源码打包直接检查已核对的 Git 归档字节。干净构建记录交付产物，并核对临时输出清理结果。
 
 ## 0.1.0-dev.0 — Developer foundation preview
