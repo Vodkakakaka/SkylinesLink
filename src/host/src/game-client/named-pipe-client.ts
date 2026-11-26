@@ -41,7 +41,7 @@ interface Pending {
   buildingQuery?: BuildingInspectionQuery;
 }
 
-interface Sending { json: string; reservation: number; control: boolean; onWriteStart?: () => void; onWriteDone?: () => void }
+interface Sending { frame: Buffer; reservation: number; control: boolean; onWriteStart?: () => void; onWriteDone?: () => void }
 
 interface Handshake {
   auth: WireAuthenticateV2;
@@ -54,16 +54,19 @@ interface Handshake {
 }
 
 export function encodePipeFrame(value: unknown, limits: TransportLimits = probeLimits): Buffer {
-  measureJson(value, limits);
-  const body = Buffer.from(JSON.stringify(value), 'utf8');
-  if (body.length > limits.messageBytes) throw new GameClientError('BUDGET_EXCEEDED', '内部消息超过上限。');
-  const frame = Buffer.allocUnsafe(12 + body.length);
+  const maximum = measureJson(value, limits);
+  return encodeJsonFrame(JSON.stringify(value), maximum);
+}
+
+function encodeJsonFrame(json: string, maximumBodyBytes: number): Buffer {
+  const length = Buffer.byteLength(json, 'utf8');
+  if (length === 0 || length > maximumBodyBytes) throw new GameClientError('BUDGET_EXCEEDED', '内部消息超过上限。');
+  const frame = Buffer.allocUnsafe(12 + length);
   frame.write('SLNK', 0, 4, 'ascii');
   frame.writeUInt16LE(1, 4);
   frame.writeUInt16LE(0, 6);
-  frame.writeUInt32LE(body.length, 8);
-  body.copy(frame, 12);
-  body.fill(0);
+  frame.writeUInt32LE(length, 8);
+  frame.write(json, 12, length, 'utf8');
   return frame;
 }
 
@@ -222,22 +225,23 @@ export class NamedPipeGameClient implements GameClient {
     if (this.#closed || this.#socket.destroyed) throw new GameClientError('GAME_UNAVAILABLE', '游戏连接已经关闭。');
     const control = controlKey !== undefined;
     const maximum = control ? controlTransportProfile.maximumRequestBytes - 12 : this.limits.messageBytes;
-    const reservation = (measureJson(value, { ...this.limits, messageBytes: maximum }) + 12) * 3;
+    const bodyBound = measureJson(value, { ...this.limits, messageBytes: maximum });
+    const reservation = (bodyBound + 12) * 3;
     const controlReserve = this.#classifier.binding ? controlTransportProfile.maximumControlRequests * controlTransportProfile.maximumRequestBytes * 3 : 0;
     if (this.#sending >= this.limits.sendCount || this.#pendingBytes + reservation > this.limits.sendBytes
       || (control ? this.#controlSending >= controlTransportProfile.maximumControlRequests :
         this.#ordinarySending >= this.limits.activeRequests || this.#ordinaryBytes + reservation > this.limits.sendBytes - controlReserve))
       throw new GameClientError('BUDGET_EXCEEDED', '内部连接字节额度不足。');
-    const json = JSON.stringify(value);
+    const frame = encodeJsonFrame(JSON.stringify(value), Math.min(bodyBound, this.limits.messageBytes));
     this.#pendingBytes += reservation; this.#sending++;
     if (control) this.#controlSending++; else { this.#ordinarySending++; this.#ordinaryBytes += reservation; }
-    (control ? this.#controlQueue : this.#ordinaryQueue).push({ json, reservation, control,
+    (control ? this.#controlQueue : this.#ordinaryQueue).push({ frame, reservation, control,
       ...(onWriteStart ? { onWriteStart } : {}), ...(onWriteDone ? { onWriteDone } : {}) });
     this.#pump();
   }
 
   #finishSending(item: Sending): void {
-    item.json = ''; this.#pendingBytes -= item.reservation; this.#sending--;
+    item.frame.fill(0); this.#pendingBytes -= item.reservation; this.#sending--;
     if (item.control) this.#controlSending--; else { this.#ordinarySending--; this.#ordinaryBytes -= item.reservation; }
   }
   #pump(): void {
@@ -249,23 +253,21 @@ export class NamedPipeGameClient implements GameClient {
       while (!this.#closed && !this.#socket.destroyed) {
         const item = this.#controlQueue.shift() ?? this.#ordinaryQueue.shift();
         if (!item) break;
-        let frame: Buffer | undefined;
         let sent = false;
         try {
-          frame = encodePipeFrame(JSON.parse(item.json), this.limits);
           await new Promise<void>((written, failed) => {
             const sendTimer = setTimeout(() => this.#socket.destroy(), this.limits.sendDeadlineMs);
             const closed = () => { clearTimeout(sendTimer); failed(new Error('连接已关闭。')); };
             this.#socket.once('close', closed);
             item.onWriteStart?.();
-            this.#socket.write(frame!, error => {
+            this.#socket.write(item.frame, error => {
               this.#socket.off('close', closed); clearTimeout(sendTimer);
               if (error) failed(error); else written();
             });
           });
           sent = true;
         } catch { this.#socket.destroy(); }
-        finally { frame?.fill(0); this.#finishSending(item); }
+        finally { this.#finishSending(item); }
         if (sent) item.onWriteDone?.();
       }
     }).finally(() => { this.#pumping = false; if (!this.#closed && !this.#socket.destroyed && (this.#ordinaryQueue.length || this.#controlQueue.length)) this.#pump(); });
