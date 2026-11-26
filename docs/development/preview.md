@@ -14,8 +14,8 @@ The 0.1.0-dev.2 source update fixes shared connection ownership: cancelling the 
 | --- | --- |
 | `contracts/` | Shared schema, generated C#/TypeScript contracts and wire values |
 | `src/game/SkylinesLink.Application/` | Context, bounded observations, operation rules and consumer ports |
-| `src/game/SkylinesLink.Infrastructure/` | Persistence, authenticated local communication and lifetime ownership |
-| `src/game/SkylinesLink.Mod/` | Official game entry, native adapters, connection settings and development probes |
+| `src/game/SkylinesLink.Infrastructure/` | Persistence, environment leases and release binding |
+| `src/game/SkylinesLink.Mod/` | Official game entry, native adapters, authenticated game pipes, settings and development probes |
 | `src/host/` | Official MCP SDK integration, stdio/HTTP transports, routing and bilingual guidance |
 | `src/desktop/` | Launcher, Setup and shared deployment logic |
 | `tests/` | Contract, runtime, protocol, history and desktop-process checks |
@@ -75,8 +75,8 @@ Player installation and updates, the game UI, full city information and actions,
 | --- | --- |
 | `contracts/` | 共享 schema、派生的 C#/TypeScript 契约和通信值 |
 | `src/game/SkylinesLink.Application/` | 上下文、有界观察、操作规则及消费端口 |
-| `src/game/SkylinesLink.Infrastructure/` | 持久化、认证本地通信及资源寿命管理 |
-| `src/game/SkylinesLink.Mod/` | 官方游戏入口、原生适配、连接设置及开发探针 |
+| `src/game/SkylinesLink.Infrastructure/` | 持久化、环境租约与发行绑定 |
+| `src/game/SkylinesLink.Mod/` | 官方游戏入口、原生适配、认证游戏管道、设置和开发探针 |
 | `src/host/` | 官方 MCP SDK、stdio/HTTP 传输、路由及双语指南 |
 | `src/desktop/` | Launcher、Setup 及共用部署逻辑 |
 | `tests/` | 契约、运行时、协议、历史和桌面进程检查 |

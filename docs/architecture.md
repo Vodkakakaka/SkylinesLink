@@ -6,7 +6,7 @@
 
 SkylinesLink links useful game information, normal gameplay capabilities, user intent, planning and verifiable results. A C# game mod owns game access and operation facts. A separate TypeScript/Node.js Host exposes MCP over stdio and Streamable HTTP; authenticated Windows named pipes connect the components. The stable Launcher is the stdio entry point.
 
-The neutral Contracts assembly defines shared values and wire contracts. Application owns use cases, operation state and domain rules. Infrastructure implements persistence and communication. Mod composes those parts with game-thread adapters and the game's lifecycle. The Host handles protocol and client presentation rather than implementing game rules. Generated contracts keep both languages aligned.
+The neutral Contracts assembly defines shared values and wire contracts. Application owns use cases, operation state and domain rules. Infrastructure implements persistence, environment leases and release binding. Mod owns the authenticated game endpoint and composes it with game-thread adapters and the game's lifecycle. The Host handles protocol and client presentation rather than implementing game rules. Generated contracts keep both languages aligned.
 
 Reads, planning/preview and writes have distinct paths. Information includes identity, geometry, relationships, qualifications and operational evidence, with source, scope, freshness and completeness. Commands enter one operation authority with stable identity, durable intent and truthful outcomes. Unknown submission results remain queryable and are not automatically replayed. Task and interface views derive from the same facts.
 
@@ -28,7 +28,7 @@ Planned city blueprints can keep a coarse overall structure and refine the area 
 
 SkylinesLink把有用的游戏信息、正常游玩能力、用户意图、规划和可核结果链接起来。C#模组负责游戏访问与操作事实；独立TypeScript/Node.js Host通过stdio和Streamable HTTP提供MCP，组件间使用认证Windows命名管道。稳定Launcher是stdio接入入口。
 
-中立Contracts程序集定义共享值与通信契约；Application负责用例、操作状态与领域规则；Infrastructure实现持久化和通信；Mod将它们与游戏线程适配及生命周期装配。Host负责协议与客户端呈现，不另写游戏规则。契约生成保持两种语言一致。
+中立Contracts程序集定义共享值与通信契约；Application负责用例、操作状态与领域规则；Infrastructure 实现持久化、环境租约和发行绑定。Mod 管理已认证的游戏管道，与游戏线程适配及生命周期一同装配。Host负责协议与客户端呈现，不另写游戏规则。契约生成保持两种语言一致。
 
 读取、规划/预览、写入分别走适用路径。信息涵盖身份、几何、关系、资格和运行证据，说明来源、范围、新鲜度与完整性。命令进入唯一操作权威，保稳定身份、持久意图与真实结果；提交未知可查且不自动重放。任务和界面投影来自同一份事实。
 
