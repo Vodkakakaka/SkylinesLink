@@ -175,7 +175,13 @@ catch { $report['failureType'] = $_.Exception.GetType().Name; $report.status = '
 finally {
     Assert-NoReparseAncestor $exportRoot
     $entries = @(Read-OwnedTree $exportRoot)
-    $built = @($entries | Where-Object { !$_.PSIsContainer -or ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) } | ForEach-Object {
+    $hostOutputs = (Join-Path $exportRoot 'artifacts/host') + [IO.Path]::DirectorySeparatorChar
+    $managedOutputs = (Join-Path $exportRoot 'artifacts/dotnet/bin') + [IO.Path]::DirectorySeparatorChar
+    $built = @($entries | Where-Object {
+        (!$_.PSIsContainer -or ($_.Attributes -band [IO.FileAttributes]::ReparsePoint)) -and
+        ($_.FullName.StartsWith($hostOutputs, [StringComparison]::OrdinalIgnoreCase) -or
+         $_.FullName.StartsWith($managedOutputs, [StringComparison]::OrdinalIgnoreCase))
+    } | ForEach-Object {
         $link = [bool]($_.Attributes -band [IO.FileAttributes]::ReparsePoint)
         [ordered]@{ path = [IO.Path]::GetRelativePath($exportRoot, $_.FullName).Replace('\', '/'); kind = $(if ($link) { 'reparse-point-not-followed' } else { 'file' }); sha256 = $(if (!$link) { (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() } else { $null }); bytes = $(if (!$link) { $_.Length } else { $null }) }
     })
@@ -196,4 +202,4 @@ finally {
     Write-JsonFile (Join-Path $runRoot 'report.json') $report
     Write-Output ([ordered]@{ evidence = [IO.Path]::GetRelativePath($sourceRoot, $runRoot).Replace('\', '/'); result = $report } | ConvertTo-Json -Depth 12)
 }
-if ($report.status -ne 'passed') { exit 1 }
+if ($report.status -ne 'passed' -or $report.cleanup -ne 'source-and-build-output-removed') { exit 1 }

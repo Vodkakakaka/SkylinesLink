@@ -36,6 +36,8 @@ pnpm test
 
 Ordinary C# restores use each project's `packages.lock.json`. Local .NET outputs go under `artifacts/dotnet`; the Host bundle goes under `artifacts/host`.
 
+`pnpm verify:fresh-source` checks a temporary source export against the locked dependencies, without the game SDK. Its report records source integrity, final Host and managed outputs, and cleanup of the export.
+
 ### Official game Mod build
 
 This additionally needs a legitimate Cities: Skylines II installation and its configured official modding toolchain, including the matching Unity editor, project and dependencies. Use the versions required by that toolchain; do not independently upgrade Unity, Entities or Burst.
@@ -102,6 +104,8 @@ pnpm test
 `pnpm build` 生成契约、检查 TypeScript、打包 Host，并构建 [SkylinesLink.slnx](../../SkylinesLink.slnx) 中六个不依赖游戏的 C# 工程；该 solution 不包含游戏 Mod。`pnpm test` 执行配置的离线检查和 Windows 集成夹具，不代表游戏验收。
 
 普通 C# 依赖还原使用各工程的 `packages.lock.json`。.NET 本地输出位于 `artifacts/dotnet`，Host bundle 位于 `artifacts/host`。
+
+`pnpm verify:fresh-source` 使用锁定依赖构建不含游戏 SDK 的临时源码副本。报告核对源文件、Host 和托管构建产物，并确认副本已清理。
 
 ### 官方游戏 Mod 构建
 
