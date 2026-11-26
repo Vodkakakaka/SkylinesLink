@@ -8,8 +8,7 @@ using Unity.Entities;
 
 namespace SkylinesLink.Mod.Native
 {
-    // Shared by the two native qualification owners. Captures identities, not
-    // a world copy or a global version; never restores player state.
+    // Captures native qualification identities without retaining mutable views.
     internal sealed class NativeProbeSourceProtection
     {
         private const int MaxWorlds = 64, MaxSourceSystems = 4096;
@@ -57,13 +56,17 @@ namespace SkylinesLink.Mod.Native
 
         // During creation, only these exact appended instances are allowed.
         // After cleanup callers pass none, requiring the original list back.
-        internal void Observe(params ComponentSystemBase[] appended)
+        internal void Observe(params ComponentSystemBase[] appended) => Observe((IReadOnlyList<ComponentSystemBase>)appended);
+
+        // The list is read synchronously on the main thread and never retained.
+        internal void Observe(IReadOnlyList<ComponentSystemBase> appended)
         {
             RequireMainThread();
             defaultSame = worldsSame = systemsSame = toolSame = activeSame = selectedSame = selectedIndexSame = listSame = contentsSame = false;
             try
             {
-                if (appended == null || appended.Length > MaxAppendedSystems) throw new InvalidOperationException();
+                int appendedCount = appended.Count;
+                if (appendedCount > MaxAppendedSystems) throw new InvalidOperationException();
                 defaultSame = ReferenceEquals(defaultWorld, World.DefaultGameObjectInjectionWorld);
                 var currentWorlds = World.All;
                 int worldCount = currentWorlds.Count;
@@ -73,9 +76,9 @@ namespace SkylinesLink.Mod.Native
                     worldsSame = ReferenceEquals(currentWorlds[index], worlds[index]);
 
                 var current = SourceSystems(source, MaxSourceSystems + MaxAppendedSystems);
-                systemsSame = current.Count == systems.Length + appended.Length;
+                systemsSame = current.Count == systems.Length + appendedCount;
                 for (int index = 0; systemsSame && index < systems.Length; index++) systemsSame = ReferenceEquals(current[index], systems[index]);
-                for (int index = 0; systemsSame && index < appended.Length; index++) systemsSame = ReferenceEquals(current[systems.Length + index], appended[index]);
+                for (int index = 0; systemsSame && index < appendedCount; index++) systemsSame = ReferenceEquals(current[systems.Length + index], appended[index]);
                 toolSame = ReferenceEquals(source.GetExistingSystemManaged<ToolSystem>(), tool);
                 activeSame = ReferenceEquals(tool.activeTool, activeTool);
                 selectedSame = tool.selected == selected; selectedIndexSame = tool.selectedIndex == selectedIndex;

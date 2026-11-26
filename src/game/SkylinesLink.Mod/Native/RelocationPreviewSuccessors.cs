@@ -709,7 +709,7 @@ namespace SkylinesLink.Mod.Native
         private void ObserveProtection()
         {
             requireScope();
-            protection!.Observe(appended.ToArray());
+            protection!.Observe(appended);
             Require(protection.Passed, "RELOCATION_PREVIEW_SUCCESSOR_PROTECTION_CHANGED");
         }
 

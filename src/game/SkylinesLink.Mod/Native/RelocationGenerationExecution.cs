@@ -133,7 +133,7 @@ namespace SkylinesLink.Mod.Native
             void ObserveProtection()
             {
                 requireScope();
-                protection!.Observe(appended.ToArray());
+                protection!.Observe(appended);
                 Require(protection.Passed, "RELOCATION_GENERATION_PROTECTION_CHANGED");
             }
         }

@@ -611,7 +611,7 @@ namespace SkylinesLink.Mod.Native
 
         private void ObserveProtection()
         {
-            protection!.Observe(appended.ToArray());
+            protection!.Observe(appended);
             Check(protection.Passed, "OBJECT_GENERATION_PROTECTION_CHANGED");
         }
 
