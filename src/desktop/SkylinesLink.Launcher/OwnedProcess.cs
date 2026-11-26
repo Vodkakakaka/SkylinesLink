@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Microsoft.Win32.SafeHandles;
 using SkylinesLink.Shared.Processes;
 
@@ -49,25 +50,31 @@ internal static class OwnedProcess
                 var exited = child.WaitForExit(StdioRelay.CleanupMilliseconds);
                 return new RunResult(joined && exited ? 76 : 75, joined && exited ? "RELAY_STARTUP_FAILED" : "RELAY_CLEANUP_INCOMPLETE", joined, relay.LiveBufferBytes, exited);
             }
+            using var childExit = child.BorrowExitSignal();
+            WaitHandle[] signals = { childExit, relay.Activity };
             long closingStarted = 0;
             uint? childCode = null;
             string? failure = null;
             while (true)
             {
-                var exited = child.WaitForExit(20);
-                if (exited && childCode is null)
-                {
-                    childCode = child.ExitCode;
-                    relay.StopInput();
-                }
-                if (relay.OutputExpired) { failure = "STDIO_OUTPUT_TIMEOUT"; break; }
+                int wait = relay.GetOutputWaitMilliseconds();
+                if (wait == 0) { failure = "STDIO_OUTPUT_TIMEOUT"; break; }
                 if (relay.Failed) { failure = "RELAY_IO_FAILED"; break; }
                 if (childCode.HasValue && relay.OutputCompleted) break;
                 if ((relay.InputCompleted || relay.OutputCompleted || childCode.HasValue) && closingStarted == 0)
                     closingStarted = Stopwatch.GetTimestamp();
-                if (closingStarted != 0 && Stopwatch.GetElapsedTime(closingStarted).TotalMilliseconds >= StdioRelay.CleanupMilliseconds)
-                { failure = "RELAY_DRAIN_TIMEOUT"; break; }
-                if (childCode.HasValue) System.Threading.Thread.Sleep(10);
+                if (closingStarted != 0)
+                {
+                    int drainWait = StdioRelay.MillisecondsRemaining(closingStarted, StdioRelay.CleanupMilliseconds);
+                    if (drainWait == 0) { failure = "RELAY_DRAIN_TIMEOUT"; break; }
+                    wait = wait == Timeout.Infinite ? drainWait : Math.Min(wait, drainWait);
+                }
+                if (childCode.HasValue) relay.Activity.WaitOne(wait);
+                else if (WaitHandle.WaitAny(signals, wait) == 0)
+                {
+                    childCode = child.ExitCode;
+                    relay.StopInput();
+                }
             }
             if (failure is not null) child.Terminate(74);
             var released = relay.Close();

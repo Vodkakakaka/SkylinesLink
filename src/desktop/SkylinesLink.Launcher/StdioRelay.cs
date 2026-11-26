@@ -15,6 +15,7 @@ internal sealed class StdioRelay : IDisposable
 {
     internal const int StartupMilliseconds = 5000, WriteMilliseconds = 2000, CleanupMilliseconds = 2000;
     internal const int BufferCapacity = 16384;
+    private readonly AutoResetEvent activity;
     private readonly NamedPipeServerStream input, output;
     private readonly Worker inputWorker, outputWorker;
     private bool started, disposed;
@@ -24,18 +25,23 @@ internal sealed class StdioRelay : IDisposable
     public StdioRelay(SafeFileHandle externalInput, SafeFileHandle externalOutput)
     {
         Nonce = Guid.NewGuid().ToString("N");
-        input = CreatePipe("in");
+        activity = new AutoResetEvent(false);
+        try { input = CreatePipe("in"); }
+        catch { activity.Dispose(); throw; }
         try { output = CreatePipe("out"); }
-        catch { input.Dispose(); throw; }
-        inputWorker = new Worker(externalInput, input, toExternal: false);
-        outputWorker = new Worker(externalOutput, output, toExternal: true);
+        catch { input.Dispose(); activity.Dispose(); throw; }
+        inputWorker = new Worker(externalInput, input, activity, toExternal: false);
+        outputWorker = new Worker(externalOutput, output, activity, toExternal: true);
     }
 
     public string Nonce { get; }
     public bool InputCompleted => inputWorker.Completed;
     public bool OutputCompleted => outputWorker.Completed;
     public bool Failed => inputWorker.Failed || outputWorker.Failed;
-    public bool OutputExpired => outputWorker.WriteExpired;
+    public WaitHandle Activity => activity;
+    public int GetOutputWaitMilliseconds() => outputWorker.GetWriteWaitMilliseconds();
+    internal static int MillisecondsRemaining(long start, int limit) =>
+        (int)Math.Max(0, Math.Ceiling(limit - Stopwatch.GetElapsedTime(start).TotalMilliseconds));
     public int LiveBufferBytes => inputWorker.LiveBufferBytes + outputWorker.LiveBufferBytes;
 
     private NamedPipeServerStream CreatePipe(string suffix) => new(
@@ -90,8 +96,8 @@ internal sealed class StdioRelay : IDisposable
         if (disposed) return;
         disposed = true;
         if (!Close()) return;
-        inputWorker.Dispose(); outputWorker.Dispose();
         input.Dispose(); output.Dispose();
+        activity.Dispose();
     }
 
     private sealed class Worker : IDisposable
@@ -99,6 +105,7 @@ internal sealed class StdioRelay : IDisposable
         private readonly object sync = new();
         private readonly SafeFileHandle external;
         private readonly NamedPipeServerStream pipe;
+        private readonly AutoResetEvent activity;
         private readonly bool toExternal;
         private readonly CancellationTokenSource cancellation = new();
         private readonly Thread thread;
@@ -110,21 +117,23 @@ internal sealed class StdioRelay : IDisposable
         private bool resourcesReleased;
         private int stopping, completed, failed, liveBufferBytes;
         private long nativeWriteStarted;
+        private bool watchWriteStart;
 
-        public Worker(SafeFileHandle external, NamedPipeServerStream pipe, bool toExternal)
+        public Worker(SafeFileHandle external, NamedPipeServerStream pipe, AutoResetEvent activity, bool toExternal)
         {
-            this.external = external; this.pipe = pipe; this.toExternal = toExternal;
+            this.external = external; this.pipe = pipe; this.activity = activity; this.toExternal = toExternal;
             thread = new Thread(Run) { IsBackground = true, Name = toExternal ? "SkylinesLink stdout" : "SkylinesLink stdin" };
         }
         public bool Completed => Volatile.Read(ref completed) != 0;
         public bool Failed => Volatile.Read(ref failed) != 0;
         public int LiveBufferBytes => Volatile.Read(ref liveBufferBytes);
-        public bool WriteExpired
+        public int GetWriteWaitMilliseconds()
         {
-            get
+            lock (sync)
             {
-                var start = Interlocked.Read(ref nativeWriteStarted);
-                return start != 0 && Stopwatch.GetElapsedTime(start).TotalMilliseconds >= WriteMilliseconds;
+                // Arm under the same lock as write start, so an idle wait cannot miss a new deadline.
+                watchWriteStart = nativeWriteStarted == 0;
+                return watchWriteStart ? Timeout.Infinite : MillisecondsRemaining(nativeWriteStarted, WriteMilliseconds);
             }
         }
         public void Start() { thread.Start(); launched = true; }
@@ -190,6 +199,7 @@ internal sealed class StdioRelay : IDisposable
                 lock (sync) nativePending = false;
                 pipe.Dispose();
                 Volatile.Write(ref completed, 1);
+                activity.Set();
             }
         }
 
@@ -201,7 +211,15 @@ internal sealed class StdioRelay : IDisposable
                 if (!ResetEvent(ioEvent)) throw new Win32Exception();
                 Marshal.StructureToPtr(new NativeOverlappedValue { Event = ioEvent.DangerousGetHandle() }, overlapped, false);
                 nativePending = true;
-                if (toExternal) Interlocked.Exchange(ref nativeWriteStarted, Stopwatch.GetTimestamp());
+                if (toExternal)
+                {
+                    nativeWriteStarted = Stopwatch.GetTimestamp();
+                    if (watchWriteStart)
+                    {
+                        watchWriteStart = false;
+                        activity.Set();
+                    }
+                }
             }
             try
             {
@@ -224,8 +242,11 @@ internal sealed class StdioRelay : IDisposable
             }
             finally
             {
-                lock (sync) nativePending = false;
-                Interlocked.Exchange(ref nativeWriteStarted, 0);
+                lock (sync)
+                {
+                    nativePending = false;
+                    nativeWriteStarted = 0;
+                }
             }
         }
 

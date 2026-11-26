@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using Microsoft.Win32.SafeHandles;
 
 namespace SkylinesLink.Shared.Processes
@@ -98,6 +99,14 @@ namespace SkylinesLink.Shared.Processes
             if (result == 0) return true;
             if (result == WaitTimeout) return false;
             throw new Win32Exception();
+        }
+
+        // The caller keeps this process owner alive until the borrowed wait signal is disposed.
+        internal WaitHandle BorrowExitSignal() => new ProcessExitSignal(process.DangerousGetHandle());
+
+        private sealed class ProcessExitSignal : WaitHandle
+        {
+            internal ProcessExitSignal(IntPtr handle) => SafeWaitHandle = new SafeWaitHandle(handle, ownsHandle: false);
         }
 
         internal uint ExitCode
