@@ -181,10 +181,17 @@ test('真实git archive的成员与准确HEAD相同；损坏ZIP不当对应源�
   const tree = spawnSync('git', ['ls-tree', '-r', '-z', 'HEAD'], { cwd: root, windowsHide: true, encoding: 'utf8' });
   assert.equal(tree.status, 0);
   const blobs = new Map(tree.stdout.split('\0').filter(Boolean).map(entry => { const match = /^\d+ blob ([0-9a-f]{40})\t([\s\S]+)$/.exec(entry); assert.ok(match); return [match[2], match[1]]; }));
-  assert.deepEqual(archiveFiles(archive.stdout, blobs), [...blobs.keys()].sort());
+  const pkg = spawnSync('git', ['show', 'HEAD:package.json'], { cwd: root, windowsHide: true });
+  assert.equal(pkg.status, 0);
+  const inspected = new Set();
+  assert.deepEqual(archiveFiles(archive.stdout, blobs, (path, bytes) => {
+    inspected.add(path);
+    if (path === 'package.json') assert.deepEqual(bytes, pkg.stdout);
+  }), [...blobs.keys()].sort());
+  assert.deepEqual([...inspected].sort(), [...blobs.keys()].sort());
   // Central-directory members remain identical, but this different expected blob must fail.
   const changed = new Map(blobs); changed.set([...changed.keys()][0], '0'.repeat(40));
-  assert.throws(() => archiveFiles(archive.stdout, changed), /CORE_SOURCE_ARCHIVE_CONTENT/);
+  assert.throws(() => archiveFiles(archive.stdout, changed, () => assert.fail('Unverified blob inspected')), /CORE_SOURCE_ARCHIVE_CONTENT/);
   assert.throws(() => archiveFiles(archive.stdout.subarray(0, archive.stdout.length - 50)));
   assert.throws(() => archiveFiles(Buffer.alloc(8)));
 });

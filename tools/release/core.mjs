@@ -65,7 +65,7 @@ async function inventory(path, kind) {
 
 // Git ZIP is generated here, not accepted from outside. Check its exact file set so
 // local export-ignore/substitution cannot silently remove matching source material.
-export function archiveFiles(bytes, expectedBlobs) {
+export function archiveFiles(bytes, expectedBlobs, inspectBlob) {
   if (bytes.length > 64 * 1024 * 1024) throw new Error('CORE_SOURCE_ARCHIVE_BUDGET');
   let end = bytes.length - 22;
   while (end >= Math.max(0, bytes.length - 65557) && bytes.readUInt32LE(end) !== 0x06054b50) end--;
@@ -93,6 +93,7 @@ export function archiveFiles(bytes, expectedBlobs) {
         const plain = method === 0 ? data : inflateRawSync(data, { maxOutputLength: 8 * 1024 * 1024 });
         const blob = createHash('sha1').update(`blob ${plain.length}\0`).update(plain).digest('hex');
         if (plain.length !== uncompressed || blob !== expectedBlobs.get(name)) throw new Error('CORE_SOURCE_ARCHIVE_CONTENT');
+        inspectBlob?.(name, plain);
       }
     }
     cursor += 46 + size + extra + comment;

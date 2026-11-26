@@ -49,15 +49,13 @@ export async function buildSourcePreview() {
   if (pkg.name !== 'skylineslink' || !/^\d+\.\d+\.\d+-dev\.\d+$/.test(pkg.version))
     throw new Error('SOURCE_PREVIEW_VERSION');
   const privatePrefixes = [root, process.env.USERPROFILE].filter(Boolean);
-  for (const [path, blob] of blobs) {
-    if (path.endsWith('.png')) continue;
-    const bytes = git('cat-file', 'blob', blob);
+  const archive = git('archive', '--format=zip', sourceCommit);
+  archiveFiles(archive, blobs, (path, bytes) => {
+    if (path.endsWith('.png')) return;
     rejectPrivatePrefixes(bytes, privatePrefixes);
     if (/(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)/.test(bytes.toString('utf8')))
       throw new Error('SOURCE_PREVIEW_SENSITIVE_CONTENT');
-  }
-  const archive = git('archive', '--format=zip', sourceCommit);
-  archiveFiles(archive, blobs);
+  });
   clean();
   if (text('rev-parse', 'HEAD') !== sourceCommit) throw new Error('SOURCE_PREVIEW_CHANGED');
   const name = `SkylinesLink-${pkg.version}-source.zip`;
@@ -80,7 +78,7 @@ export async function buildSourcePreview() {
   await writeFile(join(output, name), archive, { flag: 'wx' });
   await writeFile(join(output, 'source-manifest.json'), metadata, { flag: 'wx' });
   await writeFile(join(output, 'SHA256SUMS.txt'),
-    `${digest(archive)}  ${name}\n${digest(metadata)}  source-manifest.json\n`, { flag: 'wx' });
+    `${manifest.archive.sha256}  ${name}\n${digest(metadata)}  source-manifest.json\n`, { flag: 'wx' });
   return manifest;
 }
 
