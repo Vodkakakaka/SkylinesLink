@@ -230,6 +230,7 @@ namespace SkylinesLink.Mod.Native
                     // Returning true would request a redundant native removal.
                     return false;
                 }
+                observer?.Advance();
                 RefreshLocale();
                 FinishAction();
                 FinishReplacement();

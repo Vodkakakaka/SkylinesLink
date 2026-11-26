@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Colossal.Core;
 using Colossal.Serialization.Entities;
 using Game;
@@ -18,11 +17,10 @@ namespace SkylinesLink.Mod.Native
         private readonly WorldContextTracker context;
         private readonly Action<string>? report;
         private readonly Action<WorldContextSnapshot>? observeReady;
-        private readonly Func<bool> updater;
         private GameManager? manager;
         private World? world;
         private LoadGameSystem? loader;
-        private bool started, stopRequested, preloadHeld, updaterMayBeHeld;
+        private bool started, stopRequested, preloadHeld;
         private string? lastIssue;
 
         public NativeWorldContextObserver(UpdateSystem updateSystem, WorldContextTracker context, Action<string>? report = null,
@@ -32,7 +30,6 @@ namespace SkylinesLink.Mod.Native
             this.context = context ?? throw new ArgumentNullException(nameof(context));
             this.report = report;
             this.observeReady = observeReady;
-            updater = Tick;
         }
 
         public void Start()
@@ -57,11 +54,8 @@ namespace SkylinesLink.Mod.Native
                     // can leave a callback installed and still needs owned cleanup.
                     preloadHeld = true;
                     manager.onGamePreload += OnPreload;
-                    updaterMayBeHeld = true;
-                    if (MainThreadDispatcher.RegisterUpdater(updater) == Guid.Empty)
-                        throw new InvalidOperationException("The world updater was not registered.");
                     started = true;
-                    Tick();
+                    Advance();
                 }
                 catch (Exception failure)
                 {
@@ -92,13 +86,11 @@ namespace SkylinesLink.Mod.Native
             }
         }
 
-        private bool Tick()
+        internal void Advance()
         {
-            // Func<bool> keeps this updater registered. The Action overload is
-            // one-shot. No exception may escape into the native updater loop.
             lock (sync)
             {
-                if (!started || stopRequested || context.IsStopped) return true;
+                if (!started || stopRequested || context.IsStopped) return;
                 try
                 {
                     RequireMainThread();
@@ -106,7 +98,7 @@ namespace SkylinesLink.Mod.Native
                     {
                         SetUnavailable();
                         ReportIssue("WORLD_OBSERVER_SOURCE_UNAVAILABLE");
-                        return false;
+                        return;
                     }
                     var source = manager!;
                     if (source.isGameLoading)
@@ -129,7 +121,6 @@ namespace SkylinesLink.Mod.Native
                     TrySetUnavailable();
                     ReportIssue("WORLD_OBSERVER_OBSERVATION_FAILED");
                 }
-                return false;
             }
         }
 
@@ -186,44 +177,17 @@ namespace SkylinesLink.Mod.Native
 
         private void ReleaseOwnedResources()
         {
-            var failures = new List<Exception>(2);
-            if (updaterMayBeHeld)
+            if (!preloadHeld) return;
+            try
             {
-                try
-                {
-                    // RegisterUpdater can throw after insertion but before
-                    // returning its Guid. Find only this instance's delegate.
-                    Guid owned = MainThreadDispatcher.GetUpdaterGuid(updater);
-                    if (owned != Guid.Empty)
-                    {
-                        try { MainThreadDispatcher.UnregisterUpdater(owned); }
-                        catch (Exception)
-                        {
-                            // Native logging can throw after the dictionary removal.
-                            // Actual ownership, rather than the log result, decides close.
-                            if (MainThreadDispatcher.GetUpdaterGuid(updater) != Guid.Empty) throw;
-                        }
-                    }
-                    if (MainThreadDispatcher.GetUpdaterGuid(updater) != Guid.Empty)
-                        throw new InvalidOperationException("The owned world updater remains registered.");
-                    updaterMayBeHeld = false;
-                }
-                catch (Exception failure) { failures.Add(failure); }
+                if (ReferenceEquals(manager, null)) throw new InvalidOperationException("The preload registration source is unknown.");
+                manager!.onGamePreload -= OnPreload;
+                preloadHeld = false;
             }
-            if (preloadHeld)
-            {
-                try
-                {
-                    if (ReferenceEquals(manager, null)) throw new InvalidOperationException("The preload registration source is unknown.");
-                    manager!.onGamePreload -= OnPreload;
-                    preloadHeld = false;
-                }
-                catch (Exception failure) { failures.Add(failure); }
-            }
-            if (failures.Count != 0)
+            catch (Exception)
             {
                 ReportIssue("WORLD_OBSERVER_RELEASE_FAILED");
-                throw new AggregateException("World observer callback release was not confirmed.", failures);
+                throw;
             }
         }
 

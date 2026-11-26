@@ -12,7 +12,7 @@ namespace SkylinesLink.Mod.Native
     // a world copy or a global version; never restores player state.
     internal sealed class NativeProbeSourceProtection
     {
-        private const int MaxSourceSystems = 4096;
+        private const int MaxWorlds = 64, MaxSourceSystems = 4096;
         private const int MaxAppendedSystems = 16;
         private readonly World source;
         private readonly World? defaultWorld;
@@ -32,7 +32,7 @@ namespace SkylinesLink.Mod.Native
             RequireMainThread();
             this.source = source ?? throw new ArgumentNullException(nameof(source));
             defaultWorld = World.DefaultGameObjectInjectionWorld;
-            worlds = ReadWorlds(); systems = ReadSystems(source, MaxSourceSystems);
+            worlds = ReadWorlds(); systems = ReadSystems(source);
             tool = source.GetExistingSystemManaged<ToolSystem>() ?? throw new InvalidOperationException("PROBE_TOOL_SOURCE_UNAVAILABLE");
             activeTool = tool.activeTool; selected = tool.selected; selectedIndex = tool.selectedIndex;
             tools = tool.tools;
@@ -44,7 +44,13 @@ namespace SkylinesLink.Mod.Native
         { foreach (var item in systems) if (item is T) return true; return false; }
 
         internal static bool IsRegistered(World world, ComponentSystemBase expected)
-        { foreach (var item in ReadSystems(world, MaxSourceSystems + MaxAppendedSystems)) if (ReferenceEquals(item, expected)) return true; return false; }
+        {
+            var current = SourceSystems(world, MaxSourceSystems + MaxAppendedSystems);
+            int count = current.Count;
+            for (int index = 0; index < count; index++)
+                if (ReferenceEquals(current[index], expected)) return true;
+            return false;
+        }
 
         internal bool Passed => failure == null && defaultSame && worldsSame && systemsSame && toolSame && activeSame
             && selectedSame && selectedIndexSame && listSame && contentsSame;
@@ -59,9 +65,15 @@ namespace SkylinesLink.Mod.Native
             {
                 if (appended == null || appended.Length > MaxAppendedSystems) throw new InvalidOperationException();
                 defaultSame = ReferenceEquals(defaultWorld, World.DefaultGameObjectInjectionWorld);
-                worldsSame = Same(worlds, ReadWorlds());
-                var current = ReadSystems(source, MaxSourceSystems + MaxAppendedSystems);
-                systemsSame = current.Length == systems.Length + appended.Length;
+                var currentWorlds = World.All;
+                int worldCount = currentWorlds.Count;
+                if (worldCount > MaxWorlds) throw new InvalidOperationException("PROBE_WORLD_OBSERVATION_BUDGET");
+                worldsSame = worldCount == worlds.Length;
+                for (int index = 0; worldsSame && index < worldCount; index++)
+                    worldsSame = ReferenceEquals(currentWorlds[index], worlds[index]);
+
+                var current = SourceSystems(source, MaxSourceSystems + MaxAppendedSystems);
+                systemsSame = current.Count == systems.Length + appended.Length;
                 for (int index = 0; systemsSame && index < systems.Length; index++) systemsSame = ReferenceEquals(current[index], systems[index]);
                 for (int index = 0; systemsSame && index < appended.Length; index++) systemsSame = ReferenceEquals(current[systems.Length + index], appended[index]);
                 toolSame = ReferenceEquals(source.GetExistingSystemManaged<ToolSystem>(), tool);
@@ -86,18 +98,22 @@ namespace SkylinesLink.Mod.Native
         private static World[] ReadWorlds()
         {
             var all = World.All;
-            if (all.Count > 64) throw new InvalidOperationException("PROBE_WORLD_OBSERVATION_BUDGET");
+            if (all.Count > MaxWorlds) throw new InvalidOperationException("PROBE_WORLD_OBSERVATION_BUDGET");
             var result = new World[all.Count]; for (int index = 0; index < result.Length; index++) result[index] = all[index]; return result;
         }
-        private static ComponentSystemBase[] ReadSystems(World world, int maximum)
+        private static World.NoAllocReadOnlyCollection<ComponentSystemBase> SourceSystems(World world, int maximum)
         {
             if (!world.IsCreated) throw new InvalidOperationException("PROBE_SOURCE_WORLD_UNAVAILABLE");
             var all = world.Systems;
             if (all.Count > maximum) throw new InvalidOperationException("PROBE_SYSTEM_OBSERVATION_BUDGET");
+            return all;
+        }
+
+        private static ComponentSystemBase[] ReadSystems(World world)
+        {
+            var all = SourceSystems(world, MaxSourceSystems);
             var result = new ComponentSystemBase[all.Count]; for (int index = 0; index < result.Length; index++) result[index] = all[index]; return result;
         }
-        private static bool Same<T>(T[] left, T[] right) where T : class
-        { if (left.Length != right.Length) return false; for (int index = 0; index < left.Length; index++) if (!ReferenceEquals(left[index], right[index])) return false; return true; }
         private static void RequireMainThread()
         { if (!MainThreadDispatcher.isMainThread) throw new InvalidOperationException("PROBE_PROTECTION_MAIN_THREAD_REQUIRED"); }
     }
