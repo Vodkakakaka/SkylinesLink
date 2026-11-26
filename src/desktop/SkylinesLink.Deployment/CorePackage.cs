@@ -34,8 +34,7 @@ public sealed class CorePackage : IDisposable
         try
         {
             RejectReparseAncestors(package.Root);
-            var manifestPath = Path.Combine(package.Root, "core-manifest.json");
-            var manifest = preparationManifest ?? OpenReadPin(manifestPath);
+            var manifest = preparationManifest ?? OpenReadPin(ResolveCorePath(package.Root, "core-manifest.json"));
             package.manifestPin = manifest;
             package.ownsManifest = preparationManifest is null;
             if (manifest.Length > MaximumManifestBytes) throw new InvalidDataException("发行清单超出读取上限");
@@ -53,12 +52,11 @@ public sealed class CorePackage : IDisposable
             {
                 total = checked(total + item.Size);
                 if (total > MaximumCoreBytes) throw new InvalidDataException("核心制品超出当前验证预算");
-                var path = ResolveCorePath(package.Root, item.Path);
                 var firstSegment = item.Path.Split('/')[0];
                 if (firstSegment.Equals("core-manifest.json", StringComparison.OrdinalIgnoreCase)
                     || firstSegment.Equals("preparation-manifest.json", StringComparison.OrdinalIgnoreCase)
                     || package.filePins.ContainsKey(item.Path)) throw new InvalidDataException("清单存在重复或自引用文件");
-                var file = OpenReadPin(path);
+                var file = OpenReadPin(ResolveCorePath(package.Root, item.Path));
                 package.filePins.Add(item.Path, file);
                 if (file.Length != item.Size) throw new InvalidDataException("核心文件大小不符");
                 VerifyHash(file, item.Sha256);
@@ -166,11 +164,8 @@ public sealed class CorePackage : IDisposable
 
     public static void RejectReparseAncestors(string path) => CoreInstallationPaths.RejectReparseAncestors(path);
 
-    private static FileStream OpenReadPin(string path)
-    {
-        RejectReparseAncestors(path);
-        return new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-    }
+    private static FileStream OpenReadPin(string checkedPath) =>
+        new FileStream(checkedPath, FileMode.Open, FileAccess.Read, FileShare.Read);
 
     private static void VerifyHash(FileStream stream, string expected)
     {
