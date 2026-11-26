@@ -136,6 +136,7 @@ namespace SkylinesLink.Application.Context
 
         private void Publish(CaptureWork work)
         {
+            JToken? encoded = null;
             for (int index = 0; index < work.Slots.Length; index++)
             {
                 ReadLease? lease;
@@ -152,8 +153,14 @@ namespace SkylinesLink.Application.Context
                 }
                 if (!lease.IsCancelled)
                 {
-                    var result = reason != null ? Unavailable(reason) :
-                        Encode(capture!);
+                    JToken result;
+                    if (reason != null) result = Unavailable(reason);
+                    else
+                    {
+                        encoded ??= Encode(capture!);
+                        // Each consumer owns its DOM. The final slot can take the encoded original.
+                        result = index + 1 == work.AddedConsumers ? encoded : encoded.DeepClone();
+                    }
                     lease.TryComplete(GetCurrentResult(result));
                 }
                 // Keep the current lease owned if encoding throws. Finish sees
