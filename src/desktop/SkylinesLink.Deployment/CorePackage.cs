@@ -13,10 +13,9 @@ public sealed class CorePackage : IDisposable
 {
     private const int MaximumManifestBytes = 1024 * 1024;
     private const long MaximumCoreBytes = 1024L * 1024 * 1024;
-    private readonly List<FileStream> pins = new();
-    private readonly Dictionary<string, string> files = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, FileStream> filePins = new(StringComparer.OrdinalIgnoreCase);
-    private FileStream manifestPin = null!;
+    private FileStream? manifestPin;
+    private bool ownsManifest;
     public string Root { get; }
     public CoreManifest Manifest { get; private set; } = null!;
     public string ManifestSha256 { get; private set; } = null!;
@@ -36,8 +35,9 @@ public sealed class CorePackage : IDisposable
         {
             RejectReparseAncestors(package.Root);
             var manifestPath = Path.Combine(package.Root, "core-manifest.json");
-            var manifest = preparationManifest ?? package.Pin(manifestPath);
+            var manifest = preparationManifest ?? OpenReadPin(manifestPath);
             package.manifestPin = manifest;
+            package.ownsManifest = preparationManifest is null;
             if (manifest.Length > MaximumManifestBytes) throw new InvalidDataException("发行清单超出读取上限");
             manifest.Position = 0;
             var bytes = new byte[checked((int)manifest.Length)];
@@ -57,8 +57,8 @@ public sealed class CorePackage : IDisposable
                 var firstSegment = item.Path.Split('/')[0];
                 if (firstSegment.Equals("core-manifest.json", StringComparison.OrdinalIgnoreCase)
                     || firstSegment.Equals("preparation-manifest.json", StringComparison.OrdinalIgnoreCase)
-                    || !package.files.TryAdd(item.Path, path)) throw new InvalidDataException("清单存在重复或自引用文件");
-                var file = package.Pin(path);
+                    || package.filePins.ContainsKey(item.Path)) throw new InvalidDataException("清单存在重复或自引用文件");
+                var file = OpenReadPin(path);
                 package.filePins.Add(item.Path, file);
                 if (file.Length != item.Size) throw new InvalidDataException("核心文件大小不符");
                 VerifyHash(file, item.Sha256);
@@ -72,11 +72,14 @@ public sealed class CorePackage : IDisposable
         }
     }
 
-    public string RequireFile(string relativePath)
+    public string RequireFile(string relativePath) => RequireRuntimePin(relativePath).Name;
+
+    private FileStream RequireRuntimePin(string relativePath)
     {
-        if (!files.TryGetValue(relativePath, out var path)) throw new InvalidDataException("发行缺少必要运行文件");
-        RejectReparseAncestors(path);
-        return path;
+        ObjectDisposedException.ThrowIf(manifestPin is null, this);
+        if (!filePins.TryGetValue(relativePath, out var file)) throw new InvalidDataException("发行缺少必要运行文件");
+        RejectReparseAncestors(file.Name);
+        return file;
     }
 
     /// <summary>核当前成套载荷的必要文件集合；不代替来源、可执行格式或实际运行验收。</summary>
@@ -84,10 +87,7 @@ public sealed class CorePackage : IDisposable
     {
         RequireSupportedContract();
         foreach (var path in CorePayloadFiles.Required)
-        {
-            RequireFile(path);
-            if (filePins[path].Length == 0) throw new InvalidDataException("核心必要文件为空");
-        }
+            if (RequireRuntimePin(path).Length == 0) throw new InvalidDataException("核心必要文件为空");
     }
 
     /// <summary>稳定入口的基础ABI守卫；不代替准确发行组合的兼容性验收。</summary>
@@ -116,17 +116,21 @@ public sealed class CorePackage : IDisposable
     }
 
     // Setup 复制的是已经核验并保持打开的源文件，不重新解析可变的源路径。
-    public void CopyManifestTo(Stream destination) => CopyPinned(manifestPin, destination);
+    public void CopyManifestTo(Stream destination)
+    {
+        ObjectDisposedException.ThrowIf(manifestPin is null, this);
+        CopyPinned(manifestPin, destination);
+    }
 
     public void CopyFileTo(string relativePath, Stream destination)
     {
+        ObjectDisposedException.ThrowIf(manifestPin is null, this);
         if (!filePins.TryGetValue(relativePath, out var stream)) throw new InvalidDataException("复制文件不在核心清单中");
         CopyPinned(stream, destination);
     }
 
-    private void CopyPinned(FileStream stream, Stream destination)
+    private static void CopyPinned(FileStream stream, Stream destination)
     {
-        ObjectDisposedException.ThrowIf(pins.Count == 0, this);
         stream.Position = 0;
         stream.CopyTo(destination, 64 * 1024);
     }
@@ -162,12 +166,10 @@ public sealed class CorePackage : IDisposable
 
     public static void RejectReparseAncestors(string path) => CoreInstallationPaths.RejectReparseAncestors(path);
 
-    private FileStream Pin(string path)
+    private static FileStream OpenReadPin(string path)
     {
         RejectReparseAncestors(path);
-        var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        pins.Add(stream);
-        return stream;
+        return new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
     }
 
     private static void VerifyHash(FileStream stream, string expected)
@@ -182,7 +184,9 @@ public sealed class CorePackage : IDisposable
 
     public void Dispose()
     {
-        foreach (var stream in pins) stream.Dispose();
-        pins.Clear();
+        if (ownsManifest) manifestPin?.Dispose();
+        manifestPin = null;
+        foreach (var stream in filePins.Values) stream.Dispose();
+        filePins.Clear();
     }
 }
