@@ -96,8 +96,8 @@ namespace SkylinesLink.RuntimeProbe
                 await FrameCodec.WriteAsync(encoded, new JObject { ["requestId"] = "second" }, limits, CancellationToken.None);
                 using (var fragmented = new FragmentedStream(encoded.ToArray()))
                 {
-                    var first = ContractJson.Parse((await FrameCodec.ReadAsync(fragmented, limits, limits.FrameTimeout, CancellationToken.None))!);
-                    var second = ContractJson.Parse((await FrameCodec.ReadAsync(fragmented, limits, limits.FrameTimeout, CancellationToken.None))!);
+                    var first = (await FrameCodec.ReadAsync(fragmented, limits, limits.FrameTimeout, CancellationToken.None))!.Value.Document;
+                    var second = (await FrameCodec.ReadAsync(fragmented, limits, limits.FrameTimeout, CancellationToken.None))!.Value.Document;
                     Check((string?)first["requestId"] == "first" && (string?)second["requestId"] == "second" &&
                         await FrameCodec.ReadAsync(fragmented, limits, limits.FrameTimeout, CancellationToken.None) == null, "coalesced frames survive three-byte reads");
                 }
@@ -121,11 +121,12 @@ namespace SkylinesLink.RuntimeProbe
                 }
                 using (var input = new FragmentedStream(expected))
                 {
-                    string? decoded = await FrameCodec.ReadAsync(input, limits, limits.FrameTimeout, CancellationToken.None);
-                    Check(decoded == json, "shared fragmented decode " + name);
+                    var decoded = (await FrameCodec.ReadAsync(input, limits, limits.FrameTimeout, CancellationToken.None))!.Value;
+                    Check(decoded.PayloadBytes == (int)vector["payloadBytes"]! &&
+                        JToken.DeepEquals(decoded.Document, ContractJson.Parse(json)), "shared fragmented decode " + name);
                     // A one- or two-byte JSON payload is frame-valid, not a Wire message.
-                    if ((int)vector["payloadBytes"]! <= 2)
-                        Reject<ContractValidationException>(() => ContractCatalog.ParseAndValidate(SchemaIds.WireChallengeV2, decoded!), "small frame is not Wire " + name);
+                    if (decoded.PayloadBytes <= 2)
+                        Reject<ContractValidationException>(() => ContractCatalog.Require(SchemaIds.WireChallengeV2, decoded.Document), "small frame is not Wire " + name);
                 }
             }
             foreach (JObject vector in (JArray)vectors["headers"]!)
@@ -161,6 +162,31 @@ namespace SkylinesLink.RuntimeProbe
             var shortHeader = (JObject)((JArray)vectors["headers"]!).Single(v => (string?)v["name"] == "short-header");
             using (var input = new FragmentedStream(FrameHex((string)shortHeader["hex"]!)))
                 await RejectFrameAsync(() => FrameCodec.ReadAsync(input, limits, limits.FrameTimeout, CancellationToken.None), "TRUNCATED_FRAME", "EOF during header is truncated stream");
+            var shortBudget = new PipeLimits(1, 256, 2, 6, limits.HandshakeTimeout, limits.FrameTimeout, limits.SendTimeout);
+            using (var input = RawJsonFrame("{\"键\":2,\"键\":3}"))
+            {
+                var frame = (await FrameCodec.ReadAsync(input, shortBudget, shortBudget.FrameTimeout, CancellationToken.None))!.Value;
+                Check((int)frame.Document["键"]! == 3 && frame.PayloadBytes == 17, "token-budget boundary keeps duplicate last value and original UTF-8 bytes");
+            }
+            foreach (var test in new[] {
+                (Json: "{\"a\":1,\"a\":2,\"a\":3}", Code: "JSON_LIMIT"),
+                (Json: "{\"a\":1e999,\"a\":2}", Code: "INVALID_JSON"),
+                (Json: "[[[]]]", Code: "INVALID_JSON"),
+                (Json: "{\"a\":1,}", Code: "INVALID_JSON")
+            })
+            {
+                using (var input = RawJsonFrame(test.Json))
+                    await RejectFrameAsync(() => FrameCodec.ReadAsync(input, shortBudget, shortBudget.FrameTimeout, CancellationToken.None), test.Code, "wire JSON rejected before publication");
+            }
+        }
+        private static MemoryStream RawJsonFrame(string value)
+        {
+            byte[] payload = System.Text.Encoding.UTF8.GetBytes(value);
+            var bytes = new byte[FrameCodec.HeaderLength + payload.Length];
+            FrameHex("534c4e4b01000000").CopyTo(bytes, 0);
+            bytes[8] = checked((byte)payload.Length);
+            payload.CopyTo(bytes, FrameCodec.HeaderLength);
+            return new MemoryStream(bytes);
         }
         private static byte[] FrameHex(string value)
         {
@@ -436,25 +462,22 @@ namespace SkylinesLink.RuntimeProbe
                         Check(HandshakeProof.EqualsProof(challenge.ServerProof, HandshakeProof.Compute(fixture.Token, "server", challenge)), "server possession proof");
                         await FinishHandshake(client, challenge, fixture.Token, limits);
                         await Query(client, "q-1", limits);
-                        var result = ContractCatalog.ParseAndValidate(SchemaIds.WireResult, (await FrameCodec.ReadAsync(client, limits, limits.FrameTimeout, CancellationToken.None))!, new RegisteredBinding("system.context", "2"));
+                        var result = await ReadValidatedFrame(client, limits, SchemaIds.WireResult, new RegisteredBinding("system.context", "2"));
                         Check((string?)result["result"]?["gameState"] == "menu", "real v2 authenticated read");
                         long loaded = owner.Context.EnterLoading(); owner.Context.ObserveReady(loaded);
                         await Query(client, "q-unidentified", limits);
-                        var ready = ContractCatalog.ParseAndValidate(SchemaIds.WireResult,
-                            (await FrameCodec.ReadAsync(client, limits, limits.FrameTimeout, CancellationToken.None))!, new RegisteredBinding("system.context", "2"));
+                        var ready = await ReadValidatedFrame(client, limits, SchemaIds.WireResult, new RegisteredBinding("system.context", "2"));
                         Check((string?)ready["result"]?["gameState"] == "ready" && ready["result"]?["world"] is JObject &&
                             ready["result"]!["world"]!["cityId"]!.Type == JTokenType.Null &&
                             (string?)ready["result"]!["world"]!["generation"] == loaded.ToString(System.Globalization.CultureInfo.InvariantCulture),
                             "real authenticated context revision 2 exposes a ready scope with unknown persistent identity");
                         await QueryOperation(client, "op-live", false, limits);
-                        var operation = ContractCatalog.ParseAndValidate(SchemaIds.WireResult,
-                            (await FrameCodec.ReadAsync(client, limits, limits.FrameTimeout, CancellationToken.None))!, new RegisteredBinding("operations.get", "5"));
+                        var operation = await ReadValidatedFrame(client, limits, SchemaIds.WireResult, new RegisteredBinding("operations.get", "5"));
                         Check((string?)operation["result"]?["result"]?["kind"] == "live" &&
                             (string?)operation["result"]?["result"]?["lookup"]?["kind"] == "absent", "active operation revision 5 has real authenticated live envelope");
                         await owner.History.InitialAttempt;
                         await QueryOperation(client, "op-history", true, limits);
-                        var history = ContractCatalog.ParseAndValidate(SchemaIds.WireResult,
-                            (await FrameCodec.ReadAsync(client, limits, limits.FrameTimeout, CancellationToken.None))!, new RegisteredBinding("operations.get", "5"));
+                        var history = await ReadValidatedFrame(client, limits, SchemaIds.WireResult, new RegisteredBinding("operations.get", "5"));
                         Check((string?)history["result"]?["result"]?["kind"] == "history" &&
                             (string?)history["result"]?["result"]?["lookup"]?["reason"] == "HISTORY_NOT_COVERED", "active revision 5 history uses actual published source and never live absent");
                         await owner.Authority.UpdateAsync(Profile, GrantScope.None, fixture.Token, null);
@@ -539,12 +562,12 @@ namespace SkylinesLink.RuntimeProbe
                 ExpectedInstanceId = id.InstanceId, ProductVersion = id.ProductVersion, ContractVersion = id.ContractVersion, CoreManifestSha256 = id.CoreManifestSha256,
                 ExpectedAuthorityEpoch = id.AuthorityEpoch, ExpectedGrantEpoch = grant.GrantEpoch, ClientNonce = new string('a', 64) };
             await FrameCodec.WriteAsync(client, ContractCodec.EncodeWireAuthenticateV2(hello), limits, CancellationToken.None);
-            return ContractCodec.DecodeWireChallengeV2(ContractCatalog.ParseAndValidate(SchemaIds.WireChallengeV2, (await FrameCodec.ReadAsync(client, limits, limits.FrameTimeout, CancellationToken.None))!));
+            return ContractCodec.DecodeWireChallengeV2((await FrameCodec.ReadAsync(client, limits, limits.FrameTimeout, CancellationToken.None))!.Value.Document);
         }
         private static async Task FinishHandshake(Stream client, WireChallengeV2 challenge, string token, PipeLimits limits)
         {
             await FrameCodec.WriteAsync(client, ContractCodec.EncodeWireProofV2(new WireProofV2 { Kind = "proof", RequestId = challenge.RequestId, ClientProof = HandshakeProof.Compute(token, "client", challenge) }), limits, CancellationToken.None);
-            var accepted = ContractCodec.DecodeWireAuthenticatedV2(ContractCatalog.ParseAndValidate(SchemaIds.WireAuthenticatedV2, (await FrameCodec.ReadAsync(client, limits, limits.FrameTimeout, CancellationToken.None))!));
+            var accepted = ContractCodec.DecodeWireAuthenticatedV2((await FrameCodec.ReadAsync(client, limits, limits.FrameTimeout, CancellationToken.None))!.Value.Document);
             Check(accepted.InstanceId == challenge.InstanceId && accepted.GrantEpoch == challenge.GrantEpoch && accepted.AuthorityEpoch == challenge.AuthorityEpoch, "authenticated binding matches challenge");
         }
         private static Task Query(Stream client, string id, PipeLimits limits) => FrameCodec.WriteAsync(client,
@@ -556,8 +579,13 @@ namespace SkylinesLink.RuntimeProbe
             return FrameCodec.WriteAsync(client, new JObject { ["kind"] = "request", ["requestId"] = id,
                 ["capabilityId"] = "operations.get", ["schemaRevision"] = "5", ["arguments"] = arguments }, limits, CancellationToken.None);
         }
-        private static async Task<JToken> ReadError(Stream client, PipeLimits limits) => ContractCatalog.ParseAndValidate(SchemaIds.WireError,
-            (await FrameCodec.ReadAsync(client, limits, limits.FrameTimeout, CancellationToken.None))!);
+        private static Task<JToken> ReadError(Stream client, PipeLimits limits) => ReadValidatedFrame(client, limits, SchemaIds.WireError);
+        internal static async Task<JToken> ReadValidatedFrame(Stream client, PipeLimits limits, string schema, RegisteredBinding? binding = null)
+        {
+            var document = (await FrameCodec.ReadAsync(client, limits, limits.FrameTimeout, CancellationToken.None))!.Value.Document;
+            ContractCatalog.Require(schema, document, binding);
+            return document;
+        }
         private static async Task<ConnectionAuthorityOwner?> Open(Fixture fixture, int deadline = 5000, Func<IAuthorizationStore, IAuthorizationStore>? port = null)
         {
             var owner = await ConnectionAuthorityOwner.CreateAsync(fixture.Connection, "probe", Core, Program.ProductVersion, Program.Limits(deadline),

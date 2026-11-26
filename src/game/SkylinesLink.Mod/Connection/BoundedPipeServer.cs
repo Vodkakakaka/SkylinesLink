@@ -5,7 +5,6 @@ using System.IO;
 using System.IO.Pipes;
 using System.Linq;
 using System.Security.AccessControl;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -37,7 +36,6 @@ namespace SkylinesLink.Mod.Connection
         private readonly CapacityBudget ingressBudget;
         private readonly CapacityBudget egressBudget;
         private readonly PipeReplyBudget replyBudget = new PipeReplyBudget();
-        private static readonly UTF8Encoding StrictUtf8 = new UTF8Encoding(false, true);
         private readonly CancellationTokenSource shutdown = new CancellationTokenSource();
         private readonly object sync = new object();
         private NamedPipeServerStream?[] streams;
@@ -187,17 +185,17 @@ namespace SkylinesLink.Mod.Connection
         {
             while (!cancellation.IsCancellationRequested)
             {
-                string? json = await FrameCodec.ReadAsync(stream, limits, limits.FrameTimeout, cancellation, ingressBudget).ConfigureAwait(false);
-                if (json == null) return;
-                bool keepReceiving = ReceiveFrame(json, subject, replies);
-                json = null; // 不让父request DOM/原文越过下一次异步读取。
+                var frame = await FrameCodec.ReadAsync(stream, limits, limits.FrameTimeout, cancellation, ingressBudget).ConfigureAwait(false);
+                if (!frame.HasValue) return;
+                bool keepReceiving = ReceiveFrame(frame.Value.Document, frame.Value.PayloadBytes, subject, replies);
+                frame = null; // 不让父 request DOM 越过下一次异步读取。
                 if (!keepReceiving) { await replies.SenderEnded.ConfigureAwait(false); return; }
             }
         }
 
-        private bool ReceiveFrame(string json, GrantSnapshot subject, ReplyQueue replies)
+        private bool ReceiveFrame(JToken request, int payloadBytes, GrantSnapshot subject, ReplyQueue replies)
         {
-            JToken request = ContractCatalog.ParseAndValidate(SchemaIds.WireRequest, json);
+            ContractCatalog.Require(SchemaIds.WireRequest, request);
             string requestId = (string)request["requestId"]!;
             string capabilityId = (string)request["capabilityId"]!;
             string revision = (string)request["schemaRevision"]!;
@@ -211,7 +209,7 @@ namespace SkylinesLink.Mod.Connection
             var binding = new RegisteredBinding(capabilityId, revision);
             if (isStop)
             {
-                if (StrictUtf8.GetByteCount(json) > ControlTransportProfile.MaximumRequestBytes) throw new PipeProtocolException("FRAME_LIMIT");
+                if (payloadBytes > ControlTransportProfile.MaximumRequestBytes) throw new PipeProtocolException("FRAME_LIMIT");
                 var selector = ContractCodec.DecodeTaskStopQuery(request["arguments"]!);
                 var stop = dispatcher as ITaskStopCapabilityDispatcher;
                 try
@@ -365,9 +363,10 @@ namespace SkylinesLink.Mod.Connection
             using (deadline.Token.Register(stream.Dispose))
             {
                 deadline.CancelAfter(limits.HandshakeTimeout);
-                string? json = await FrameCodec.ReadAsync(stream, limits, limits.HandshakeTimeout, deadline.Token, ingressBudget).ConfigureAwait(false);
-                if (json == null) return null;
-                var hello = ContractCodec.DecodeWireAuthenticateV2(ContractCatalog.ParseAndValidate(SchemaIds.WireAuthenticateV2, json));
+                var frame = await FrameCodec.ReadAsync(stream, limits, limits.HandshakeTimeout, deadline.Token, ingressBudget).ConfigureAwait(false);
+                if (!frame.HasValue) return null;
+                var hello = ContractCodec.DecodeWireAuthenticateV2(frame.Value.Document);
+                frame = null;
                 AuthorizationState.ValidateHex(hello.ClientNonce);
                 if (hello.ProductVersion != identity.ProductVersion || hello.ContractVersion != identity.ContractVersion || hello.CoreManifestSha256 != identity.CoreManifestSha256)
                 { await SendError(stream, hello.RequestId, "INCOMPATIBLE_COMPONENT", "连接组件版本不匹配。").ConfigureAwait(false); return null; }
@@ -381,9 +380,10 @@ namespace SkylinesLink.Mod.Connection
                     ClientNonce = hello.ClientNonce, ServerNonce = HandshakeProof.RandomHex(), ServerProof = "" };
                 challenge.ServerProof = HandshakeProof.Compute(capture.InternalToken, "server", challenge);
                 await FrameCodec.WriteAsync(stream, ContractCodec.EncodeWireChallengeV2(challenge), limits, deadline.Token, egressBudget).ConfigureAwait(false);
-                json = await FrameCodec.ReadAsync(stream, limits, limits.HandshakeTimeout, deadline.Token, ingressBudget).ConfigureAwait(false);
-                if (json == null) return null;
-                var proof = ContractCodec.DecodeWireProofV2(ContractCatalog.ParseAndValidate(SchemaIds.WireProofV2, json));
+                frame = await FrameCodec.ReadAsync(stream, limits, limits.HandshakeTimeout, deadline.Token, ingressBudget).ConfigureAwait(false);
+                if (!frame.HasValue) return null;
+                var proof = ContractCodec.DecodeWireProofV2(frame.Value.Document);
+                frame = null;
                 if (proof.RequestId != hello.RequestId || !HandshakeProof.EqualsProof(HandshakeProof.Compute(capture.InternalToken, "client", challenge), proof.ClientProof) ||
                     !authentication.Allows(capture.Subject, capture.Subject.Scope))
                 { await SendError(stream, hello.RequestId, "UNAUTHORIZED", "连接授权无效。").ConfigureAwait(false); return null; }

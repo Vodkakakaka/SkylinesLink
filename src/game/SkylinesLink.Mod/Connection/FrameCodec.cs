@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SkylinesLink.Contracts;
 using SkylinesLink.Application.Operations;
 using SkylinesLink.Mod.Runtime;
 
@@ -17,7 +18,7 @@ namespace SkylinesLink.Mod.Connection
         public const int HeaderLength = 12;
         private static readonly UTF8Encoding StrictUtf8 = new UTF8Encoding(false, true);
 
-        public static async Task<string?> ReadAsync(Stream stream, PipeLimits limits, TimeSpan deadline, CancellationToken cancellation,
+        public static async Task<(JToken Document, int PayloadBytes)?> ReadAsync(Stream stream, PipeLimits limits, TimeSpan deadline, CancellationToken cancellation,
             CapacityBudget? payloadBudget = null)
         {
             using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation))
@@ -37,8 +38,8 @@ namespace SkylinesLink.Mod.Connection
                 catch (DecoderFallbackException) { throw new PipeProtocolException("INVALID_UTF8"); }
                 catch (EndOfStreamException) { throw new PipeProtocolException("TRUNCATED_FRAME"); }
                 catch (PayloadCapacityException) { throw new PipeProtocolException("PAYLOAD_BUDGET"); }
-                CheckJsonBudget(json, limits);
-                return json;
+                try { return (ContractJson.ParseWire(json, limits.MaximumJsonDepth, limits.MaximumJsonTokens), length); }
+                catch (ContractValidationException error) { throw WireJsonError(error); }
             }
         }
 
@@ -68,7 +69,8 @@ namespace SkylinesLink.Mod.Connection
                 value = text.ToString();
                 payloadLength = StrictUtf8.GetByteCount(value);
                 if (payloadLength > maximum) throw new PipeProtocolException("FRAME_LIMIT");
-                CheckJsonBudget(value, limits);
+                try { ContractJson.CheckWireTokens(value, limits.MaximumJsonDepth, limits.MaximumJsonTokens); }
+                catch (ContractValidationException error) { throw WireJsonError(error); }
             }
             return new FrozenFrame(value, payloadLength);
         }
@@ -104,27 +106,8 @@ namespace SkylinesLink.Mod.Connection
             internal int PayloadBytes { get; }
         }
 
-        public static void CheckJsonBudget(string json, PipeLimits limits)
-        {
-            using (var source = new StringReader(json))
-            using (var reader = new JsonTextReader(source) { MaxDepth = limits.MaximumJsonDepth, DateParseHandling = DateParseHandling.None, FloatParseHandling = FloatParseHandling.Double })
-            {
-                int count = 0;
-                try
-                {
-                    while (reader.Read())
-                    {
-                        if (++count > limits.MaximumJsonTokens) throw new PipeProtocolException("JSON_LIMIT");
-                        if (reader.TokenType == JsonToken.Comment || reader.TokenType == JsonToken.Undefined ||
-                            reader.TokenType == JsonToken.StartConstructor || reader.TokenType == JsonToken.Raw)
-                            throw new PipeProtocolException("INVALID_JSON");
-                        if (reader.TokenType == JsonToken.Float && reader.Value is double number && (double.IsNaN(number) || double.IsInfinity(number)))
-                            throw new PipeProtocolException("INVALID_JSON");
-                    }
-                }
-                catch (JsonReaderException) { throw new PipeProtocolException("INVALID_JSON"); }
-            }
-        }
+        private static PipeProtocolException WireJsonError(ContractValidationException error) =>
+            new PipeProtocolException(error.Issues[0].Code == "JSON_LIMIT" ? "JSON_LIMIT" : "INVALID_JSON");
 
         private static async Task<bool> ReadExactlyAsync(Stream stream, byte[] buffer, bool allowEof, CancellationToken cancellation)
         {

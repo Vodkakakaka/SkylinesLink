@@ -214,12 +214,27 @@ namespace SkylinesLink.Contracts
     {
         public static JToken Parse(string json) => ParseCore(json, false);
         internal static JToken ParseHistoryCheckpointV2(string json) => ParseCore(json, true);
-        private static JToken ParseCore(string json, bool checkpointV2)
+        public static JToken ParseWire(string json, int maximumDepth, int maximumTokens) =>
+            ParseCore(json, false, Math.Min(maximumDepth, 33), maximumTokens);
+
+        public static void CheckWireTokens(string json, int maximumDepth, int maximumTokens)
+        {
+            try
+            {
+                using (var reader = new WireTokenReader(json, maximumDepth, maximumTokens))
+                    while (reader.Read()) { }
+            }
+            catch (JsonException) { throw Invalid("JSON"); }
+        }
+
+        private static JToken ParseCore(string json, bool checkpointV2, int maximumDepth = 33, int? maximumTokens = null)
         {
             try
             {
                 if (checkpointV2) StrictJsonSyntax.ValidateHistoryCheckpointV2(json); else StrictJsonSyntax.Validate(json);
-                using (var reader = new JsonTextReader(new StringReader(json)) { DateParseHandling = DateParseHandling.None, FloatParseHandling = FloatParseHandling.Double, MaxDepth = 33 })
+                using (JsonTextReader reader = maximumTokens.HasValue
+                    ? new WireTokenReader(json, maximumDepth, maximumTokens.Value)
+                    : new JsonTextReader(new StringReader(json)) { DateParseHandling = DateParseHandling.None, FloatParseHandling = FloatParseHandling.Double, MaxDepth = maximumDepth })
                     return JToken.Load(reader, new JsonLoadSettings { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Replace, CommentHandling = CommentHandling.Ignore, LineInfoHandling = LineInfoHandling.Ignore });
             }
             catch (ContractValidationException) { throw; }
@@ -228,6 +243,31 @@ namespace SkylinesLink.Contracts
             catch (OverflowException) { throw Invalid("NUMBER"); }
         }
         private static ContractValidationException Invalid(string code) => new ContractValidationException(new[] { new ValidationIssue("", code) });
+
+        // Count the original tokens during load, before a later property can replace an earlier value.
+        private sealed class WireTokenReader : JsonTextReader
+        {
+            private readonly int maximumTokens;
+            private int tokens;
+
+            internal WireTokenReader(string json, int maximumDepth, int maximumTokens) : base(new StringReader(json))
+            {
+                this.maximumTokens = maximumTokens;
+                MaxDepth = maximumDepth;
+                DateParseHandling = DateParseHandling.None;
+                FloatParseHandling = FloatParseHandling.Double;
+            }
+
+            public override bool Read()
+            {
+                if (!base.Read()) return false;
+                if (++tokens > maximumTokens) throw Invalid("JSON_LIMIT");
+                if (TokenType == JsonToken.Comment || TokenType == JsonToken.Undefined || TokenType == JsonToken.StartConstructor || TokenType == JsonToken.Raw ||
+                    TokenType == JsonToken.Float && Value is double number && (double.IsNaN(number) || double.IsInfinity(number)))
+                    throw Invalid("JSON");
+                return true;
+            }
+        }
 
     }
 }

@@ -278,7 +278,7 @@ namespace SkylinesLink.RuntimeProbe
             {
                 await FrameCodec.WriteFrozenAsync(wire, frozen, limits, CancellationToken.None);
                 wire.Position = 0;
-                Check((string?)ContractJson.Parse((await FrameCodec.ReadAsync(wire, limits, limits.FrameTimeout, CancellationToken.None))!)["value"] == "original",
+                Check((string?)(await FrameCodec.ReadAsync(wire, limits, limits.FrameTimeout, CancellationToken.None))!.Value.Document["value"] == "original",
                     "a queued frame uses its frozen serialized value rather than the caller DOM");
             }
 
@@ -315,7 +315,7 @@ namespace SkylinesLink.RuntimeProbe
             }
         }
 
-        private static async Task ExpectTruncated(Task<string?> work)
+        private static async Task ExpectTruncated(Task work)
         {
             try { await work; throw new InvalidOperationException("Expected an incomplete payload."); }
             catch (PipeProtocolException error) when (error.Code == "TRUNCATED_FRAME") { }
@@ -517,8 +517,8 @@ namespace SkylinesLink.RuntimeProbe
         private static TaskStatedGoal Goal(string title) => new TaskStatedGoal(title, "fixture intent", Array.Empty<string>(), Array.Empty<string>());
         private static async Task<JToken> ReadAny(Stream client, PipeLimits limits)
         {
-            string? value = await FrameCodec.ReadAsync(client, limits, limits.FrameTimeout, CancellationToken.None);
-            if (value == null) throw new IOException("Expected a complete server frame."); return ContractJson.Parse(value);
+            var frame = await FrameCodec.ReadAsync(client, limits, limits.FrameTimeout, CancellationToken.None);
+            return frame?.Document ?? throw new IOException("Expected a complete server frame.");
         }
         private static async Task<JToken> Read(Stream client, PipeLimits limits, string capability)
         {

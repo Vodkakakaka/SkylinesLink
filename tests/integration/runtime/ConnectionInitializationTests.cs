@@ -290,8 +290,7 @@ namespace SkylinesLink.RuntimeProbe
                             "recovered configuration proves possession of the actual canonical token over the real pipe");
                         await FinishHandshake(client, challenge, configured.InternalToken, limits);
                         await Query(client, "configuration-retry-read", limits);
-                        var result = ContractCatalog.ParseAndValidate(SchemaIds.WireResult,
-                            (await FrameCodec.ReadAsync(client, limits, limits.FrameTimeout, CancellationToken.None))!, new RegisteredBinding("system.context", "2"));
+                        var result = await RuntimeSelfTests.ReadValidatedFrame(client, limits, SchemaIds.WireResult, new RegisteredBinding("system.context", "2"));
                         Check((string?)result["result"]?["gameState"] == "menu", "explicit first-configuration retry authenticates and reads through the real connection");
                     }
                     var subject = recovered.Authority.Read(Profile)!;
