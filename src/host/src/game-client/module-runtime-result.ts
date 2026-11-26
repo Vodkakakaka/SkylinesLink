@@ -19,9 +19,9 @@ export function copyModuleRuntimeQuery(query: ModuleRuntimeQuery): ModuleRuntime
 export function requireModuleRuntimePage(query: ModuleRuntimeQuery, value: unknown, expectedInstanceId?: string): ModuleRuntimePage {
   try {
     // Bound plain JSON before validation/stringification; never invoke an output getter.
-    measureJson(value, probeLimits);
+    const estimatedBytes = measureJson(value, probeLimits);
     requireContract(schemaIds.ModuleRuntimePage, value);
-    if (Buffer.byteLength(JSON.stringify(value), 'utf8') > maximumRawResultBytes) throw invalid();
+    if (estimatedBytes > maximumRawResultBytes && Buffer.byteLength(JSON.stringify(value), 'utf8') > maximumRawResultBytes) throw invalid();
   } catch { throw invalid(); }
   const result = value as ModuleRuntimePage;
   if (result.kind === 'unavailable') {

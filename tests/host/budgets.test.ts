@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { PassThrough, Writable } from 'node:stream';
 import { setTimeout as delay } from 'node:timers/promises';
+import { promiseHooks } from 'node:v8';
 import { startStdioHost, JsonLineBudget } from '../../src/host/src/mcp/transports/stdio.ts';
 import { probeLimits } from '../../src/host/src/shared/limits.ts';
 import { checkRawJson, measureJson } from '../../src/host/src/shared/json-budget.ts';
@@ -92,6 +93,50 @@ test('公开Transport装饰器透传选项，输出租约等实际输出完成',
   const sending = transport.send({ jsonrpc: '2.0', id: 1, result: {} }, options);
   await delay(0); assert.equal(sentOptions, options); assert.equal(transport.usage.sendCount, 1); assert.ok(transport.usage.sendBytes > 0);
   release(); await sending; assert.equal(transport.usage.sendBytes, 0); assert.equal(transport.usage.activeRequests, 0); await transport.close();
+});
+
+test('连续发送保持关闭等待有界，实际关流后释放卡住的发送', { timeout: 3000 }, async () => {
+  const writes = 32;
+  const waitingChildren = new WeakMap<Promise<unknown>, number>();
+  const settled = new WeakSet<Promise<unknown>>();
+  let mostWaiters = 0;
+  const stop = promiseHooks.createHook({
+    settled: promise => { settled.add(promise); },
+    init: (_promise, parent) => {
+      if (!parent || settled.has(parent)) return;
+      const count = (waitingChildren.get(parent) ?? 0) + 1;
+      waitingChildren.set(parent, count);
+      mostWaiters = Math.max(mostWaiters, count);
+    },
+  });
+  const blockedSend = Promise.withResolvers<void>();
+  const ownerClose = Promise.withResolvers<void>();
+  let block = false;
+  const inner: Transport = { start: async () => {}, close: async () => {},
+    send: async () => { if (block) await blockedSend.promise; } };
+  const transport = new BoundedTransport(inner, probeLimits,
+    { settled: async () => {}, close: () => ownerClose.promise });
+  const message: JSONRPCMessage = { jsonrpc: '2.0', id: 1, result: {} };
+  try {
+    await transport.start();
+    for (let i = 0; i < writes; i++) await transport.send(message);
+    assert.ok(mostWaiters < writes, 'completed sends must not accumulate observers on a pending promise');
+    block = true;
+    const rejected = assert.rejects(transport.send(message), /连接已关闭/);
+    const closing = transport.close();
+    await delay(0);
+    assert.equal(transport.usage.sendCount, 1);
+    ownerClose.resolve();
+    await closing;
+    await rejected;
+    assert.equal(transport.usage.sendCount, 0);
+    assert.equal(transport.usage.sendBytes, 0);
+  } finally {
+    stop();
+    ownerClose.resolve();
+    blockedSend.resolve();
+    await transport.close();
+  }
 });
 
 test('stdio慢读者：实际关闭输出后释放发送租约；EOF关闭GameClient', { timeout: 3000 }, async () => {

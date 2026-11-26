@@ -40,8 +40,7 @@ export class BoundedTransport implements Transport {
   #controlQueue: Output[] = [];
   #pumping = false;
   #pumpTask: Promise<void> | undefined;
-  #physicalClosed!: () => void;
-  #closedEvent = new Promise<void>(resolve => { this.#physicalClosed = resolve; });
+  #rejectWrite: ((reason: Error) => void) | undefined;
 
   constructor(readonly inner: Transport, readonly limits: TransportLimits, readonly owner: TransportOwner,
     classifier = new ControlClassifier()) {
@@ -121,11 +120,15 @@ export class BoundedTransport implements Transport {
         if (!output) break;
         const message = JSON.parse(output.json) as JSONRPCMessage;
         try {
-          const written = (async () => { await this.inner.send(message, output.options); await this.owner.settled(); })();
-          await Promise.race([written, this.#closedEvent.then(() => { throw new Error('MCP 连接已关闭。'); })]);
+          const { promise, resolve, reject } = Promise.withResolvers<void>();
+          // Close can interrupt the current write only after the I/O owners settle.
+          this.#rejectWrite = reject;
+          void this.inner.send(message, output.options).then(() => this.owner.settled()).then(resolve, reject);
+          await promise;
           this.lifecycle.outputDone(message);
           this.#finish(output);
         } catch (error) { this.#finish(output, error); this.#closeAfterEvent(); break; }
+        finally { this.#rejectWrite = undefined; }
       }
     })().finally(() => { this.#pumping = false; if (!this.#closed && !this.#closing && (this.#controlQueue.length || this.#normalQueue.length)) this.#pump(); });
   }
@@ -144,8 +147,9 @@ export class BoundedTransport implements Transport {
     this.#closing = Promise.resolve().then(async () => {
       const closed = await Promise.allSettled([Promise.resolve().then(() => this.owner.close()), Promise.resolve().then(() => this.inner.close())]);
       this.#closed = true;
-      this.#physicalClosed();
-      for (const output of [...this.#normalQueue, ...this.#controlQueue]) this.#finish(output, new Error('MCP 连接已关闭。'));
+      const failure = new Error('MCP 连接已关闭。');
+      this.#rejectWrite?.(failure);
+      for (const output of [...this.#normalQueue, ...this.#controlQueue]) this.#finish(output, failure);
       this.#normalQueue = []; this.#controlQueue = [];
       this.lifecycle.close();
       await this.#pumpTask;

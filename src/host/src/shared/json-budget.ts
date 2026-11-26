@@ -30,7 +30,7 @@ export function checkRawJson(bytes: Uint8Array, limits: TransportLimits): string
   return text;
 }
 
-/** 在 SDK 整条 stringify 前核普通值的成本；不调用属性 getter。 */
+/** 在 SDK stringify 前核普通 JSON 值的成本。返回编码字节数的保守上界，不调用属性 getter。 */
 export function measureJson(value: unknown, limits: TransportLimits): number {
   const stack: Array<{ value: unknown; depth: number; leave?: boolean }> = [{ value, depth: 0 }];
   const seen = new Set<object>();

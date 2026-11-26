@@ -20,9 +20,9 @@ export function copyBuildingInspectionQuery(value: unknown): BuildingInspectionQ
 
 export function requireBuildingInspection(query: BuildingInspectionQuery, value: unknown, expectedInstanceId?: string): BuildingInspection {
   try {
-    measureJson(value, probeLimits);
+    const estimatedBytes = measureJson(value, probeLimits);
     requireContract(schemaIds.BuildingInspection, value);
-    if (Buffer.byteLength(JSON.stringify(value), 'utf8') > 16 * 1024) throw invalid();
+    if (estimatedBytes > 16 * 1024 && Buffer.byteLength(JSON.stringify(value), 'utf8') > 16 * 1024) throw invalid();
   } catch { throw invalid(); }
   const result = value as BuildingInspection;
   if (result.kind === 'unavailable') return result;

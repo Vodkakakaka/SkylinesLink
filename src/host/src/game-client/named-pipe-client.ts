@@ -174,10 +174,8 @@ export class NamedPipeGameClient implements GameClient {
 
   async call(capabilityId: string, schemaRevision: string, args: unknown, signal: AbortSignal): Promise<unknown> {
     const buildingQuery = capabilityId === 'buildings.inspect' && schemaRevision === '1' ? copyBuildingInspectionQuery(args) : undefined;
-    if (buildingQuery) args = copyBuildingInspectionQuery(buildingQuery);
     const moduleQuery = capabilityId === 'system.modules.get' && schemaRevision === '1'
       ? (requireContract(schemaIds.ModuleRuntimeQuery, args), copyModuleRuntimeQuery(args as ModuleRuntimeQuery)) : undefined;
-    if (moduleQuery) args = copyModuleRuntimeQuery(moduleQuery);
     if (!this.#ready || this.#closed || this.#socket.destroyed) throw new GameClientError('GAME_UNAVAILABLE', '游戏连接尚未就绪或已经关闭。');
     let query: TaskStopDecisionQuery | undefined;
     if ((capabilityId === 'tasks.stop' || capabilityId === 'tasks.stop.get') && schemaRevision === '1') {
@@ -185,7 +183,8 @@ export class NamedPipeGameClient implements GameClient {
       query = { ...copyStopSelector(input), ...(capabilityId === 'tasks.stop.get' && input.source !== undefined ? { source: input.source } : {}) };
     }
     const requestId = randomUUID();
-    const request = { kind: 'request', requestId, capabilityId, schemaRevision, arguments: args };
+    // #send encodes the request synchronously. Keep the same owned selector for reply correlation.
+    const request = { kind: 'request', requestId, capabilityId, schemaRevision, arguments: buildingQuery ?? moduleQuery ?? args };
     requireContract(schemaIds.WireRequest, request);
     const capability = capabilities.find(c => c.id === capabilityId && c.schemaRevision === schemaRevision);
     const reply = await this.#send(requestId, request, { capabilityId, schemaRevision }, signal, capability?.effect === 'write', query, moduleQuery, buildingQuery) as WireResult;
