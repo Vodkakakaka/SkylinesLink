@@ -173,7 +173,7 @@ namespace SkylinesLink.Mod.Native
             }
             catch (Exception error)
             {
-                failureCode = error is Rejection rejected ? rejected.Code : "PREVIEW_VALIDATION_RUN_FAILED";
+                failureCode = NativeProbeFailure.CodeOf(error) ?? "PREVIEW_VALIDATION_RUN_FAILED";
                 throw;
             }
             finally

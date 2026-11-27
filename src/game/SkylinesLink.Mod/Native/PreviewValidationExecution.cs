@@ -136,12 +136,7 @@ namespace SkylinesLink.Mod.Native
             }
             catch (Exception error)
             {
-                failureCode = error switch
-                {
-                    Rejection rejected => rejected.Code,
-                    PreviewValidationProducer.Rejection rejected => rejected.Code,
-                    _ => "PREVIEW_VALIDATION_EXECUTION_FAILED"
-                };
+                failureCode = NativeProbeFailure.CodeOf(error) ?? "PREVIEW_VALIDATION_EXECUTION_FAILED";
                 throw new Rejection(failureCode, error);
             }
         }
