@@ -6,6 +6,7 @@
 - City and building queries share capture lifecycle and encode a result once for consumers of the same sample.
 - Authenticated game pipes survive idle periods, retain the original deadline for started frames, and write each outgoing frame after a single encoding. Operation lookups retain the selector and source supplied at call time.
 - Source packaging scans verified Git archive bytes directly. Clean builds record delivery outputs and verify cleanup.
+- The development preview probe compares native member values while a preview is held and preserves the original rejection code from validation.
 
 ### 简体中文
 
@@ -13,6 +14,7 @@
 - 城市与建筑读取共用采样生命周期，同一份样本的结果只编码一次。
 - 已认证的游戏管道可以继续使用空闲连接，已开始的帧沿原绝对期限收束，出站帧只编码一次。操作查询固定调用时的选择器和来源。
 - 源码打包直接检查已核对的 Git 归档字节。干净构建记录交付产物，并核对临时输出清理结果。
+- 开发探针在预览保持期间直接比较原生成员值，并保留资格校验的原始拒绝代码。
 
 ## 0.1.0-dev.0 — Developer foundation preview
 

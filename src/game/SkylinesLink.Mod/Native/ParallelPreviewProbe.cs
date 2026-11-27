@@ -65,7 +65,9 @@ namespace SkylinesLink.Mod.Native
         private Entity root, node, nodeUtilityChildPrefab;
         private Entity[] definitionIds = Array.Empty<Entity>(), members = Array.Empty<Entity>();
         private Entity[] rootChildren = Array.Empty<Entity>(), nodeChildren = Array.Empty<Entity>();
-        private JObject? inputReceipt, graphReceipt, nonemptyInputObservation;
+        private JObject? inputReceipt, nonemptyInputObservation;
+        private (Entity Prefab, Entity Owner, bool Secondary, TempFlags Flags, int Cost, int Value,
+            float3 Position, quaternion Rotation)[]? memberValues;
         private Stage stage;
         private string? failureCode, exceptionType;
         private DefinitionProducerPatchProbe patch = new DefinitionProducerPatchProbe();
@@ -274,14 +276,14 @@ namespace SkylinesLink.Mod.Native
                 Require(nodeInputs.CalculateEntityCount() == 0 || UnityEngine.Time.frameCount == emittedFrame,
                     "EXTERNAL_PREVIEW_ADDITIONAL_NODE_INPUT");
                 if (!previewConfirmed && !GraphReady()) return;
-                var observed = ReadGraph(requireStable: previewConfirmed);
+                ReadGraph(requireStable: previewConfirmed);
                 Require(actor.AllowApply(), "EXTERNAL_PREVIEW_NATIVE_QUALIFICATION_REJECTED");
                 Require(ReadMoney() == moneyBefore, "EXTERNAL_PREVIEW_FUNDS_CHANGED");
                 Require(Existing<ToolApplySystem>().CheckedStateRef.LastSystemVersion == applyVersion,
                     "EXTERNAL_PREVIEW_UNEXPECTED_APPLY_PHASE");
                 if (!previewConfirmed)
                 {
-                    graphReceipt = observed; previewConfirmed = true; observedFrame = UnityEngine.Time.frameCount;
+                    previewConfirmed = true; observedFrame = UnityEngine.Time.frameCount;
                     lastHoldFrame = observedFrame; stage = Stage.Hold;
                 }
                 else if (UnityEngine.Time.frameCount != lastHoldFrame)
@@ -355,15 +357,25 @@ namespace SkylinesLink.Mod.Native
             }
         }
 
-        private JObject ReadGraph(bool requireStable)
+        private void ReadGraph(bool requireStable)
         {
             int count = visibleTemps.CalculateEntityCount();
             Require(count == maximumMembers && count <= 3 + 2 * MaximumRows, "EXTERNAL_PREVIEW_MEMBER_BOUND_CHANGED");
-            using var ids = visibleTemps.ToEntityArray(Allocator.Temp);
-            Require(ids.Length == count, "EXTERNAL_PREVIEW_MEMBER_SET_CHANGED");
-            var actual = ids.ToArray();
-            Array.Sort(actual, (a, b) => a.Index != b.Index ? a.Index.CompareTo(b.Index) : a.Version.CompareTo(b.Version));
             var entities = source.EntityManager;
+            var actual = members;
+            if (requireStable)
+            {
+                Require(count == actual.Length, "EXTERNAL_PREVIEW_MEMBER_SET_CHANGED");
+                foreach (Entity member in actual)
+                    Require(entities.Exists(member) && visibleTemps.Matches(member), "EXTERNAL_PREVIEW_MEMBER_SET_CHANGED");
+            }
+            else
+            {
+                using var ids = visibleTemps.ToEntityArray(Allocator.Temp);
+                Require(ids.Length == count, "EXTERNAL_PREVIEW_MEMBER_SET_CHANGED");
+                actual = ids.ToArray();
+                Array.Sort(actual, (a, b) => a.Index != b.Index ? a.Index.CompareTo(b.Index) : a.Version.CompareTo(b.Version));
+            }
             Entity foundRoot = Entity.Null, foundNode = Entity.Null;
             foreach (Entity entity in actual)
             {
@@ -393,10 +405,14 @@ namespace SkylinesLink.Mod.Native
             RequireEmptyBuffer<Game.Net.SubNet>(foundNode);
             RequireChildren(foundRoot, rootChildren, actual, Entity.Null);
             RequireChildren(foundNode, nodeChildren, actual, nodeUtilityChildPrefab);
-            var rows = new JArray();
+            if (requireStable)
+                Require(root == foundRoot && node == foundNode, "EXTERNAL_PREVIEW_GRAPH_CHANGED_WHILE_HELD");
+
+            var values = requireStable ? memberValues! : new (Entity, Entity, bool, TempFlags, int, int, float3, quaternion)[count];
             int totalCost = 0;
-            foreach (Entity entity in actual)
+            for (int index = 0; index < count; index++)
             {
+                Entity entity = actual[index];
                 Temp temp = entities.GetComponentData<Temp>(entity);
                 TempFlags flags = entity == foundRoot ? TempFlags.Create | TempFlags.Essential
                     : entity == foundNode ? TempFlags.Create | TempFlags.IsLast : TempFlags.Create;
@@ -415,20 +431,36 @@ namespace SkylinesLink.Mod.Native
                 else
                 { var pose = entities.GetComponentData<Transform>(entity); position = pose.m_Position; rotation = pose.m_Rotation; }
                 Require(math.all(math.isfinite(position)) && math.all(math.isfinite(rotation.value)), "EXTERNAL_PREVIEW_POSE_INVALID");
-                rows.Add(new JObject {
-                    ["entity"] = Id(entity), ["prefab"] = Id(entities.GetComponentData<PrefabRef>(entity).m_Prefab),
-                    ["owner"] = Id(owner), ["secondary"] = entities.HasComponent<Secondary>(entity),
-                    ["flags"] = (uint)temp.m_Flags, ["cost"] = temp.m_Cost, ["value"] = temp.m_Value,
-                    ["position"] = new JArray(position.x, position.y, position.z),
-                    ["rotation"] = new JArray(rotation.value.x, rotation.value.y, rotation.value.z, rotation.value.w)
-                });
+                var value = (entities.GetComponentData<PrefabRef>(entity).m_Prefab, owner,
+                    entities.HasComponent<Secondary>(entity), temp.m_Flags, temp.m_Cost, temp.m_Value, position, rotation);
+                if (requireStable)
+                    Require(values[index].Equals(value), "EXTERNAL_PREVIEW_GRAPH_CHANGED_WHILE_HELD");
+                else
+                    values[index] = value;
             }
             Require(totalCost == 25000, "EXTERNAL_PREVIEW_QUOTED_COST_CHANGED");
-            var receipt = new JObject { ["root"] = Id(foundRoot), ["node"] = Id(foundNode), ["cost"] = totalCost, ["members"] = rows };
-            if (requireStable)
-                Require(root == foundRoot && node == foundNode && JToken.DeepEquals(graphReceipt, receipt), "EXTERNAL_PREVIEW_GRAPH_CHANGED_WHILE_HELD");
-            else { root = foundRoot; node = foundNode; members = actual; }
-            return receipt;
+            if (!requireStable) { root = foundRoot; node = foundNode; members = actual; memberValues = values; }
+        }
+
+        private JToken PreviewReceipt()
+        {
+            if (!previewConfirmed) return JValue.CreateNull();
+
+            var rows = new JArray();
+            int totalCost = 0;
+            for (int index = 0; index < members.Length; index++)
+            {
+                var value = memberValues![index];
+                totalCost += value.Cost;
+                rows.Add(new JObject {
+                    ["entity"] = Id(members[index]), ["prefab"] = Id(value.Prefab),
+                    ["owner"] = Id(value.Owner), ["secondary"] = value.Secondary,
+                    ["flags"] = (uint)value.Flags, ["cost"] = value.Cost, ["value"] = value.Value,
+                    ["position"] = new JArray(value.Position.x, value.Position.y, value.Position.z),
+                    ["rotation"] = new JArray(value.Rotation.value.x, value.Rotation.value.y, value.Rotation.value.z, value.Rotation.value.w)
+                });
+            }
+            return new JObject { ["root"] = Id(root), ["node"] = Id(node), ["cost"] = totalCost, ["members"] = rows };
         }
 
         private void RequireChildren(Entity parent, Entity[] prefabs, Entity[] all, Entity secondaryPrefab)
@@ -1013,7 +1045,7 @@ namespace SkylinesLink.Mod.Native
             ["ownedDefinitionQueryRetained"] = definitionsCreated, ["ownedTempQueryRetained"] = tempsCreated,
             ["nonemptyInput"] = (JToken?)nonemptyInputObservation?.DeepClone() ?? JValue.CreateNull(),
             ["inputs"] = (JToken?)inputReceipt?.DeepClone() ?? JValue.CreateNull(),
-            ["preview"] = (JToken?)graphReceipt?.DeepClone() ?? JValue.CreateNull(),
+            ["preview"] = PreviewReceipt(),
             ["failureCode"] = Value(failureCode), ["exceptionType"] = Value(exceptionType),
             ["scope"] = "One native default-pipeline external preview and normal cancellation; no AI concurrency or permanent construction proof. Empty disabled phase anchor remains World-owned."
         };
