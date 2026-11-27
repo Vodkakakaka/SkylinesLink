@@ -33,10 +33,10 @@ async function fixture(productionHost = false, environment = `probe-${randomByte
   await mkdir(join(core, 'runtime'), { recursive: true });
   await mkdir(join(core, 'host'), { recursive: true });
   await writeFile(join(directory, '.owned-probe'), environment);
-  await copyFile(runtimeNodePath, join(core, 'runtime/node.exe'));
-  await verifyNodeRuntime(join(core, 'runtime/node.exe'));
+  const nodePath = 'runtime/node.exe';
+  await copyFile(runtimeNodePath, join(core, nodePath));
   await copyFile(runtime.license.sourcePath, join(core, runtime.license.relativePath));
-  const paths = ['runtime/node.exe', runtime.license.relativePath, 'host/host.mjs'];
+  const paths = [runtime.license.relativePath, 'host/host.mjs'];
   await mkdir(join(core, 'desktop/launcher'), { recursive: true });
   const launcherFiles = launcherKind === 'nativeaot'
     ? ['SkylinesLink.Launcher.exe', 'DOTNET.LICENSE.txt', 'DOTNET.THIRD-PARTY-NOTICES.txt', 'DOTNET.SOURCES.txt']
@@ -52,7 +52,8 @@ async function fixture(productionHost = false, environment = `probe-${randomByte
     await copyFile(join(root, 'artifacts/host/host.THIRD_PARTY_NOTICES.txt'), join(core, 'host/host.THIRD_PARTY_NOTICES.txt'));
     paths.push('host/host.mjs.LEGAL.txt', 'host/host.THIRD_PARTY_NOTICES.txt');
   } else await copyFile(join(import.meta.dirname, 'fixture-host.mjs'), join(core, 'host/host.mjs'));
-  const files = [];
+  const { size, sha256 } = await verifyNodeRuntime(join(core, nodePath));
+  const files = [{ path: nodePath, size, sha256 }];
   for (const path of paths) {
     const bytes = await readFile(join(core, path));
     files.push({ path, size: bytes.length, sha256: hash(bytes) });
