@@ -37,6 +37,7 @@ namespace SkylinesLink.Mod.Native
         internal bool ResourcesReleased => registrationReleased && !NativeWorkMayReadSource;
         internal bool Passed => registration?.Instance.OutputConfirmed == true && protectionConfirmed && ResourcesReleased && failureCode == null;
         internal JobHandle CompletedDependency => registration?.Instance.CompletedDependency ?? default;
+        internal string? FailureCode => failureCode;
 
         internal void RequirePreparedInputs(World source, Entity[] graph)
         {
@@ -68,7 +69,7 @@ namespace SkylinesLink.Mod.Native
             }
             catch (Exception error)
             {
-                failureCode = error is Rejection rejected ? rejected.Code : "PREVIEW_COMMIT_OBJECT_FAILED";
+                failureCode = NativeProbeFailure.CodeOf(error) ?? "PREVIEW_COMMIT_OBJECT_FAILED";
                 throw new Rejection(failureCode, error);
             }
             finally
@@ -87,7 +88,7 @@ namespace SkylinesLink.Mod.Native
             }
             catch (Exception error)
             {
-                failureCode = "PREVIEW_COMMIT_OBJECT_PROTECTION_UNCONFIRMED";
+                failureCode = NativeProbeFailure.CodeOf(error) ?? "PREVIEW_COMMIT_OBJECT_PROTECTION_UNCONFIRMED";
                 throw new Rejection(failureCode, error);
             }
         }

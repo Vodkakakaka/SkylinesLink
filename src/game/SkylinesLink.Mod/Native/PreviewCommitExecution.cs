@@ -139,13 +139,8 @@ namespace SkylinesLink.Mod.Native
             }
             catch (Exception error)
             {
-                failureCode = error switch {
-                    Rejection rejected => rejected.Code,
-                    PreviewCommitPayment.Rejection paymentError => paymentError.Code,
-                    PreviewCommitObjects.Rejection objectsError => objectsError.Code,
-                    PreviewCommitNet.Rejection netError => netError.Code,
-                    _ => (string?)objects.Snapshot()["failureCode"] ?? (string?)net.Snapshot()["failureCode"] ?? "PREVIEW_COMMIT_EXECUTION_FAILED"
-                };
+                failureCode = NativeProbeFailure.CodeOf(error) ?? objects.FailureCode ?? net.FailureCode
+                    ?? "PREVIEW_COMMIT_EXECUTION_FAILED";
                 throw new Rejection(failureCode, error);
             }
             finally
@@ -169,7 +164,7 @@ namespace SkylinesLink.Mod.Native
             }
             catch (Exception error)
             {
-                failureCode = error is Rejection rejected ? rejected.Code : "PREVIEW_COMMIT_PROTECTION_UNCONFIRMED";
+                failureCode = NativeProbeFailure.CodeOf(error) ?? "PREVIEW_COMMIT_PROTECTION_UNCONFIRMED";
                 throw new Rejection(failureCode, error);
             }
         }
@@ -237,7 +232,7 @@ namespace SkylinesLink.Mod.Native
             }
             catch (Exception error)
             {
-                failureCode = error is Rejection rejected ? rejected.Code : "PREVIEW_COMMIT_WORLD_READBACK_FAILED";
+                failureCode = NativeProbeFailure.CodeOf(error) ?? "PREVIEW_COMMIT_WORLD_READBACK_FAILED";
                 throw new Rejection(failureCode, error);
             }
         }

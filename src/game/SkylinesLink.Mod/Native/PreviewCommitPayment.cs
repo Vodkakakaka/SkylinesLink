@@ -51,14 +51,7 @@ namespace SkylinesLink.Mod.Native
             }
             catch (Exception error)
             {
-                failureCode = error switch
-                {
-                    Rejection rejected => rejected.Code,
-                    PreviewValidationExecution.Rejection rejected => rejected.Code,
-                    PreviewCommitExecution.Rejection rejected => rejected.Code,
-                    PreviewCommitObjects.Rejection rejected => rejected.Code,
-                    _ => "PREVIEW_COMMIT_PAYMENT_FAILED"
-                };
+                failureCode = NativeProbeFailure.CodeOf(error) ?? "PREVIEW_COMMIT_PAYMENT_FAILED";
                 throw new Rejection(failureCode, error);
             }
         }

@@ -31,6 +31,7 @@ namespace SkylinesLink.Mod.Native
         internal bool Passed => registration?.Instance.OutputConfirmed == true && protectionConfirmed
             && ResourcesReleased && failureCode == null;
         internal JobHandle CompletedDependency => registration?.Instance.CompletedDependency ?? default;
+        internal string? FailureCode => failureCode;
 
         internal void RunOnce(World source, Entity[] graph, PreviewCommitBarrier output, PreviewCommitTriggerSink triggers,
             List<ComponentSystemBase> appended, Action requireScope, Action guardLiveGraph, Action observeProtection)
@@ -50,7 +51,7 @@ namespace SkylinesLink.Mod.Native
             }
             catch (Exception error)
             {
-                failureCode = error is Rejection rejected ? rejected.Code : "PREVIEW_COMMIT_NET_FAILED";
+                failureCode = NativeProbeFailure.CodeOf(error) ?? "PREVIEW_COMMIT_NET_FAILED";
                 throw new Rejection(failureCode, error);
             }
             finally { ReleaseProducer(appended); }
@@ -66,7 +67,8 @@ namespace SkylinesLink.Mod.Native
             }
             catch (Exception error)
             {
-                throw new Rejection(failureCode = "PREVIEW_COMMIT_NET_PROTECTION_UNCONFIRMED", error);
+                failureCode = NativeProbeFailure.CodeOf(error) ?? "PREVIEW_COMMIT_NET_PROTECTION_UNCONFIRMED";
+                throw new Rejection(failureCode, error);
             }
         }
 
