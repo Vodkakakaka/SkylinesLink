@@ -33,7 +33,7 @@ function frame(document) {
 }
 async function publish(f, document = f.checkpoint) { await writeFile(join(f.connection, 'operations.history'), frame(document)); }
 function request(f, extra = {}) { return { formatVersion: 1, environmentId: f.environment, profileId: 'Reader.With_Id', expectedAuthorityEpoch: null, expectedGrantEpoch: null, selector: clone(selector), ...extra }; }
-function cleanup(f) { execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-File', join(import.meta.dirname, 'remove-owned-probe.ps1'), '-ProbeRoot', f.directory], { windowsHide: true, stdio: 'pipe' }); }
+function cleanup(f) { execFileSync('pwsh', ['-NoProfile', '-NonInteractive', '-File', join(import.meta.dirname, 'remove-owned-probe.ps1'), '-ProbeRoot', f.directory], { windowsHide: true, stdio: 'pipe' }); }
 function acl(f, object, mode) { execFileSync(probe, ['history-acl', f.environment, object, mode], { windowsHide: true, stdio: 'pipe', timeout: 5000 }); }
 
 function startNative(value, { pipeMode = 'overlapped', endInput = true, env } = {}) {
@@ -195,7 +195,7 @@ test('Native拒绝重解析connection，不跟随测试junction', { timeout: 100
     await rejected(f, 87);
   } finally {
     if (linked) {
-      execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-File', join(import.meta.dirname, 'remove-history-link.ps1'), '-ProbeRoot', f.directory], { windowsHide: true, stdio: 'pipe' });
+      execFileSync('pwsh', ['-NoProfile', '-NonInteractive', '-File', join(import.meta.dirname, 'remove-history-link.ps1'), '-ProbeRoot', f.directory], { windowsHide: true, stdio: 'pipe' });
       assert.equal((await lstat(f.connection)).isSymbolicLink(), false);
       assert.deepEqual(await readFile(join(f.connection, 'operations.history')), originalHistory);
     }

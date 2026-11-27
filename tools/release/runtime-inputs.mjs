@@ -6,6 +6,10 @@ import { fileURLToPath } from 'node:url';
 
 const directory = dirname(fileURLToPath(import.meta.url));
 
+export function nodeRuntimeExecutable() {
+  return process.env.SKYLINESLINK_NODE_RUNTIME ?? process.execPath;
+}
+
 async function sha256(path) {
   const hash = createHash('sha256');
   for await (const chunk of createReadStream(path)) hash.update(chunk);

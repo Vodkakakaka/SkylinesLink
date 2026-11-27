@@ -6,7 +6,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { inflateRawSync } from 'node:zlib';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { verifyNodeRuntime } from './runtime-inputs.mjs';
+import { nodeRuntimeExecutable, verifyNodeRuntime } from './runtime-inputs.mjs';
 import { managedNames, managedComponentIndex, meetsMinimumVersion, rejectPrivatePrefixes, requireInspectedBytes, validateManagedClosure, validateOutputInventory, validateSourcePath } from './core-policy.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -147,7 +147,7 @@ export async function buildCore() {
     || !meetsMinimumVersion(run('pwsh', ['-NoProfile', '-NonInteractive', '-Command', 'pnpm --version']), pkg.engines.pnpm)) throw new Error('CORE_TOOL_VERSION');
   // nvm's stable command may be a managed junction. Resolve only this explicit input;
   // all ordinary source/Core paths keep their strict ancestor/reparse checks.
-  const nodeExe = await realpath(process.execPath);
+  const nodeExe = await realpath(nodeRuntimeExecutable());
   await ordinary(nodeExe);
   const node = await verifyNodeRuntime(nodeExe);
   const privatePrefixes = [root, process.env.USERPROFILE ?? ''].filter(Boolean);

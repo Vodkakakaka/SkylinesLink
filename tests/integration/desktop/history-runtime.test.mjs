@@ -140,6 +140,6 @@ test('真实Runtime journal→publisher→SLHC→Native：正常关闭持久取�
     if (!normalStop) runtime.abort();
     try { await runtime.closed; } catch (error) { if (normalStop) throw error; }
     lines.close();
-    execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-File', join(import.meta.dirname, 'remove-owned-probe.ps1'), '-ProbeRoot', fixture.directory], { windowsHide: true, stdio: 'pipe' });
+    execFileSync('pwsh', ['-NoProfile', '-NonInteractive', '-File', join(import.meta.dirname, 'remove-owned-probe.ps1'), '-ProbeRoot', fixture.directory], { windowsHide: true, stdio: 'pipe' });
   }
 });

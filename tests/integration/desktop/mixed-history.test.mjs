@@ -79,7 +79,7 @@ async function fingerprint(directory) {
   return values;
 }
 function cleanup(directory) {
-  execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-File', join(import.meta.dirname, 'remove-owned-probe.ps1'), '-ProbeRoot', directory],
+  execFileSync('pwsh', ['-NoProfile', '-NonInteractive', '-File', join(import.meta.dirname, 'remove-owned-probe.ps1'), '-ProbeRoot', directory],
     { windowsHide: true, stdio: 'pipe', timeout: 5000 });
 }
 

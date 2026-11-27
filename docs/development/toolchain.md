@@ -54,6 +54,8 @@ The [build script](../../tools/build/build-mod.ps1) temporarily sets `DOTNET_ROL
 
 This build invokes the official post-processor. Deployment is disabled and the Mod publisher is rejected by the project. The optional `-IntegrationProbe` switch produces a separate developer build, not a player package. Compilation and post-processing do not prove runtime behavior in the game.
 
+When the development Node patch differs from the bundled runtime, set `SKYLINESLINK_NODE_RUNTIME` to the absolute path of the reviewed Windows x64 Node executable before running the desktop tests or building Core. The source and copied executable must match the [runtime input record](../../tools/release/runtime-inputs.json).
+
 ### NativeAOT desktop outputs
 
 NativeAOT is separate from ordinary development. The current target is Windows x64 and needs the supported native C++ build tools and Windows SDK in a suitable build environment; see [Microsoft's NativeAOT prerequisites](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/?tabs=windows). This does not require the full Visual Studio IDE for ordinary C#/TypeScript work.
@@ -122,6 +124,8 @@ pwsh -NoProfile -File tools/build/build-mod.ps1 -Configuration Release
 [构建脚本](../../tools/build/build-mod.ps1) 仅在自身进程中临时设置 `DOTNET_ROLL_FORWARD=Major`，让子工具可以考虑使用已安装的较新运行时，并在 `finally` 中恢复原值。它不修改机器层／用户层环境或官方运行配置，不安装运行时，也不忽略后处理失败。
 
 构建会执行官方后处理器。工程已禁用部署并拒绝调用 Mod 发布器。可选的 `-IntegrationProbe` 开关产生独立开发构建，不是玩家安装包；编译和后处理通过不代表游戏实载行为已验收。
+
+开发 Node 补丁与随包运行时不同时，运行桌面测试或构建 Core 前，将 `SKYLINESLINK_NODE_RUNTIME` 设为已核验的 Windows x64 Node 可执行文件绝对路径。源文件及复制后的文件均须匹配[运行时输入记录](../../tools/release/runtime-inputs.json)。
 
 ### NativeAOT 桌面输出
 

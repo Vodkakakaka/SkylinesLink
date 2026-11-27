@@ -7,7 +7,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
 import { createRequire } from 'node:module';
 import { createInterface } from 'node:readline';
-import { verifyNodeRuntime } from '../../../tools/release/runtime-inputs.mjs';
+import { nodeRuntimeExecutable, verifyNodeRuntime } from '../../../tools/release/runtime-inputs.mjs';
 
 const root = resolve(import.meta.dirname, '../../..');
 const productToolNames = JSON.parse(await readFile(join(root, 'contracts/capabilities.json'), 'utf8')).capabilities.map(capability => capability.toolName).sort();
@@ -22,15 +22,19 @@ const sdk = createRequire(join(root, 'src/host/package.json'));
 const { Client } = sdk('@modelcontextprotocol/client');
 const { StdioClientTransport } = sdk('@modelcontextprotocol/client/stdio');
 const { ReadBuffer, serializeMessage } = sdk('@modelcontextprotocol/server');
+const runtimeNodePath = nodeRuntimeExecutable();
+let runtimeNode;
+const reviewedRuntimeNode = () => runtimeNode ??= verifyNodeRuntime(runtimeNodePath);
 
 async function fixture(productionHost = false, environment = `probe-${randomBytes(12).toString('hex')}`) {
+  const runtime = await reviewedRuntimeNode();
   const directory = join(process.env.USERPROFILE, '.skylineslink', 'environments', environment);
   const core = join(directory, 'releases', '0.1.0-dev.0');
   await mkdir(join(core, 'runtime'), { recursive: true });
   await mkdir(join(core, 'host'), { recursive: true });
   await writeFile(join(directory, '.owned-probe'), environment);
-  await copyFile(process.execPath, join(core, 'runtime/node.exe'));
-  const runtime = await verifyNodeRuntime(join(core, 'runtime/node.exe'));
+  await copyFile(runtimeNodePath, join(core, 'runtime/node.exe'));
+  await verifyNodeRuntime(join(core, 'runtime/node.exe'));
   await copyFile(runtime.license.sourcePath, join(core, runtime.license.relativePath));
   const paths = ['runtime/node.exe', runtime.license.relativePath, 'host/host.mjs'];
   await mkdir(join(core, 'desktop/launcher'), { recursive: true });
@@ -60,7 +64,7 @@ async function fixture(productionHost = false, environment = `probe-${randomByte
 }
 
 function cleanup(fixture) {
-  execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-File', join(import.meta.dirname, 'remove-owned-probe.ps1'), '-ProbeRoot', fixture.directory], { windowsHide: true, stdio: 'pipe' });
+  execFileSync('pwsh', ['-NoProfile', '-NonInteractive', '-File', join(import.meta.dirname, 'remove-owned-probe.ps1'), '-ProbeRoot', fixture.directory], { windowsHide: true, stdio: 'pipe' });
 }
 
 async function within(promise, milliseconds = 8000) {
@@ -665,6 +669,7 @@ const launcherStatus = f => execFileSync(setup, ['launcher-status', f.source, f.
 const initializeCore = f => execFileSync(setup, ['initialize-core', f.source, f.environment.toUpperCase()], { windowsHide: true, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 
 async function activationFixture({ nativeLauncher } = {}) {
+  const runtime = nativeLauncher ? await reviewedRuntimeNode() : undefined;
   const f = await preparationFixture();
   const paths = [
     'LICENSE', 'SOURCE.txt', 'source/SkylinesLink-source.zip', 'runtime/node.exe', 'runtime/Node.LICENSE.txt',
@@ -674,13 +679,12 @@ async function activationFixture({ nativeLauncher } = {}) {
       ...['DOTNET.LICENSE.txt', 'DOTNET.THIRD-PARTY-NOTICES.txt', 'DOTNET.SOURCES.txt'].map(file => `desktop/${name}/${file}`)]),
   ];
   const files = [];
-  const runtime = nativeLauncher ? await verifyNodeRuntime(process.execPath) : undefined;
   // NativeAOT execution uses real Launcher/Node/fixture-host only. Other bytes
   // remain synthetic file-set inputs and are never loaded as Mod or Setup code.
   for (const path of paths) {
     let source;
     if (nativeLauncher) {
-      if (path === 'runtime/node.exe') source = process.execPath;
+      if (path === 'runtime/node.exe') source = runtimeNodePath;
       else if (path === 'runtime/Node.LICENSE.txt') source = runtime.license.sourcePath;
       else if (path === 'host/host.mjs') source = join(import.meta.dirname, 'fixture-host.mjs');
       else if (path === 'desktop/launcher/SkylinesLink.Launcher.exe') source = nativeLauncher;
@@ -691,6 +695,7 @@ async function activationFixture({ nativeLauncher } = {}) {
     await writeFile(join(f.source, path), bytes);
     files.push({ path, size: bytes.length, sha256: hash(bytes) });
   }
+  if (nativeLauncher) await verifyNodeRuntime(join(f.source, 'runtime/node.exe'));
   const manifest = Buffer.from(JSON.stringify({ ...JSON.parse(f.manifest.toString()), files }));
   await writeFile(join(f.source, 'core-manifest.json'), manifest);
   return { ...f, manifest };
